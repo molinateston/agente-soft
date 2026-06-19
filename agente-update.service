@@ -1,0 +1,13 @@
+[Unit]
+Description=Agente Soft — auto-update do método (puxa skills novas e revalida)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+# %h = HOME do usuário 'agente'. Roda o update seguro (idempotente + auto-rollback).
+# PATH explícito: o timer --user tem PATH minúsculo e não acharia o 'claude'/'node'
+# (o update.sh já resolve o claude por caminho absoluto, mas o node vem do PATH).
+Environment=HOME=%h
+Environment=PATH=/usr/local/bin:/usr/bin:/bin:%h/.npm-global/bin:%h/.local/bin
+ExecStart=/usr/bin/env bash %h/agente-soft/update.sh

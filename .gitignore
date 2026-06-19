@@ -1,0 +1,10 @@
+# segredos e estado de runtime — NUNCA versionar
+.env
+sessions.json
+sessions.json.bak
+sessions.json.tmp
+topics.json
+persona/
+brain/
+backups/
+*.log

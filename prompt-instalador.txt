@@ -1,0 +1,18 @@
+Quero instalar meu Agente Soft (Telegram + Claude) nesta VPS.
+
+Primeiro baixe o repo e leia o manual (o clone vem ANTES de precisar do arquivo):
+  cd ~ && git clone https://github.com/molinateston/agente-soft.git agente-soft
+Se a pasta já existir: cd ~/agente-soft && git pull -q
+
+Depois leia e execute ~/agente-soft/SETUP-AGENTE.md com a ferramenta Read,
+seguindo o passo a passo do início ao fim.
+
+Vou te dar conforme você pedir:
+- Nome do agente (ex: Bia, Léo, Sofia)
+- Meu nome
+- Token do bot do Telegram (eu crio no @BotFather quando você pedir)
+- Meu user_id do Telegram (eu pego no @userinfobot quando você pedir)
+
+Sobe a ponte, baixa as skills do método, sobe o serviço (auto-restart),
+valida, e me confirma quando estiver no ar conversando comigo no Telegram.
+Se travar em algum passo, me explica em português simples o que precisa.

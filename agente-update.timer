@@ -1,0 +1,14 @@
+[Unit]
+Description=Checa atualização do Agente Soft a cada 6h (e no boot)
+
+[Timer]
+# A cada 6 horas + um atraso aleatório de até 30min, pra muitos clientes
+# não baterem no GitHub ao mesmo tempo. Persistent: se a VPS estava off
+# na hora marcada, roda assim que voltar.
+OnBootSec=10min
+OnUnitActiveSec=6h
+RandomizedDelaySec=30min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
