@@ -9,7 +9,7 @@ Runtime **lean**: node puro, login nativo do Claude (sem colar token), sem tmux/
 2. **Abra o Browser Terminal** no hPanel (sem SSH, sem senha decoreba).
 3. **Instale o ambiente** (1 comando):
    ```bash
-   curl -fsSL https://agente-soft.pages.dev/bootstrap.sh | sudo bash
+   curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/bootstrap.sh | sudo bash
    ```
 4. **Logue o Claude na sua conta:**
    ```bash

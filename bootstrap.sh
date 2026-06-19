@@ -6,7 +6,7 @@
 # NÃO instala tmux, Postgres, Caddy, pm2 nem túnel — a ponte é node puro.
 #
 # Roda UMA vez, numa VPS Ubuntu 22+ (como root, via Browser Terminal):
-#   curl -fsSL https://agente-soft.pages.dev/bootstrap.sh | sudo bash
+#   curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/bootstrap.sh | sudo bash
 #
 # Depois dele: você roda `claude`, loga na SUA conta (sem colar token),
 # e cola o prompt-instalador. O Claude faz o resto lendo o SETUP-AGENTE.md.
