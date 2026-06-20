@@ -339,6 +339,11 @@ function processOne(msg, chatId, threadId, key, cfg) {
       try { spawn("systemctl", ["--user", "start", "agente-update.service"], { detached: true, stdio: "ignore" }).unref(); } catch {}
       return send(chatId, `🔄 Atualizando pra última versão do método... o update roda separado e me reinicia sozinho. Já volto com o "✅ No ar!".`, threadId);
     }
+    // comando /audio — liga a transcrição de áudio (instala faster-whisper local, SEM root, num cgroup separado)
+    if (/^\/(audio|áudio|voz)\b/i.test(text.trim())) {
+      try { spawn("systemd-run", ["--user", "--collect", "bash", `${process.env.HOME}/agente-soft/enable-voice.sh`], { detached: true, stdio: "ignore" }).unref(); } catch {}
+      return send(chatId, `🎤 Ligando o áudio (transcrição local, sem chave)... baixo o modelo e me reinicio — leva uns minutos. Te aviso com o "✅ No ar!".`, threadId);
+    }
     return ask(key, text, cfg, chatId, threadId).then(async ({ result, sid, ctx }) => {
       if (sid) { sessions[key] = { sid, ctx: ctx || 0 }; saveSessions(); }
       await send(chatId, result, threadId);
