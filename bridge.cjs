@@ -151,8 +151,14 @@ function ask(key, text, cfg, chatId, threadId) {
                     "--add-dir", WORKDIR, "--add-dir", BRAIN, "--add-dir", TMP_DIR];
       if (cfg.effort) args.push("--effort", cfg.effort);                 // quanto ele PENSA: high=estratégico, medium=operacional, low=casual
       if (useResume && canResume) args.push("--resume", _sid);
+      // identidade: doutrina-base FORTE (do repo agente-soft, auto-atualiza → cai em todos os clientes)
+      // + a persona específica do dono (nome/tom). A base vem PRIMEIRO pra cravar "você é o agente
+      // que JÁ roda aqui, não o Claude genérico" antes de qualquer coisa.
       const pf = `${PERSONA_DIR}/${cfg.persona}`;
-      if (cfg.persona && fs.existsSync(pf)) args.push("--append-system-prompt", fs.readFileSync(pf, "utf8"));
+      let sysPrompt = "";
+      try { const bd = `${process.env.HOME}/agente-soft/AGENT-BASE.md`; if (fs.existsSync(bd)) sysPrompt += fs.readFileSync(bd, "utf8") + "\n\n"; } catch {}
+      if (cfg.persona && fs.existsSync(pf)) { try { sysPrompt += fs.readFileSync(pf, "utf8"); } catch {} }
+      if (sysPrompt.trim()) args.push("--append-system-prompt", sysPrompt);
       const proc = spawn(CLAUDE_BIN, args, { cwd: WORKDIR, env: childEnv() });
 
       const t0 = Date.now();
