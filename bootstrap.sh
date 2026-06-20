@@ -2,7 +2,8 @@
 # =====================================================================
 # bootstrap.sh — Agente Soft (Telegram <-> Claude Code), runtime LEAN.
 #
-# Instala SÓ o mínimo: Node 20, git e o Claude Code CLI.
+# Instala SÓ o mínimo: Node 20, git, Claude Code CLI e python3 (+venv/pip, pré-req
+# do áudio — o agente não tem sudo, então isto PRECISA entrar aqui, como root).
 # NÃO instala tmux, Postgres, Caddy, pm2 nem túnel — a ponte é node puro.
 #
 # Roda UMA vez, numa VPS Ubuntu 22+ (como root, via Browser Terminal):
@@ -32,10 +33,12 @@ if [[ "${EUID}" -ne 0 ]]; then
   exit 1
 fi
 
-echo "→ 1/4 Pacotes base (git, curl, ca-certificates)..."
+echo "→ 1/4 Pacotes base (git, curl, ca-certificates, python3 +venv/pip p/ áudio)..."
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get install -y -qq git curl ca-certificates >/dev/null
+# python3-venv + python3-pip: pré-requisitos do áudio (faster-whisper roda num venv
+# nível-usuário). Precisam vir AQUI porque o user 'agente' não tem sudo pra instalá-los.
+apt-get install -y -qq git curl ca-certificates python3 python3-venv python3-pip >/dev/null
 
 echo "→ 2/4 Node 20 (NodeSource)..."
 if ! command -v node >/dev/null 2>&1 || [[ "$(node -v 2>/dev/null | cut -dv -f2 | cut -d. -f1)" -lt 18 ]]; then
