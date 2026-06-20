@@ -42,30 +42,35 @@ if ! systemctl --user is-active --quiet agente; then
   exit 0
 fi
 
-# ---- 2) login nativo vivo? (call paga → no máx ~1x/3h) --------------
-# 3 tentativas com pausa: filtra falha TRANSITÓRIA (rede, ou limite de uso
-# momentâneo da conta Claude — comum quando a mesma conta é usada em mais de
-# um lugar) de expiração DE VERDADE. Só alarma se as 3 falharem. E mesmo aí,
-# alerta no MÁXIMO 1x por dia (trava anti-spam) — antes mandava a cada 3h.
+# ---- 2) login nativo vivo? ------------------------------------------
+# O probe `claude -p` falha por DOIS motivos bem diferentes: (a) login
+# expirado DE VERDADE, ou (b) limite/saturação momentânea da conta (rate
+# limit / overload) — comum quando a mesma conta é usada em mais de um lugar.
+# SÓ (a) merece alarme. Distinguimos pelo TEXTO do erro: saturação/rede =
+# silêncio TOTAL; auth-fail exige 2 checagens seguidas antes de alarmar; e
+# mesmo aí, alerta no MÁX 1x por dia. Resultado: zero alarme por saturação.
 NOW=$(date +%s); LAST=$(cat "$STAMP" 2>/dev/null || echo 0)
-ASTAMP="$BRIDGE_DIR/.health-alert-stamp"
+ASTAMP="$BRIDGE_DIR/.health-alert-stamp"; AUTHFAIL="$BRIDGE_DIR/.health-authfail"
 if [ -n "$CB" ] && [ $((NOW - LAST)) -ge 10800 ]; then
   echo "$NOW" > "$STAMP"
-  ok=0
-  for try in 1 2 3; do
-    if timeout 30 "$CB" -p "responda só OK" 2>/dev/null | head -c 40 | grep -qiE '^[^a-z]*ok'; then ok=1; break; fi
-    [ "$try" -lt 3 ] && sleep 20
-  done
-  if [ "$ok" = 1 ]; then
-    rm -f "$ASTAMP"   # respondeu → normal; zera a trava de alerta
-  else
-    AL=$(cat "$ASTAMP" 2>/dev/null || echo 0)
-    if [ $((NOW - AL)) -ge 86400 ]; then
-      echo "$NOW" > "$ASTAMP"
-      say "login falhou 3x — alertando (no máx 1x/dia)"
-      alert "🔑 Não consegui confirmar o login do Claude do seu agente (3 tentativas seguidas). Se ele PARAR de responder, o login pode ter expirado — me avise aqui que a gente religa. Se ele ainda responde normal, pode ignorar (provável falha temporária de conexão)."
+  out="$(timeout 30 "$CB" -p "responda só OK" 2>&1)"
+  if printf '%s' "$out" | head -c 40 | grep -qiE '^[^a-z]*ok'; then
+    rm -f "$ASTAMP" "$AUTHFAIL"        # respondeu → tudo normal, zera tudo
+  elif printf '%s' "$out" | grep -qiE 'rate.?limit|usage limit|quota|429|503|529|overload|capacity|too many|try again|temporar|limit reached|esgot|network|timeout|ECONN|fetch failed|socket'; then
+    rm -f "$AUTHFAIL"                  # saturação/rede → NÃO é login → silêncio
+    say "probe falhou por limite/rede (nao e login) — silenciando"
+  elif printf '%s' "$out" | grep -qiE 'oauth|unauthor|401|invalid.*(api|key|credential|token)|expired|please (log|sign) ?in|authenticat|not logged|log ?in to|sign ?in to'; then
+    n=$(( $(cat "$AUTHFAIL" 2>/dev/null || echo 0) + 1 )); echo "$n" > "$AUTHFAIL"
+    if [ "$n" -ge 2 ]; then
+      AL=$(cat "$ASTAMP" 2>/dev/null || echo 0)
+      if [ $((NOW - AL)) -ge 86400 ]; then
+        echo "$NOW" > "$ASTAMP"; say "AUTH falhou ${n}x — alertando (1x/dia)"
+        alert "🔑 O login do Claude do seu agente parece ter expirado mesmo (erro de autenticação confirmado 2x). Me avise aqui que a gente religa — você não precisa mexer na VPS."
+      fi
     else
-      say "login falhou 3x, mas já alertei nas últimas 24h — segurando spam"
+      say "AUTH falhou 1x — espero confirmar na proxima checagem antes de alarmar"
     fi
+  else
+    say "probe falhou (erro nao reconhecido) — nao alarma (conservador)"
   fi
 fi
