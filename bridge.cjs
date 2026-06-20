@@ -158,6 +158,9 @@ function ask(key, text, cfg, chatId, threadId) {
       let sysPrompt = "";
       try { const bd = `${process.env.HOME}/agente-soft/AGENT-BASE.md`; if (fs.existsSync(bd)) sysPrompt += fs.readFileSync(bd, "utf8") + "\n\n"; } catch {}
       if (cfg.persona && fs.existsSync(pf)) { try { sysPrompt += fs.readFileSync(pf, "utf8"); } catch {} }
+      // ONDE VOCÊ ESTÁ: o agente sempre sabe o chat/tópico atual → reporta o id, se auto-configura, e não precisa de getUpdates/@userinfobot
+      const loc = `## ONDE VOCÊ ESTÁ AGORA\nVocê está respondendo no chat_id=${chatId}` + (threadId ? `, dentro do tópico topic_id=${threadId}` : ` (sem tópico — DM ou chat principal)`) + (cfg.label ? `, sala "${cfg.label}"` : "") + `. Se pedirem o id deste grupo/tópico, é ESTE — você JÁ sabe, não use getUpdates nem @userinfobot. Pra te configurar nesta sala, grave este chat_id/topic_id no seu .env (GROUP_CHAT_ID) ou no topics.json e reinicie.`;
+      sysPrompt += "\n\n" + loc;
       if (sysPrompt.trim()) args.push("--append-system-prompt", sysPrompt);
       const proc = spawn(CLAUDE_BIN, args, { cwd: WORKDIR, env: childEnv() });
 
@@ -326,6 +329,10 @@ function processOne(msg, chatId, threadId, key, cfg) {
   tg("sendChatAction", { chat_id: chatId, action: "typing", ...(threadId ? { message_thread_id: Number(threadId) } : {}) });
   resolveInput(msg).then(({ text, files }) => {
     if (!text) return;
+    // comando instantâneo /id (e variantes) — reporta chat/tópico SEM gastar cota do Claude
+    if (/^\/(id|topic_?id|grupo_?id|chat_?id)\b/i.test(text.trim())) {
+      return send(chatId, `📍 Onde você está agora:\nchat_id: ${chatId}\ntopic_id: ${threadId || "(sem tópico — chat principal/DM)"}\nsala: ${cfg.label || "Geral"}\n\nÉ esse o id deste grupo/tópico — use no .env (GROUP_CHAT_ID) ou no topics.json pra me configurar aqui.`, threadId);
+    }
     return ask(key, text, cfg, chatId, threadId).then(async ({ result, sid, ctx }) => {
       if (sid) { sessions[key] = { sid, ctx: ctx || 0 }; saveSessions(); }
       await send(chatId, result, threadId);
