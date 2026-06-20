@@ -43,10 +43,29 @@ if ! systemctl --user is-active --quiet agente; then
 fi
 
 # ---- 2) login nativo vivo? (call paga → no máx ~1x/3h) --------------
+# 3 tentativas com pausa: filtra falha TRANSITÓRIA (rede, ou limite de uso
+# momentâneo da conta Claude — comum quando a mesma conta é usada em mais de
+# um lugar) de expiração DE VERDADE. Só alarma se as 3 falharem. E mesmo aí,
+# alerta no MÁXIMO 1x por dia (trava anti-spam) — antes mandava a cada 3h.
 NOW=$(date +%s); LAST=$(cat "$STAMP" 2>/dev/null || echo 0)
+ASTAMP="$BRIDGE_DIR/.health-alert-stamp"
 if [ -n "$CB" ] && [ $((NOW - LAST)) -ge 10800 ]; then
   echo "$NOW" > "$STAMP"
-  if ! "$CB" -p "responda só OK" 2>/dev/null | head -c 40 | grep -qiE '^[^a-z]*ok'; then
-    say "login EXPIRADO"; alert "🔑 O login do seu agente expirou. Entre na VPS, rode 'claude' e logue de novo — senão ele para de responder."
+  ok=0
+  for try in 1 2 3; do
+    if timeout 30 "$CB" -p "responda só OK" 2>/dev/null | head -c 40 | grep -qiE '^[^a-z]*ok'; then ok=1; break; fi
+    [ "$try" -lt 3 ] && sleep 20
+  done
+  if [ "$ok" = 1 ]; then
+    rm -f "$ASTAMP"   # respondeu → normal; zera a trava de alerta
+  else
+    AL=$(cat "$ASTAMP" 2>/dev/null || echo 0)
+    if [ $((NOW - AL)) -ge 86400 ]; then
+      echo "$NOW" > "$ASTAMP"
+      say "login falhou 3x — alertando (no máx 1x/dia)"
+      alert "🔑 Não consegui confirmar o login do Claude do seu agente (3 tentativas seguidas). Se ele PARAR de responder, o login pode ter expirado — me avise aqui que a gente religa. Se ele ainda responde normal, pode ignorar (provável falha temporária de conexão)."
+    else
+      say "login falhou 3x, mas já alertei nas últimas 24h — segurando spam"
+    fi
   fi
 fi
