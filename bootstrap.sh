@@ -17,6 +17,12 @@ echo "============================================"
 echo " BOOTSTRAP · AGENTE SOFT (runtime lean)"
 echo "============================================"
 
+echo ""
+echo "  ⏳ Isto instala node + git + claude e pode levar de 2 a 5 minutos."
+echo "     A tela vai parecer PARADA em alguns passos — isso é NORMAL."
+echo "     NÃO feche o terminal. Espere até aparecer '✅ AMBIENTE PRONTO'."
+echo ""
+
 if ! grep -qi ubuntu /etc/os-release 2>/dev/null; then
   echo "✗ Este bootstrap é pra Ubuntu 22+. SO não suportado." >&2
   exit 1
@@ -69,20 +75,32 @@ cat <<'NEXT'
     (Sem colar token. É a conta que paga o agente.)
 
  2) Ainda dentro do `claude`, cole EXATAMENTE este
-    PROMPT-INSTALADOR (já está pronto abaixo):
+    PROMPT-INSTALADOR (já está pronto abaixo).
+    (Pra colar: botão direito → Colar, ou Ctrl+Shift+V —
+     Ctrl+V comum às vezes não cola em terminal.)
+
+ ⚠️ Cole o bloco INTEIRO de uma vez e aperte Enter só UMA vez.
+    É normal aparecer várias linhas antes de enviar — pode mandar.
+    Se enviar antes de terminar de colar, é só mandar o resto na
+    mensagem seguinte: o Claude entende e continua.
 
 ----------8<---------- COPIE A PARTIR DAQUI ----------8<----------
 Quero instalar meu Agente Soft (Telegram + Claude) nesta VPS.
 
 Primeiro baixe o repo e leia o manual:
   cd ~ && git clone https://github.com/molinateston/agente-soft.git agente-soft
+  Se a pasta já existir: cd ~/agente-soft && git pull -q
 Depois leia e execute ~/agente-soft/SETUP-AGENTE.md com a ferramenta Read,
 seguindo do início ao fim.
 
-Vou te dar conforme você pedir: nome do agente, meu nome, token do bot
-do Telegram (@BotFather) e meu user_id (@userinfobot).
+Vou te dar conforme você pedir: nome do agente, meu nome e o token do bot
+do Telegram (@BotFather). Meu id você captura sozinho (eu mando uma mensagem
+no próprio bot, sem @userinfobot).
 Sobe a ponte, baixa as skills do método, sobe o serviço, valida, e me
 confirma quando estiver no ar. Se travar, me explica em português simples.
 ----------8<---------- ATÉ AQUI ----------8<----------
+
+ 💾 Perdeu este texto depois de abrir o `claude`? O MESMO prompt está aqui:
+    https://raw.githubusercontent.com/molinateston/agente-soft/main/prompt-instalador.txt
 ============================================
 NEXT

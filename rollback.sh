@@ -44,8 +44,8 @@ fi
 
 # 3) Restaura config (não-secreta) do backup. sessions.json volta também
 #    (se foi salvo no snapshot) pra preservar o --resume das conversas.
-say "→ 3/5 Restaurando .env/persona/topics/sessions..."
-for f in .env topics.json sessions.json; do
+say "→ 3/5 Restaurando bridge.cjs/.env/persona/topics/sessions..."
+for f in .env topics.json sessions.json bridge.cjs; do
   [ -f "$BACKUP_DIR/$f" ] && cp -p "$BACKUP_DIR/$f" "$BRIDGE_DIR/$f"
 done
 [ -d "$BACKUP_DIR/persona" ] && { rm -rf "$BRIDGE_DIR/persona"; cp -rp "$BACKUP_DIR/persona" "$BRIDGE_DIR/persona"; }

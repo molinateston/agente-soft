@@ -49,3 +49,15 @@ o `--resume` preservado; a memória de longo prazo no `brain/` nunca é tocada).
 
 **Logs:** `~/lean-bridge/upgrade.log` (update/rollback) · `~/lean-bridge/bridge.log` (agente).
 **Nunca** copie o `~/.claude/` inteiro pra backup: lá moram as credenciais do login (a conta que paga).
+
+---
+
+## Freio de emergência da frota (HALT)
+Pra travar TODAS as instalações de uma vez (ex: publiquei algo errado), crie um arquivo vazio chamado `HALT` na raiz do repo do método; pra religar, apague o `HALT`.
+
+## A conta GitHub é a chave-mestra
+Cada cliente baixa e **RODA** o que estiver nesse repo, com Bash livre. Quem invadir a conta controla todas as VPS de uma vez. Por isso 2FA não é opcional.
+
+- **2FA obrigatório** na conta `molinateston` (é a porta única; com 2FA, phishing de senha não basta).
+- **Branch protection no `main`** dos dois repos (`agente-soft` + `agente-soft-skills`): exigir que o push venha só de você.
+- **Nunca gerar PAT de escrita** em máquina compartilhada/VPS de cliente; se vazar um PAT, revogar na hora.

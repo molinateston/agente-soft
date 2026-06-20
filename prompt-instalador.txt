@@ -11,7 +11,9 @@ Vou te dar conforme você pedir:
 - Nome do agente (ex: Bia, Léo, Sofia)
 - Meu nome
 - Token do bot do Telegram (eu crio no @BotFather quando você pedir)
-- Meu user_id do Telegram (eu pego no @userinfobot quando você pedir)
+
+Meu id do Telegram NÃO precisa de @userinfobot: na hora certa eu mando uma mensagem
+no próprio bot e você captura meu id direto da API (com prova de identidade).
 
 Sobe a ponte, baixa as skills do método, sobe o serviço (auto-restart),
 valida, e me confirma quando estiver no ar conversando comigo no Telegram.

@@ -2,7 +2,7 @@
 # =====================================================================
 # update.sh — atualiza o Agente Soft com segurança (runtime lean).
 #
-# Pensado pra rodar TAMBÉM sem ninguém olhando (via timer a cada 6h):
+# Pensado pra rodar TAMBÉM sem ninguém olhando (via timer 1x por semana):
 #  - PRIMEIRO detecta mudança (git pull + compara SHA) → se nada mudou, sai
 #    sem chamar o claude (não queima call paga à toa)
 #  - só ENTÃO valida o login nativo e aplica
@@ -63,6 +63,13 @@ PULL_FAIL=0
 pull_safe "$SKILLS_DIR" "skills"
 pull_safe "$REPO_DIR"   "repo (ponte)"
 NEW_SHA="$( [ -d "$SKILLS_DIR/.git" ] && git -C "$SKILLS_DIR" rev-parse HEAD 2>/dev/null || echo none )"
+
+# ---- Freio de emergência: se o dono colocar um arquivo HALT no repo do método,
+#      o update PARA de aplicar (permite cortar a frota inteira se um push ruim/hostil vazar).
+if [ -f "$REPO_DIR/HALT" ] || [ -f "$SKILLS_DIR/HALT" ]; then
+  say "⛔ HALT presente no repo — update suspenso de propósito. Nada aplicado. (remova o HALT pra religar)"
+  exit 0
+fi
 
 BRIDGE_CHANGED=0
 if [ -f "$REPO_DIR/bridge.cjs" ] && ! cmp -s "$REPO_DIR/bridge.cjs" "$BRIDGE_DIR/bridge.cjs" 2>/dev/null; then
