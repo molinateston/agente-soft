@@ -86,8 +86,14 @@ say "→ Mudança detectada (skills $OLD_SHA → $NEW_SHA; bridge alterado=$BRID
 # ---- 2/5 Agora sim: login nativo precisa estar vivo pra aplicar ------
 #     (match firme: a 1ª palavra-ish da resposta tem que ser 'ok', pra não
 #      casar "não está ok" como falso-positivo de login válido.)
-if ! "$CLAUDE_BIN" -p "responda só OK" 2>/dev/null | head -c 40 | grep -qiE '^[^a-z]*ok'; then
-  say "✗ Login nativo expirado: rode 'claude' e logue de novo. Update abortado (mudança ficou pendente)."; exit 1
+# login nativo vivo? 3 tentativas filtram saturação MOMENTÂNEA da conta (que não é login expirado de verdade)
+LOGIN_OK=0
+for _try in 1 2 3; do
+  if "$CLAUDE_BIN" -p "responda só OK" 2>/dev/null | head -c 40 | grep -qiE '^[^a-z]*ok'; then LOGIN_OK=1; break; fi
+  [ "$_try" -lt 3 ] && sleep 15
+done
+if [ "$LOGIN_OK" -eq 0 ]; then
+  say "✗ Login não confirmou em 3 tentativas (pode ser saturação momentânea da conta). Mudança ficou pendente — tente de novo em alguns minutos."; exit 1
 fi
 
 # ---- 3/5 Snapshot pré-mudança (sem credenciais), pro auto-rollback ---

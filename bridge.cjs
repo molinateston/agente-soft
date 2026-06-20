@@ -333,6 +333,12 @@ function processOne(msg, chatId, threadId, key, cfg) {
     if (/^\/(id|topic_?id|grupo_?id|chat_?id)\b/i.test(text.trim())) {
       return send(chatId, `📍 Onde você está agora:\nchat_id: ${chatId}\ntopic_id: ${threadId || "(sem tópico — chat principal/DM)"}\nsala: ${cfg.label || "Geral"}\n\nÉ esse o id deste grupo/tópico — use no .env (GROUP_CHAT_ID) ou no topics.json pra me configurar aqui.`, threadId);
     }
+    // comando /atualiza — o agente se atualiza sozinho: dispara o agente-update.service (roda
+    // num cgroup separado, sobrevive ao restart, valida e reverte sozinho se quebrar). Sem cota.
+    if (/^\/atualiza/i.test(text.trim())) {
+      try { spawn("systemctl", ["--user", "start", "agente-update.service"], { detached: true, stdio: "ignore" }).unref(); } catch {}
+      return send(chatId, `🔄 Atualizando pra última versão do método... o update roda separado e me reinicia sozinho. Já volto com o "✅ No ar!".`, threadId);
+    }
     return ask(key, text, cfg, chatId, threadId).then(async ({ result, sid, ctx }) => {
       if (sid) { sessions[key] = { sid, ctx: ctx || 0 }; saveSessions(); }
       await send(chatId, result, threadId);
