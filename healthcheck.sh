@@ -16,6 +16,11 @@ LOG="$BRIDGE_DIR/health.log"
 STAMP="$BRIDGE_DIR/.health-login-stamp"
 say(){ echo "[$(date '+%F %H:%M:%S')] $*" >> "$LOG"; }
 
+# rotação: se o log passar de ~2MB, trunca mantendo só a cauda (não cresce sem fim)
+if [ -f "$LOG" ] && [ "$(wc -c < "$LOG" 2>/dev/null || echo 0)" -gt 2000000 ]; then
+  tail -c 500000 "$LOG" > "$LOG.tmp" 2>/dev/null && mv "$LOG.tmp" "$LOG"
+fi
+
 env_get(){ grep -E "^$1=" "$BRIDGE_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2- | sed 's/[[:space:]]*#.*$//; s/^"//; s/"$//'; }
 TG="$(env_get TELEGRAM_BOT_TOKEN)"; OWNER="$(env_get OWNER_CHAT_ID)"
 alert(){ [ -n "$TG" ] && [ -n "$OWNER" ] && curl -s --max-time 15 \
@@ -53,7 +58,7 @@ NOW=$(date +%s); LAST=$(cat "$STAMP" 2>/dev/null || echo 0)
 ASTAMP="$BRIDGE_DIR/.health-alert-stamp"; AUTHFAIL="$BRIDGE_DIR/.health-authfail"
 if [ -n "$CB" ] && [ $((NOW - LAST)) -ge 10800 ]; then
   echo "$NOW" > "$STAMP"
-  out="$(timeout 30 "$CB" -p "responda só OK" 2>&1)"
+  out="$(timeout 30 "$CB" --model sonnet -p "responda só OK" 2>&1)"
   if printf '%s' "$out" | head -c 40 | grep -qiE '^[^a-z]*ok'; then
     rm -f "$ASTAMP" "$AUTHFAIL"        # respondeu → tudo normal, zera tudo
   elif printf '%s' "$out" | grep -qiE 'rate.?limit|usage limit|quota|429|503|529|overload|capacity|too many|try again|temporar|limit reached|esgot|network|timeout|ECONN|fetch failed|socket'; then

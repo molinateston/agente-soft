@@ -16,7 +16,8 @@ Confirme (o `bootstrap.sh` já deixou pronto):
 ```bash
 node -v            # precisa ser >= 18
 command -v claude  # precisa existir
-claude -p "responda só OK" | head -c 40 | grep -qiE '^[^a-z]*ok' && echo LOGIN_OK || echo CHECK_FALHOU
+claude -p --model sonnet "responda só OK" | head -c 40 | grep -qiE '^[^a-z]*ok' && echo LOGIN_OK || echo CHECK_FALHOU
+# (--model sonnet = igual ao runtime; sem isso o modelo default da conta pode diferir e dar falso CHECK_FALHOU)
 # (o match é firme: a resposta tem que COMEÇAR com 'ok' — pra não casar "não está ok")
 ```
 > **Este check é só sanity interno — NÃO mostre a string `CHECK_FALHOU` (nem `LOGIN_OK`) pro dono.** Você já está rodando DENTRO do `claude` logado dele, então normalmente passa. Se `CHECK_FALHOU` aparecer, NÃO peça pra ele "rodar claude e logar" (ele já está dentro). Quase sempre é um soluço de rede/limite momentâneo: espere alguns segundos e rode o `claude -p` de novo. Se insistir em falhar, traduza pra algo acionável em português simples — ex.: *"O login parece não ter completado. Volte na aba do navegador onde você autorizou o Claude e confirme que terminou; se tiver fechado antes, rode `claude` numa OUTRA aba do terminal e refaça o login."* — e só então continue.
@@ -36,7 +37,7 @@ claude -p "responda só OK" | head -c 40 | grep -qiE '^[^a-z]*ok' && echo LOGIN_
    (Se o dono colar algo que não parece um token, ou se a ETAPA 3.5a `getMe` der "TOKEN INVALIDO", peça pra ele copiar de novo a linha inteira que o BotFather mandou — só o token, sem texto em volta.)
 4. (Opcional, só se ele for **publicar páginas/landing**) "Tem token do **Cloudflare** (Pages:Edit) e o **Account ID**? Se não for publicar site, pode pular." → `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
 
-> **Antes de seguir, normalize o nome.** AGENT_NAME e OWNER_NAME entram em comandos de shell e no ExecStartPost do .service (que roda a cada boot, entre aspas simples). Aceite só letras (com acento), espaço e hífen. Se o dono digitar apóstrofo (ex: "Léo's", "D'Angelo"), aspas, `$`, crase ou `\`, remova/troque esses caracteres e confirme com ele o nome limpo (ex: "vou usar 'Léos', ok?") antes de gravar. Nome próprio simples é o esperado.
+> **Antes de seguir, normalize o nome.** AGENT_NAME e OWNER_NAME entram em comandos de shell e no ExecStartPost do .service (que roda a cada boot, entre aspas simples). Aceite só letras (com acento), espaço e hífen. Se o dono digitar apóstrofo (ex: "Léo's", "D'Angelo"), aspas, `$`, crase, `\` ou `#` (o parser de .env corta ` #...` como comentário inline), remova/troque esses caracteres e confirme com ele o nome limpo (ex: "vou usar 'Léos', ok?") antes de gravar. Nome próprio simples é o esperado.
 
 > **NÃO peça o id do dono aqui — nada de `@userinfobot`.** O `OWNER_CHAT_ID` é capturado
 > sozinho na **ETAPA 3.5**: o próprio dono manda uma mensagem no bot e você pega o id
@@ -103,6 +104,13 @@ EOF
 > A ponte AINDA NÃO está no ar aqui (de propósito — pra não competir pelo `getUpdates`).
 > Faça nesta ordem, uma de cada vez:
 
+**Em REINSTALAÇÃO o serviço já está no ar e consome o `getUpdates`** (o Telegram só
+permite 1 long-poll por vez → todo `getUpdates` daqui voltaria 409 Conflict, lido como
+"nenhuma mensagem"). Por isso, PARE o serviço antes de capturar (a ETAPA 4 o reativa):
+```bash
+XDG_RUNTIME_DIR=/run/user/$(id -u) DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus systemctl --user stop agente 2>/dev/null || true
+```
+
 **a) Valide o token e descubra o @username do bot:**
 ```bash
 TOKEN="$TELEGRAM_BOT_TOKEN"
@@ -112,7 +120,7 @@ Se der "TOKEN INVALIDO", peça o token de novo ao dono.
 
 **b) Limpe a fila** (descarta mensagens antigas pra a captura ficar limpa):
 ```bash
-curl -s "https://api.telegram.org/bot$TOKEN/getUpdates" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);if(r.ok&&r.result.length){require("fs").writeFileSync("/tmp/_off",String(r.result[r.result.length-1].update_id+1))}})'
+curl -s "https://api.telegram.org/bot$TOKEN/getUpdates" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);if(r.error_code===409){console.log("CONFLITO: o bot já está sendo consumido — pare o agente e refaça");process.exit(1)}if(r.ok&&r.result.length){require("fs").writeFileSync("/tmp/_off",String(r.result[r.result.length-1].update_id+1))}})'
 [ -f /tmp/_off ] && { curl -s "https://api.telegram.org/bot$TOKEN/getUpdates?offset=$(cat /tmp/_off)" >/dev/null; rm -f /tmp/_off; echo "fila limpa"; }
 ```
 
@@ -120,14 +128,17 @@ curl -s "https://api.telegram.org/bot$TOKEN/getUpdates" | node -e 'let s="";proc
 
 **d) Capture e MOSTRE todos os remetentes** (transparência — lista todos que falaram):
 ```bash
-curl -s "https://api.telegram.org/bot$TOKEN/getUpdates?timeout=30" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);if(!r.ok||!r.result.length){console.log("NENHUMA mensagem - peca pro dono mandar de novo");process.exit(0)}const seen=new Map();for(const u of r.result){const m=u.message;if(!m||!m.chat)continue;const id=String(m.chat.id);const from=m.from?((m.from.first_name||"")+(m.from.last_name?" "+m.from.last_name:"")+(m.from.username?" (@"+m.from.username+")":"")):"?";if(!seen.has(id))seen.set(id,{from,txt:(m.text||"").slice(0,60)})}for(const[id,i]of seen)console.log("chat_id="+id+" | de: "+i.from+" | msg: \""+i.txt+"\"")})'
+curl -s "https://api.telegram.org/bot$TOKEN/getUpdates?timeout=30" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);if(r.error_code===409){console.log("CONFLITO: o bot já está sendo consumido — pare o agente e refaça");process.exit(1)}if(!r.ok||!r.result.length){console.log("NENHUMA mensagem - peca pro dono mandar de novo");process.exit(0)}const seen=new Map();for(const u of r.result){const m=u.message;if(!m||!m.chat)continue;const id=String(m.chat.id);const from=m.from?((m.from.first_name||"")+(m.from.last_name?" "+m.from.last_name:"")+(m.from.username?" (@"+m.from.username+")":"")):"?";if(!seen.has(id))seen.set(id,{from,txt:(m.text||"").slice(0,60)})}for(const[id,i]of seen)console.log("chat_id="+id+" | de: "+i.from+" | msg: \""+i.txt+"\"")})'
 ```
 
-**e) Confirme a identidade ANTES de gravar.** Escolha o `chat_id` cuja mensagem é `sou eu, $OWNER_NAME`.
-> 🔒 **Trava de segurança:** se aparecer mais de um remetente, ou se o nome NÃO bater com o dono
-> ($OWNER_NAME), **PARE e pergunte ao dono explicitamente** qual id é dele antes de gravar — quem
-> ficar no `OWNER_CHAT_ID` controla a VPS inteira pelo Telegram. Nunca grave "pela primeira
-> mensagem que aparecer".
+**e) Confirme a identidade ANTES de gravar.** A prova de identidade vem do **TEXTO** da
+mensagem (`sou eu, $OWNER_NAME`) — **NÃO** do nome de perfil do Telegram (que costuma diferir
+do que o dono digitou: ele digita "Léo", o perfil é "Leonardo Molina"). Escolha o `chat_id`
+cuja mensagem é `sou eu, $OWNER_NAME`.
+> 🔒 **Trava de segurança:** se aparecer MAIS DE UM remetente distinto, **PARE e pergunte ao
+> dono explicitamente** qual id é dele antes de gravar — quem ficar no `OWNER_CHAT_ID`
+> controla a VPS inteira pelo Telegram. Com um único remetente (o caso normal), grave direto
+> o id dele. Não compare com o nome de perfil; a prova é o texto "sou eu, NOME".
 
 **f) Grave o id confirmado no `.env`:**
 ```bash
@@ -141,7 +152,7 @@ echo "dono gravado: $OWNER_CHAT_ID"
 # continua PENDENTE no Telegram (o passo d leu mas não confirmou o offset). Se não
 # drenar, o bridge sobe com offset=0, rebusca esse backlog e dispara um claude pago
 # pra "responder" à captura logo após o "✅ No ar!". Confirmar o offset a descarta.
-curl -s "https://api.telegram.org/bot$TOKEN/getUpdates" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);if(r.ok&&r.result.length){require("fs").writeFileSync("/tmp/_off",String(r.result[r.result.length-1].update_id+1))}})'
+curl -s "https://api.telegram.org/bot$TOKEN/getUpdates" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);if(r.error_code===409){console.log("CONFLITO: o bot já está sendo consumido — pare o agente e refaça");process.exit(1)}if(r.ok&&r.result.length){require("fs").writeFileSync("/tmp/_off",String(r.result[r.result.length-1].update_id+1))}})'
 [ -f /tmp/_off ] && { curl -s "https://api.telegram.org/bot$TOKEN/getUpdates?offset=$(cat /tmp/_off)" >/dev/null; rm -f /tmp/_off; echo "fila drenada — bridge sobe limpo"; }
 ```
 
@@ -153,7 +164,11 @@ curl -s "https://api.telegram.org/bot$TOKEN/getUpdates" | node -e 'let s="";proc
 # linger ANTES de qualquer 'systemctl --user' (garante o bus do usuário; sem isso
 # o 'enable --now' pode dar "Failed to connect to bus" numa VPS enxuta):
 loginctl enable-linger "$(id -un)" 2>/dev/null || true
+# XDG_RUNTIME_DIR/DBUS não persistem entre chamadas Bash separadas → cada
+# 'systemctl --user' abaixo vem PREFIXADO inline com as duas vars (mais robusto
+# do que confiar no export, que some na próxima chamada).
 export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
 
 mkdir -p ~/.config/systemd/user
 # NOTA sobre o ExecStartPost (saudação de boot): o agente NUNCA sobe mudo. A saudação
@@ -163,10 +178,15 @@ mkdir -p ~/.config/systemd/user
 # /bin/sh, que expande do EnvironmentFile (.env). AGENT_NAME/OWNER_NAME agora vêm do
 # .env via `\$\${VAR}` (igual ao token) — não são mais interpolados crus pelo heredoc,
 # pra um apóstrofo no nome (D'Ávila, Sant'Ana) não quebrar o `sh -c` da saudação.
+# Resolve o binário do node (em algumas VPS não fica em /usr/bin → status=203/EXEC):
+NODE_BIN="$(command -v node || echo /usr/bin/node)"
 cat > ~/.config/systemd/user/agente.service <<EOF
 [Unit]
 Description=Agente Soft (Telegram <-> Claude Code)
-After=network.target
+# network-online (não só network.target): após reboot a rede pode não estar pronta
+# e a saudação de boot se perde. Espera a rede ficar de fato online antes de subir.
+Wants=network-online.target
+After=network-online.target
 # Trava anti-spam: se o serviço cair-e-subir 5x em 5min, o systemd PARA de tentar
 # (em vez de re-saudar o dono no Telegram a cada poucos segundos). A partir daí o
 # vigia (agente-health, a cada 15min) é quem avisa o dono da queda — 1 alerta, sem flood.
@@ -177,8 +197,8 @@ WorkingDirectory=$HOME/lean-bridge
 EnvironmentFile=$HOME/lean-bridge/.env
 Environment=HOME=%h
 Environment=PATH=/usr/local/bin:/usr/bin:/bin:%h/.npm-global/bin:%h/.local/bin
-ExecStart=/usr/bin/node $HOME/lean-bridge/bridge.cjs
-ExecStartPost=/bin/sh -c 'sleep 2; curl -s -X POST "https://api.telegram.org/bot\$\${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="\$\${OWNER_CHAT_ID}" --data-urlencode "text=✅ No ar! Sou o \$\${AGENT_NAME}, agente do \$\${OWNER_NAME}. Pode mandar." >/dev/null 2>&1 || true'
+ExecStart=$NODE_BIN $HOME/lean-bridge/bridge.cjs
+ExecStartPost=/bin/sh -c 'sleep 5; curl -s -X POST "https://api.telegram.org/bot\$\${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="\$\${OWNER_CHAT_ID}" --data-urlencode "text=✅ No ar! Sou o \$\${AGENT_NAME}, agente do \$\${OWNER_NAME}. Pode mandar." >/dev/null 2>&1 || true'
 Restart=always
 RestartSec=3
 StandardOutput=append:$HOME/lean-bridge/bridge.log
@@ -186,9 +206,9 @@ StandardError=append:$HOME/lean-bridge/bridge.log
 [Install]
 WantedBy=default.target
 EOF
-systemctl --user daemon-reload
-systemctl --user enable --now agente
-systemctl --user is-enabled agente   # confirma que ficou habilitado (deve imprimir "enabled")
+XDG_RUNTIME_DIR=/run/user/$(id -u) DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus systemctl --user daemon-reload
+XDG_RUNTIME_DIR=/run/user/$(id -u) DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus systemctl --user enable --now agente
+XDG_RUNTIME_DIR=/run/user/$(id -u) DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus systemctl --user is-enabled agente   # confirma que ficou habilitado (deve imprimir "enabled")
 ```
 
 ## ETAPA 4.5 — Ligar a atualização automática (o método cai sozinho aqui)
@@ -200,15 +220,15 @@ cp ~/agente-soft/agente-update.timer   ~/.config/systemd/user/agente-update.time
 # Vigia de queda: avisa o dono no Telegram se o agente cair (e reinicia sozinho).
 cp ~/agente-soft/agente-health.service ~/.config/systemd/user/agente-health.service
 cp ~/agente-soft/agente-health.timer   ~/.config/systemd/user/agente-health.timer
-systemctl --user daemon-reload
-systemctl --user enable --now agente-update.timer agente-health.timer
-systemctl --user list-timers --no-pager   # confirma que os dois estão agendados
+XDG_RUNTIME_DIR=/run/user/$(id -u) DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus systemctl --user daemon-reload
+XDG_RUNTIME_DIR=/run/user/$(id -u) DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus systemctl --user enable --now agente-update.timer agente-health.timer
+XDG_RUNTIME_DIR=/run/user/$(id -u) DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus systemctl --user list-timers --no-pager   # confirma que os dois estão agendados
 ```
 
 ## ETAPA 5 — Validar ponta a ponta
 ```bash
 sleep 4
-systemctl --user is-active agente && echo "serviço ATIVO" || tail -20 ~/lean-bridge/bridge.log
+XDG_RUNTIME_DIR=/run/user/$(id -u) DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus systemctl --user is-active agente && echo "serviço ATIVO" || tail -20 ~/lean-bridge/bridge.log
 ```
 Assim que o serviço sobe, a saudação de boot do ExecStartPost dispara sozinha. **Pergunte ao dono:** *"No seu Telegram, no bot, chegou a mensagem '✅ No ar! Sou o $AGENT_NAME…'? (responde sim/não)"*.
 

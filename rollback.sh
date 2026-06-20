@@ -10,6 +10,11 @@
 # =====================================================================
 set -euo pipefail
 
+# Garante o barramento de usuário pro systemctl --user funcionar em rollback
+# manual ('sudo -iu agente; bash rollback.sh'), senão dá 'Failed to connect to bus'.
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=${XDG_RUNTIME_DIR}/bus}"
+
 BRIDGE_DIR="$HOME/lean-bridge"
 SKILLS_DIR="$HOME/.claude/skills"
 LOG="$BRIDGE_DIR/upgrade.log"

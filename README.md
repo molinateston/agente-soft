@@ -1,11 +1,13 @@
 # Agente Soft — seu sócio IA no Telegram, em ~15 min
 
 Sobe um agente autônomo (**Claude Code + Telegram**) numa VPS, **sem entender de código**.
-Runtime **lean**: node puro, login nativo do Claude (sem colar token), sem tmux/Postgres/Caddy.
+Runtime **lean**: node puro, login nativo do Claude (na conta Pro/Max, não na API), sem tmux/Postgres/Caddy.
 
 ## Como instalar (sem código)
 
 1. **Alugue a VPS** — Hostinger → VPS KVM1 → Ubuntu.
+
+> 🎙️ **Vai mandar ÁUDIO pro agente?** A transcrição de áudio carrega um modelo que precisa de **~1GB de RAM**. Numa VPS de 1GB isso pode estourar a memória (OOM) e derrubar o agente. Se for usar áudio, **recomendado VPS com 2GB de RAM ou mais**.
 2. **Abra o Browser Terminal** no hPanel (sem SSH, sem senha decoreba).
 
 > 💡 **Como colar no Browser Terminal:** clique com o **botão direito** dentro do terminal e escolha **Colar** (jeito mais garantido). Se preferir teclado, use **Ctrl+Shift+V** — o Ctrl+V comum às vezes não cola em terminal. Vale pra todos os comandos abaixo, inclusive o prompt do passo 5.
@@ -19,7 +21,17 @@ Runtime **lean**: node puro, login nativo do Claude (sem colar token), sem tmux/
    sudo -iu agente
    claude
    ```
-   Abra o link que aparecer (pode levar alguns segundos pra surgir) → logue na sua conta Claude (Pro/Max) → autorize.
+   Na **primeira vez**, antes do link, o `claude` faz umas perguntas rápidas — responda assim:
+   - **Tema** (cor da tela): escolha qualquer um com as **SETAS** ↑↓ e aperte **Enter**.
+   - **Método de login**: escolha **"Conta Claude" / "Sign in with Claude account"** (use as SETAS + Enter). **NUNCA** escolha a opção de **API key** — não é por aí.
+   - **Confiar na pasta**: ele pergunta se confia neste diretório → confirme (geralmente "Yes, proceed" / "Sim").
+
+   Depois disso aparece um **LINK** (pode levar alguns segundos pra surgir):
+   1. **Abra o link no navegador** → **logue na sua conta Claude** (Pro/Max) → **autorize**.
+   2. A Anthropic vai te mostrar um **CÓDIGO** na tela do navegador → **COPIE esse código**.
+   3. Volte ao terminal, **COLE o código** (botão direito → **Colar**) e aperte **Enter**.
+
+   ⚠️ Esse código **NÃO é o token da API** — é o **código de login** que aparece **DEPOIS** que você autoriza no navegador. Você precisa copiar e colar ele de volta no terminal pra finalizar.
 5. **Cole o prompt-instalador** dentro do `claude` — **cole o bloco inteiro de uma vez e aperte Enter só uma vez** (é normal aparecer várias linhas antes de enviar; se enviar pela metade, é só mandar o resto na mensagem seguinte que ele continua). O `bootstrap.sh` **imprime ele pronto no terminal**
    ao terminar (é só copiar entre as linhas `----8<----`). Ele também está em
    [`prompt-instalador.txt`](prompt-instalador.txt). O prompt já clona o repo e lê o
@@ -28,6 +40,8 @@ Runtime **lean**: node puro, login nativo do Claude (sem colar token), sem tmux/
 7. **No ar** ✅ — o bot te manda **"✅ No ar!"** sozinho. Responda "oi" pra testar a conversa.
 
 > Travou? Copie o erro do terminal e cole de volta no `claude`. Ele continua de onde parou.
+
+> 👥 **Quer usar o bot DENTRO de um grupo?** Adicione o bot ao grupo e **torne ele ADMIN** do grupo. O admin é o que garante que o bot **recebe as mensagens** — sem isso, com o modo privacidade (privacy mode) que o BotFather deixa **ligado por padrão**, o bot **não enxerga as mensagens** que você manda no grupo.
 
 > ⚠️ Encaminhar pro agente um arquivo/imagem/PDF que VEIO de terceiro é como rodar na sua VPS algo que um terceiro escreveu. O agente trata anexo como dado e tem regra pra não obedecer comando escondido dentro dele, mas anexo de origem confiável é sempre mais seguro.
 

@@ -23,6 +23,20 @@ tg(){ local T O; T="$(env_get TELEGRAM_BOT_TOKEN)"; O="$(env_get OWNER_CHAT_ID)"
 say "=== enable-voice ==="
 command -v python3 >/dev/null 2>&1 || { say "python3 ausente"; tg "🎤 Não consegui ligar o áudio: falta python3 na VPS."; exit 1; }
 
+# fast-path idempotente: se já estiver tudo no lugar (venv importa faster_whisper,
+# handler copiado e VOICE_PY no .env), não refaz venv+download (~500MB). Só reinicia.
+if [ -x "$VENV/bin/python" ] \
+   && "$VENV/bin/python" -c "import faster_whisper" >/dev/null 2>&1 \
+   && [ -f "$BRIDGE_DIR/workers/voice-handler.py" ] \
+   && grep -q '^VOICE_PY=' "$BRIDGE_DIR/.env" 2>/dev/null; then
+  say "áudio já estava ligado, só reiniciando o agente..."
+  export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+  systemctl --user restart agente >>"$LOG" 2>&1 || pkill -f bridge.cjs >>"$LOG" 2>&1 || true
+  say "✅ áudio já estava ligado."
+  tg "🎤 Áudio já estava ligado. Reiniciei o agente, tá tudo certo."
+  exit 0
+fi
+
 say "criando venv + instalando faster-whisper (uns minutos)..."
 python3 -m venv "$VENV" >>"$LOG" 2>&1 || { say "venv falhou"; tg "🎤 Falha ao criar o ambiente do áudio (python3-venv?)."; exit 1; }
 "$VENV/bin/pip" install -q --upgrade pip >>"$LOG" 2>&1
@@ -38,8 +52,23 @@ else
   echo "VOICE_PY=$VENV/bin/python" >> "$BRIDGE_DIR/.env"
 fi
 
-say "baixando o modelo (small)..."
-"$VENV/bin/python" -c "from faster_whisper import WhisperModel; WhisperModel('small', device='cpu', compute_type='int8')" >>"$LOG" 2>&1 \
+# escolhe o modelo conforme a RAM disponível. Pouca RAM (< ~1.2GB) usa 'tiny'
+# em vez de 'small' pra não derrubar a VPS. O voice-handler respeita WHISPER_MODEL.
+MODEL="small"
+MEM_KB="$(grep -E '^MemAvailable:' /proc/meminfo 2>/dev/null | awk '{print $2}')"
+if [ -n "$MEM_KB" ] && [ "$MEM_KB" -lt 1200000 ]; then
+  MODEL="tiny"
+  say "RAM baixa (${MEM_KB}kB disponível), usando o modelo leve 'tiny'."
+  if grep -q '^WHISPER_MODEL=' "$BRIDGE_DIR/.env" 2>/dev/null; then
+    sed -i "s|^WHISPER_MODEL=.*|WHISPER_MODEL=tiny|" "$BRIDGE_DIR/.env"
+  else
+    echo "WHISPER_MODEL=tiny" >> "$BRIDGE_DIR/.env"
+  fi
+  tg "🎤 Áudio: usei o modelo leve (tiny) por causa da pouca RAM da VPS. A transcrição fica um pouco menos precisa, mas roda tranquilo."
+fi
+
+say "baixando o modelo ($MODEL)..."
+"$VENV/bin/python" -c "from faster_whisper import WhisperModel; WhisperModel('$MODEL', device='cpu', compute_type='int8')" >>"$LOG" 2>&1 \
   || { say "download do modelo falhou"; tg "🎤 Falha ao baixar o modelo de voz."; exit 1; }
 
 say "tudo pronto, reiniciando o agente pra ligar o áudio..."

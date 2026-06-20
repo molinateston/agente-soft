@@ -8,6 +8,12 @@ não precisa de ffmpeg de sistema nem de root. Modelo padrão 'small' (pt), cpu 
 """
 import sys, os
 
+# blinda saída UTF-8: transcrição PT com acento quebra em locale C puro (UnicodeEncodeError)
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 MODEL = os.environ.get("WHISPER_MODEL", "small")
 
 

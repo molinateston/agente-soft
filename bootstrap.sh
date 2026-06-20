@@ -9,8 +9,9 @@
 # Roda UMA vez, numa VPS Ubuntu 22+ (como root, via Browser Terminal):
 #   curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/bootstrap.sh | sudo bash
 #
-# Depois dele: você roda `claude`, loga na SUA conta (sem colar token),
-# e cola o prompt-instalador. O Claude faz o resto lendo o SETUP-AGENTE.md.
+# Depois dele: você roda `claude`, loga na SUA conta (cola o CÓDIGO de login
+# que a Anthropic mostra — NÃO o token da API), e cola o prompt-instalador.
+# O Claude faz o resto lendo o SETUP-AGENTE.md.
 # =====================================================================
 set -euo pipefail
 
@@ -38,12 +39,29 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
 # python3-venv + python3-pip: pré-requisitos do áudio (faster-whisper roda num venv
 # nível-usuário). Precisam vir AQUI porque o user 'agente' não tem sudo pra instalá-los.
-apt-get install -y -qq git curl ca-certificates python3 python3-venv python3-pip >/dev/null
+# dbus-user-session: pré-req do bus do 'systemctl --user'. Sem ele, em imagem Ubuntu
+# minimizada toda instalação morre com 'Failed to connect to bus'.
+# locales: garante locale UTF-8 (nomes com acento e transcrição PT dependem disso).
+apt-get install -y -qq git curl ca-certificates python3 python3-venv python3-pip dbus-user-session locales >/dev/null
+# Garante locale UTF-8 (nomes com acento e transcrição PT dependem disso).
+locale-gen C.UTF-8 2>/dev/null || true
+update-locale LANG=C.UTF-8 2>/dev/null || true
 
 echo "→ 2/4 Node 20 (NodeSource)..."
 if ! command -v node >/dev/null 2>&1 || [[ "$(node -v 2>/dev/null | cut -dv -f2 | cut -d. -f1)" -lt 18 ]]; then
-  curl -fsSL https://deb.nodesource.com/setup_20.x | bash - >/dev/null 2>&1
+  # Mantém um log mínimo do erro do NodeSource (não joga o stderr todo no /dev/null).
+  curl -fsSL https://deb.nodesource.com/setup_20.x | bash - >/dev/null 2>/tmp/nodesource.err || true
   apt-get install -y -qq nodejs >/dev/null
+fi
+# Valida de verdade: o node aceito precisa ser >= 20.
+if ! command -v node >/dev/null 2>&1 || [[ "$(node -v 2>/dev/null | cut -dv -f2 | cut -d. -f1)" -lt 20 ]]; then
+  echo "✗ Node 20 não instalou — sua versão de Ubuntu pode não ser suportada." >&2
+  [[ -s /tmp/nodesource.err ]] && echo "   Detalhe do erro (NodeSource): $(tail -n 3 /tmp/nodesource.err)" >&2
+  exit 1
+fi
+# Garante SEMPRE um node em caminho fixo pro .service (roda como root, é trivial).
+if [[ "$(command -v node)" != "/usr/bin/node" ]]; then
+  ln -sf "$(command -v node)" /usr/local/bin/node
 fi
 echo "   node $(node -v)  ·  npm $(npm -v)"
 
@@ -51,7 +69,11 @@ echo "→ 3/4 Claude Code CLI..."
 if ! command -v claude >/dev/null 2>&1; then
   npm install -g @anthropic-ai/claude-code >/dev/null 2>&1
 fi
-echo "   claude $(claude --version 2>/dev/null || echo '(instalado)')"
+if ! claude --version >/dev/null 2>&1; then
+  echo "✗ claude instalou mas não roda — refaça o bootstrap." >&2
+  exit 1
+fi
+echo "   claude $(claude --version 2>/dev/null)"
 
 echo "→ 4/4 Usuário não-root 'agente' (o serviço roda sob ele)..."
 if ! id agente >/dev/null 2>&1; then
@@ -73,9 +95,25 @@ cat <<'NEXT'
    sudo -iu agente
    claude
 
- 1) O `claude` mostra um LINK → abra no navegador →
-    logue na SUA conta Claude (Pro/Max) → autorize.
-    (Sem colar token. É a conta que paga o agente.)
+ 1) Login na SUA conta Claude (Pro/Max — é a conta que paga o agente):
+
+    a) Na PRIMEIRA vez, o `claude` faz umas perguntas rápidas ANTES
+       do link. Responda assim:
+        • Tema (cor): use as SETAS ↑↓ e aperte Enter.
+        • Método de login: escolha "Conta Claude / Sign in with
+          Claude account" (use as SETAS + Enter).
+          NUNCA escolha "API key".
+        • Confiar nesta pasta? → aceite (Yes / Enter).
+
+    b) Aí aparece um LINK → abra no navegador → logue na SUA conta
+       Claude → autorize.
+
+    c) Depois de autorizar, a Anthropic mostra um CÓDIGO na tela.
+       COPIE esse código e COLE de volta aqui no terminal
+       (botão direito → Colar) e aperte Enter.
+
+    ⚠️ Esse código NÃO é o token da API. É o código de login que
+       aparece DEPOIS de você autorizar no navegador.
 
  2) Ainda dentro do `claude`, cole EXATAMENTE este
     PROMPT-INSTALADOR (já está pronto abaixo).

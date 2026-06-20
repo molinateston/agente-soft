@@ -97,6 +97,7 @@ function tg(method, body) {
       headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(data) }
     }, (res) => { let b = ""; res.on("data", c => (b += c)); res.on("end", () => { try { resolve(JSON.parse(b)); } catch { resolve(null); } }); });
     req.on("error", () => resolve(null));
+    req.setTimeout(40000, () => { req.destroy(); resolve(null); });   // socket pendurado: destrói o req (evita 409 de getUpdates concorrente e vazamento de fd)
     req.write(data); req.end();
   });
 }
@@ -166,6 +167,7 @@ function ask(key, text, cfg, chatId, threadId) {
 
       const t0 = Date.now();
       let buf = "", err = "", finalResult = null, finalSid = null, finalUsage = null, settled = false, timedOut = false;
+      let finalIsError = false, finalErrors = "";
       let lastAction = "começando…", panelId = null;
       const elapsed = () => { const s = Math.round((Date.now() - t0) / 1000);
         return s < 60 ? `${s}s` : `${Math.floor(s / 60)}min${s % 60 ? (s % 60) + "s" : ""}`; };
@@ -219,7 +221,8 @@ function ask(key, text, cfg, chatId, threadId) {
               }
             }
           }
-          if (ev.type === "result") { finalResult = ev.result; finalSid = ev.session_id || finalSid; finalUsage = ev.usage || null; }
+          if (ev.type === "result") { finalResult = ev.result; finalSid = ev.session_id || finalSid; finalUsage = ev.usage || null;
+            finalIsError = ev.is_error; finalErrors = Array.isArray(ev.errors) ? ev.errors.join(" ") : (ev.errors || ""); }
         }
       });
 
@@ -228,6 +231,7 @@ function ask(key, text, cfg, chatId, threadId) {
         if (hadPanel) console.log(`[ponte] ✅ tarefa concluída em ${dur} (teve painel de progresso)`);
         const ctx = finalUsage ? ((finalUsage.input_tokens||0) + (finalUsage.cache_read_input_tokens||0) + (finalUsage.cache_creation_input_tokens||0)) : 0;
         if (timedOut)            done({ result: `⚠️ A tarefa passou de ${Math.round(ASK_TIMEOUT_MS/60000)}min e foi interrompida. Tenta de novo, talvez quebrando em pedaços menores.`, sid: finalSid, ctx, err });
+        else if (finalIsError && finalResult == null) done({ result: null, sid: finalSid, ctx, err: (finalErrors || err || buf) });   // result vazio + is_error → erro (tratado fora)
         else if (finalResult != null) done({ result: finalResult || "(resposta vazia)", sid: finalSid, ctx, err });
         else                     done({ result: null, sid: finalSid, ctx, err: (err || buf) });   // result=null → erro (tratado fora)
       });
@@ -239,10 +243,14 @@ function ask(key, text, cfg, chatId, threadId) {
 
   return (async () => {
     let out = await runOnce(true);
-    // sessão expirada/deletada no servidor → re-roda 1x SEM resume (não some o turno do Léo)
-    if (out.result == null && canResume && /session.*(not found|expired|inválid|não encontrad)/i.test(out.err || "")) {
+    // sessão expirada/deletada no servidor → re-roda 1x SEM resume (não some o turno do Léo).
+    // casa a frase REAL do claude ("No conversation found with session ID ...") além das variantes antigas.
+    const resumeMorto = /no conversation found|conversation .*not found|session.*(not found|expired|inv[aá]lid|n[aã]o encontrad)|found with session/i;
+    if (out.result == null && canResume && resumeMorto.test(out.err || "")) {
       console.log("[ponte] sessão não encontrada — recomeçando sem --resume");
       out = await runOnce(false);
+      // se o retry SEM resume também falhou, o sid antigo está morto: devolve sid:null pra NÃO re-gravar o id morto
+      if (out.result == null) out.sid = null;
     }
     if (out.result == null) {
       console.error("[ponte] claude falhou:", String(out.err || "").slice(-400));   // stack/stderr só no LOG, nunca no chat
@@ -341,11 +349,14 @@ function processOne(msg, chatId, threadId, key, cfg) {
     }
     // comando /audio — liga a transcrição de áudio (instala faster-whisper local, SEM root, num cgroup separado)
     if (/^\/(audio|áudio|voz)\b/i.test(text.trim())) {
-      try { spawn("systemd-run", ["--user", "--collect", "bash", `${process.env.HOME}/agente-soft/enable-voice.sh`], { detached: true, stdio: "ignore" }).unref(); } catch {}
+      try { spawn("systemd-run", ["--user", "--collect", "bash", `${process.env.HOME}/agente-soft/enable-voice.sh`], { detached: true, stdio: "ignore" }).unref(); }
+      catch (e) { console.error("[ponte] /audio:", e && e.message);
+        return send(chatId, `⚠️ Não consegui iniciar a instalação do áudio. Tenta de novo daqui a pouco.`, threadId); }
       return send(chatId, `🎤 Ligando o áudio (transcrição local, sem chave)... baixo o modelo e me reinicio — leva uns minutos. Te aviso com o "✅ No ar!".`, threadId);
     }
     return ask(key, text, cfg, chatId, threadId).then(async ({ result, sid, ctx }) => {
       if (sid) { sessions[key] = { sid, ctx: ctx || 0 }; saveSessions(); }
+      else if (sessions[key]) { delete sessions[key]; saveSessions(); }   // sid morto: apaga em vez de re-gravar o id morto → próximo turno começa sessão NOVA
       await send(chatId, result, threadId);
     }).finally(() => { for (const f of files) { try { fs.unlinkSync(f); } catch {} } });   // limpa mídia só DEPOIS do Read
   }).catch((e) => console.error("[ponte] erro:", e.message))
