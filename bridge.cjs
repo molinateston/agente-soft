@@ -5,10 +5,20 @@
 // Claude Code faz o trabalho: sessão (--resume), memória, ferramentas.
 // Auth = login nativo em ~/.claude/ (sem token no ambiente).
 // Roteamento: cada tópico tem seu modelo (sonnet padrão / opus[1m] sob pedido) e persona.
+//
+// CONTEXTO REDONDO (motor portado do LEON, contra "reset do nada" + "esqueceu do que falávamos"):
+//  1. Métrica honesta: gate por CRESCIMENTO da conversa (ctx - piso estático), não janela bruta;
+//     higiene de ctx órfão no boot.
+//  2. Compactação semeada por RESUMO ao cruzar SOFT: gera handoff semântico (como o /compact) e
+//     semeia a sessão nova → o usuário não percebe o corte. Fallback: resumo do texto do jsonl.
+//  3. Continuidade: o resumo (priorSummary) PERSISTE turno a turno e é re-injetado como o bloco
+//     "# A CONVERSA CONTINUA" → o agente NUNCA acha que "começou agora".
+// O resumo é SEMPRE via sonnet (janela 400k), mesmo que o modelo do cliente seja outro.
 // =====================================================================
 const { spawn } = require("child_process");
 const fs = require("fs");
 const https = require("https");
+const os = require("os");
 
 // carrega .env do diretório do script sem dotenv
 try {
@@ -51,11 +61,22 @@ try {
 } catch {}
 const HEARTBEAT_MS    = Number(process.env.HEARTBEAT_SEG || 12) * 1000;   // reescreve o painel a cada Xs
 const AVISO_PESADA_MS = Number(process.env.AVISO_PESADA_SEG || 25) * 1000; // painel só nasce depois disso
-const SESSION_MAX_CTX = Number(process.env.SESSION_MAX_CTX || 200000); // só abre sessão nova se o CONTEXTO passar disso (backstop). Abaixo: o Claude Code compacta sozinho (mantém o resumo) e o brain guarda a memória permanente
+
+// ---------- CONTEXTO REDONDO: knobs (motor portado do LEON — compactação semeada + continuidade) ----------
+const SOFT_FRAC    = Number(process.env.SOFT_FRAC || 0.62);   // fração da janela de CONVERSA onde COMPACTA (resumo)
+const HARD_FRAC    = Number(process.env.HARD_FRAC || 0.78);   // backstop bruto se a compactação falhar
+const STATIC_FLOOR = Number(process.env.STATIC_FLOOR || 30000); // piso estático estimado (system+tools+persona); seed do floor por sessão
+const SNAPSHOT_EVERY = Number(process.env.SNAPSHOT_EVERY || 8); // a cada N turnos guarda um tail-handoff (sobrevive a poda willow)
+const COMPACT_TIMEOUT_MS = Number(process.env.COMPACT_TIMEOUT_SEG || 120) * 1000;
+// janela de contexto por modelo (p/ escalar SOFT/HARD e limiar de órfão — não queimar cota no cliente sonnet)
+const winFor = (m) => ({ "opus": 200000, "opus[1m]": 1000000, "sonnet": 400000, "sonnet[1m]": 1000000, "haiku": 200000 }[m] || 200000);
+// dir de sessões do Claude Code = hash do cwd com que o claude roda (= WORKDIR, via spawn cwd). Não-alfanumérico -> '-'.
+const projDir = () => `${process.env.HOME || os.homedir()}/.claude/projects/${String(WORKDIR).replace(/[^A-Za-z0-9]/g, "-")}`;
+const sidExists = (sid) => { try { return fs.existsSync(`${projDir()}/${sid}.jsonl`); } catch { return false; } };
 // claude pelo caminho ABSOLUTO (o serviço pode ter PATH restrito sem o claude — bug pego em campo)
 const CLAUDE_BIN = (() => {
   if (process.env.CLAUDE_BIN && fs.existsSync(process.env.CLAUDE_BIN)) return process.env.CLAUDE_BIN;
-  const H = process.env.HOME || require("os").homedir();
+  const H = process.env.HOME || os.homedir();
   for (const p of [`${H}/.npm-global/bin/claude`, `${H}/.local/bin/claude`, "/usr/local/bin/claude", "/usr/bin/claude", "/snap/bin/claude"]) {
     try { if (fs.existsSync(p)) return p; } catch {}
   }
@@ -78,6 +99,18 @@ catch (e) {
   try { sessions = JSON.parse(fs.readFileSync(`${SESS_FILE}.bak`, "utf8")); console.error("[ponte] sessions.json corrompido, restaurei do .bak"); }
   catch { if (fs.existsSync(SESS_FILE)) console.error("[ponte] sessions.json ilegível (e sem .bak), começando vazio:", e.message); }
 }
+// CAMADA 1 — higiene de ctx órfão no boot: zera ctx fisicamente impossível (herdado de outra
+// linhagem de sessão). Limiar = 1.25× janela do modelo da sessão (250k opus / 500k sonnet),
+// NUNCA fixo — fixo quebraria sessão sonnet legítima no cliente.
+let _hyg = 0;
+for (const k in sessions) {
+  const s = sessions[k];
+  if (s && typeof s === "object") {
+    const mdl = s.model || (route(k.split(":")[1]) || {}).model || "sonnet";   // usa o modelo SALVO (tópico pode ter sido removido)
+    if ((s.ctx || 0) > 1.25 * winFor(mdl)) { s.ctx = 0; s.floor = STATIC_FLOOR; _hyg++; }
+  }
+}
+if (_hyg) console.error(`[ponte] higiene: ${_hyg} sessão(ões) com ctx órfão zeradas no boot`);
 // escrita atômica: grava .tmp, guarda o atual como .bak, renomeia por cima (crash no meio não trunca)
 const saveSessions = () => {
   try {
@@ -87,6 +120,157 @@ const saveSessions = () => {
     fs.renameSync(tmp, SESS_FILE);
   } catch (e) { console.error("[ponte] falha ao salvar sessions.json:", e.message); }
 };
+
+// ---------- CONTEXTO REDONDO: helpers do motor (portados do LEON) ----------
+// env reduzido pro filho: NÃO passa o token do Telegram (a ponte fala com o TG, o claude não precisa).
+// As DEMAIS chaves do .env (Cloudflare/Notion/Apify/OAuth) vão de PROPÓSITO: é a agência do agente
+// operar as APIs do DONO. Cada cliente tem o próprio .env (chaves dele), não há vazamento cruzado.
+const childEnv = () => { const e = { ...process.env }; delete e.TELEGRAM_BOT_TOKEN; return e; };
+
+// rastreio de filhos vivos: o filho de compactação roda detached (process group próprio);
+// trackKid registra pra poder matar no timeout, killTree mata a ÁRVORE (não deixa órfão queimando cota).
+const kids = new Set();
+function trackKid(p) { kids.add(p); const off = () => kids.delete(p); p.on("close", off); p.on("error", off); return p; }
+function killTree(p, sig) { try { process.kill(-p.pid, sig); } catch {} try { p.kill(sig); } catch {} }
+
+// lê os últimos N bytes de um arquivo SEM carregar ele todo (jsonl pode ter centenas de MB).
+function tailBytes(path, n) {
+  let fd;
+  try {
+    fd = fs.openSync(path, "r");
+    const size = fs.fstatSync(fd).size;
+    const len = Math.min(n, size);
+    const buf = Buffer.alloc(len);
+    fs.readSync(fd, buf, 0, len, size - len);
+    return buf.toString("utf8");
+  } catch { return ""; }
+  finally { if (fd !== undefined) { try { fs.closeSync(fd); } catch {} } }
+}
+// handoff de FALLBACK: últimas trocas user/assistant do jsonl, só blocos de TEXTO (pula thinking/tool).
+function readTail(sid, maxTurns = 16, capChars = 6000) {
+  const path = `${projDir()}/${sid}.jsonl`;
+  let truncated = false;
+  try { truncated = fs.statSync(path).size > 262144; } catch { return ""; }
+  const tail = tailBytes(path, 262144);   // últimos 256KB
+  if (!tail) return "";
+  const lines = tail.split("\n").filter(Boolean);
+  if (truncated && lines.length) lines.shift();   // só dropa a 1ª linha SE o arquivo foi cortado no meio
+  const turns = [];
+  for (const line of lines) {
+    let ev; try { ev = JSON.parse(line); } catch { continue; }
+    const m = ev.message; if (!m || (m.role !== "user" && m.role !== "assistant")) continue;
+    let txt = "";
+    const c = m.content;
+    if (typeof c === "string") txt = c;
+    else if (Array.isArray(c)) txt = c.filter(b => b && b.type === "text").map(b => b.text).join(" ");
+    txt = (txt || "").trim();
+    if (!txt) continue;
+    turns.push(`${m.role === "user" ? "Você" : "Eu"}: ${txt.slice(0, 400)}`);
+  }
+  return turns.slice(-maxTurns).join("\n").slice(-capChars);
+}
+
+// lê o TEXTO da conversa (turnos user/assistant) de um jsonl GRANDE, p/ alimentar o resumo SEM
+// --resume → robusto à janela do modelo (funciona mesmo com a sessão estourada). Input limitado
+// por capChars (~cabe em qualquer janela). É o que impede a amnésia quando a sessão é grande demais.
+function readConvoText(sid, capChars = 60000, maxBytes = 1048576) {
+  const path = `${projDir()}/${sid}.jsonl`;
+  let size; try { size = fs.statSync(path).size; } catch { return ""; }
+  const tail = tailBytes(path, Math.min(maxBytes, size));
+  if (!tail) return "";
+  const lines = tail.split("\n").filter(Boolean);
+  if (size > maxBytes && lines.length) lines.shift();   // dropa a 1ª linha cortada no meio
+  const turns = [];
+  for (const line of lines) {
+    let ev; try { ev = JSON.parse(line); } catch { continue; }
+    const m = ev.message; if (!m || (m.role !== "user" && m.role !== "assistant")) continue;
+    let txt = "";
+    const c = m.content;
+    if (typeof c === "string") txt = c;
+    else if (Array.isArray(c)) txt = c.filter(b => b && b.type === "text").map(b => b.text).join(" ");
+    txt = (txt || "").trim();
+    if (!txt) continue;
+    turns.push(`${m.role === "user" ? "Você" : "Eu"}: ${txt.slice(0, 1500)}`);
+  }
+  return turns.join("\n").slice(-capChars);
+}
+
+// MUTEX global de compactação: 1 de cada vez (vários tópicos cruzando SOFT juntos NÃO viram N claudes extras = anti-OOM/cota)
+let _compactChain = Promise.resolve();
+function withCompactSlot(fn) { const run = _compactChain.then(fn, fn); _compactChain = run.catch(() => {}); return run; }
+
+const COMPACT_PROMPT = "Resuma NOSSA conversa para retomar sem perder o fio, em no máximo ~1500 tokens, em tópicos, falando na 2ª pessoa ('você pediu…', 'decidimos…'). Inclua: (1) o assunto/projeto em aberto, (2) decisões já tomadas, (3) fatos sobre mim/meu negócio que importam, (4) o próximo passo concreto. Responda SÓ o resumo, nada além dele.";
+
+// CAMADA 2 — helper genérico: roda o claude SÓ pra resumir e devolve o texto do result (ou null).
+// SEMPRE sonnet (janela 400k, barato): mesmo que o modelo do cliente seja opus[1m], o resumo cabe
+// numa sessão que estourou a janela do opus. 'extraArgs' decide se é via --resume (rico) ou texto
+// puro (robusto); 'stdinText' é o que entra.
+function _runSummary(extraArgs, stdinText) {
+  return new Promise((resolve) => {
+    const args = ["-p", "--model", "sonnet", "--effort", "low", "--max-turns", "1", "--output-format", "stream-json", "--verbose",
+                  "--add-dir", WORKDIR, ...extraArgs];   // sonnet: resumo é tarefa simples e barata; --max-turns 1: single-shot
+    let proc; try { proc = trackKid(spawn(CLAUDE_BIN, args, { cwd: WORKDIR, env: childEnv(), detached: true })); }
+    catch { return resolve(null); }
+    let buf = "", result = null, settled = false;
+    const kill = setTimeout(() => { killTree(proc, "SIGTERM"); setTimeout(() => killTree(proc, "SIGKILL"), 3000); }, COMPACT_TIMEOUT_MS);
+    const fin = (v) => { if (settled) return; settled = true; clearTimeout(kill); resolve(v); };
+    proc.stdout.on("data", (d) => {
+      buf += d; let nl;
+      while ((nl = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
+        if (!line) continue;
+        let ev; try { ev = JSON.parse(line); } catch { continue; }
+        if (ev.type === "result") result = ev.result;
+      }
+    });
+    proc.on("close", () => fin(result && String(result).trim() ? String(result).trim() : null));
+    proc.on("error", () => fin(null));
+    try { proc.stdin.write(stdinText); proc.stdin.end(); } catch { fin(null); }
+  });
+}
+
+// CAMADA 2 — compactação ROBUSTA (o conserto do "perde contexto sozinho"):
+//  1) tenta o resumo RICO via --resume (claude vê a conversa inteira, tools incluídas). Roda em
+//     sonnet (400k) → cabe mesmo numa sessão que estourou a janela do opus (221k).
+//  2) se a sessão JÁ estourou ATÉ a janela de 400k (o --resume falha), cai no resumo por TEXTO lido
+//     do disco, que SEMPRE cabe. Nunca mais volta com handoff magro.
+async function compactSession(sid, cfg) {
+  const rich = await _runSummary(["--resume", sid], COMPACT_PROMPT);
+  if (rich) return rich;
+  const convo = readConvoText(sid);
+  if (!convo) return null;
+  console.log(`[ponte] resumo via --resume falhou (sessão grande?) — resumindo ${convo.length} chars do texto do jsonl`);
+  return await _runSummary([], `${COMPACT_PROMPT}\n\n--- NOSSA CONVERSA (trechos recentes, do mais antigo ao mais novo) ---\n${convo}`);
+}
+
+// CAMADA 1 (pura/testável) — decide os números do gate a partir do estado salvo + modelo.
+// ctxConv = crescimento da CONVERSA (ctx total - piso estático); SOFT/HARD escalam pela janela do modelo.
+function gate(prev, model) {
+  const win = winFor(model);
+  const ctx = (prev && typeof prev === "object") ? (prev.ctx || 0) : 0;
+  const floor = Math.min((prev && typeof prev === "object" && prev.floor) || STATIC_FLOOR, win - 20000);
+  const ctxConv = Math.max(0, ctx - floor);
+  return { win, floor, ctxConv, SOFT: SOFT_FRAC * (win - floor), HARD: HARD_FRAC * (win - floor) };
+}
+
+// persiste a sessão com floor (piso estático observado), turns e snapshot de tail-handoff periódico.
+// Estrutura: { sid, ctx, floor, turns, compactCount, handoff, priorSummary, model, updatedAt }.
+function persistSession(key, sid, ctx, model) {
+  if (!sid) return;
+  const prev = sessions[key];
+  const same = prev && typeof prev === "object" && prev.sid === sid;
+  // floor = MIN(ctx>0 já visto neste sid) ≈ piso estático puro; ignora leitura ctx=0 (cache-miss/erro)
+  const floor = same ? (ctx > 0 ? Math.min(prev.floor || ctx, ctx) : (prev.floor || STATIC_FLOOR))
+                     : (ctx > 0 ? ctx : STATIC_FLOOR);
+  const turns = (same ? (prev.turns || 0) : 0) + 1;
+  const compactCount = same ? (prev.compactCount || 0) : 0;
+  let handoff = same ? (prev.handoff || "") : "";
+  if (turns % SNAPSHOT_EVERY === 0) { const t = readTail(sid); if (t) handoff = t; }   // snapshot proativo (sobrevive à poda)
+  const mdl = model || (prev && typeof prev === "object" && prev.model) || undefined;   // guarda o modelo p/ a higiene de órfão acertar o limiar
+  const priorSummary = (prev && typeof prev === "object" && prev.priorSummary) || "";   // carrega o resumo-de-continuação adiante: a conversa CONTINUA entre compactações (não recomeça)
+  sessions[key] = { sid, ctx: ctx || 0, floor, turns, compactCount, handoff, ...(priorSummary ? { priorSummary } : {}), ...(mdl ? { model: mdl } : {}), updatedAt: Date.now() };
+  saveSessions();
+}
 
 // ---------- Telegram ----------
 function tg(method, body) {
@@ -136,22 +320,25 @@ async function send(chatId, text, threadId) {
 // Verdade final = sempre o evento `result` (mesmo contrato do json de antes). O streaming
 // só ADICIONA heartbeat: se qualquer linha falhar, cai no comportamento de erro de hoje.
 const ASK_TIMEOUT_MS = Number(process.env.ASK_TIMEOUT_SEG || 900) * 1000;   // watchdog: mata o claude travado (default 15min)
-// env reduzido pro filho: NÃO passa o token do Telegram (a ponte fala com o TG, o claude não precisa)
-const childEnv = () => { const e = { ...process.env }; delete e.TELEGRAM_BOT_TOKEN; return e; };
 
 function ask(key, text, cfg, chatId, threadId) {
   const base = threadId ? { message_thread_id: Number(threadId) } : {};
-  const _s = sessions[key]; const _sid = (_s && typeof _s === "object") ? _s.sid : _s; const _ctx = (_s && typeof _s === "object") ? (_s.ctx || 0) : 0;
-  const canResume = _sid && _ctx < SESSION_MAX_CTX;   // resume só se o contexto não estourou o teto (senão sessão nova)
+  const _s    = sessions[key];
+  const _sid  = (_s && typeof _s === "object") ? _s.sid : _s;
+  const _ctx  = (_s && typeof _s === "object") ? (_s.ctx || 0) : 0;
+  const _cc   = (_s && typeof _s === "object") ? (_s.compactCount || 0) : 0;
+  const _store = (_s && typeof _s === "object") ? (_s.handoff || "") : "";
+  const _prior = (_s && typeof _s === "object") ? (_s.priorSummary || "") : "";   // resumo PERSISTENTE da conversa (sobrevive à compactação → o agente nunca "começa do zero")
+  const { win, floor, ctxConv, SOFT, HARD } = gate(_s, cfg.model);   // CAMADA 1: crescimento da conversa, não janela bruta
 
-  // roda o claude uma vez; useResume=false força sessão nova (fallback de "session not found")
-  function runOnce(useResume) {
+  // roda o claude uma vez. resumeSid=null força sessão nova; 'cont' é o resumo de continuação a injetar.
+  function runOnce(resumeSid, cont) {
     return new Promise((resolve) => {
       const args = ["-p", "--model", cfg.model, "--output-format", "stream-json", "--verbose",
                     "--permission-mode", "bypassPermissions",   // agência total: escreve/edita arquivo + roda Bash (acesso já é só OWNER/allowlist)
                     "--add-dir", WORKDIR, "--add-dir", BRAIN, "--add-dir", TMP_DIR];
       if (cfg.effort) args.push("--effort", cfg.effort);                 // quanto ele PENSA: high=estratégico, medium=operacional, low=casual
-      if (useResume && canResume) args.push("--resume", _sid);
+      if (resumeSid) args.push("--resume", resumeSid);
       // identidade: doutrina-base FORTE (do repo agente-soft, auto-atualiza → cai em todos os clientes)
       // + a persona específica do dono (nome/tom). A base vem PRIMEIRO pra cravar "você é o agente
       // que JÁ roda aqui, não o Claude genérico" antes de qualquer coisa.
@@ -162,8 +349,13 @@ function ask(key, text, cfg, chatId, threadId) {
       // ONDE VOCÊ ESTÁ: o agente sempre sabe o chat/tópico atual → reporta o id, se auto-configura, e não precisa de getUpdates/@userinfobot
       const loc = `## ONDE VOCÊ ESTÁ AGORA\nVocê está respondendo no chat_id=${chatId}` + (threadId ? `, dentro do tópico topic_id=${threadId}` : ` (sem tópico — DM ou chat principal)`) + (cfg.label ? `, sala "${cfg.label}"` : "") + `. Se pedirem o id deste grupo/tópico, é ESTE — você JÁ sabe, não use getUpdates nem @userinfobot. Pra te configurar nesta sala, grave este chat_id/topic_id no seu .env (GROUP_CHAT_ID) ou no topics.json e reinicie.`;
       sysPrompt += "\n\n" + loc;
+      // A CONVERSA CONTINUA — injeta o resumo do que já falamos TODO turno (não só no 1º depois da
+      // compactação), pra o agente NUNCA achar que "começou agora". Compactar economiza espaço; a
+      // conversa segue sendo UMA só. 'cont' = handoff de sessão nova recém-semeada OU resumo persistido.
+      if (cont) sysPrompt += `\n\n# A CONVERSA CONTINUA — NÃO recomece do zero\nVocê JÁ vinha conversando com o dono; este trecho é CONTINUAÇÃO da mesma conversa (ela foi compactada pra caber, só isso). Resumo do que já falaram antes deste ponto:\n${cont}\n\nRegra: trate como continuação natural. NUNCA diga "a conversa começou agora", "não tenho histórico desta sessão" nem peça pra ele repetir o que já foi dito. Se perguntarem o que falaram antes, responda a partir DESTE resumo.`;
       if (sysPrompt.trim()) args.push("--append-system-prompt", sysPrompt);
-      const proc = spawn(CLAUDE_BIN, args, { cwd: WORKDIR, env: childEnv() });
+      // detached: process group próprio → killTree(-pgid) não deixa subagente órfão queimando cota
+      const proc = trackKid(spawn(CLAUDE_BIN, args, { cwd: WORKDIR, env: childEnv(), detached: true }));
 
       const t0 = Date.now();
       let buf = "", err = "", finalResult = null, finalSid = null, finalUsage = null, settled = false, timedOut = false;
@@ -195,8 +387,8 @@ function ask(key, text, cfg, chatId, threadId) {
       //     SIGTERM e, se persistir, SIGKILL — pra busy/fila SEMPRE destravarem.
       const watchdog = setTimeout(() => {
         timedOut = true;
-        try { proc.kill("SIGTERM"); } catch {}
-        setTimeout(() => { try { proc.kill("SIGKILL"); } catch {} }, 5000);
+        killTree(proc, "SIGTERM");
+        setTimeout(() => killTree(proc, "SIGKILL"), 5000);
       }, ASK_TIMEOUT_MS);
 
       const cleanup = async () => {
@@ -242,21 +434,52 @@ function ask(key, text, cfg, chatId, threadId) {
   }
 
   return (async () => {
-    let out = await runOnce(true);
-    // sessão expirada/deletada no servidor → re-roda 1x SEM resume (não some o turno do Léo).
+    let handoff = (!_sid && _store) ? _store : "";   // compactação pendente de turno anterior que falhou — reusa
+    let useSid = _sid;
+
+    if (_sid && !sidExists(_sid)) {
+      // sid podado pela willow (jsonl sumiu) → sessão nova semeada com o handoff salvo (não amnésia muda)
+      console.log(`[ponte] sid podado (${key}) — recomeçando com handoff salvo`);
+      useSid = null; handoff = _store || "";
+    } else if (_sid && ctxConv >= SOFT && _cc < 1) {
+      // CAMADA 2 — cruzou SOFT: compacta com RESUMO antes de responder (1× por sid = anti-flap/anti-cota)
+      console.log(`[ponte] SOFT cruzado (${key}) ctxConv≈${Math.round(ctxConv)}/${Math.round(SOFT)} — compactando`);
+      handoff = (await withCompactSlot(() => compactSession(_sid, cfg))) || readTail(_sid) || _store || "";
+      useSid = null;
+      // persiste o corte ANTES de descartar o sid velho (sobrevive a crash entre os dois turnos)
+      sessions[key] = { sid: null, ctx: 0, floor: STATIC_FLOOR, turns: 0, compactCount: _cc + 1, handoff, priorSummary: handoff, updatedAt: Date.now() };   // priorSummary persiste: a conversa CONTINUA, não recomeça
+      saveSessions();
+    }
+
+    const canResume = !!useSid && ctxConv < HARD;
+    // BACKSTOP HARD (ou qualquer sessão-nova sem handoff): NUNCA resetar a frio se há de onde retomar.
+    // Semeia do snapshot salvo, ou do tail do sid que está sendo abandonado por tamanho.
+    if (!canResume && !handoff) {
+      handoff = _store || (useSid && sidExists(useSid) ? readTail(useSid) : "");
+      if (useSid) console.log(`[ponte] backstop HARD (${key}) ctxConv≈${Math.round(ctxConv)} — sessão nova com handoff`);
+    }
+
+    // continuidade injetada TODO turno: handoff (sessão nova recém-semeada) OU _prior (resumo persistido)
+    const cont = handoff || _prior;
+
+    let out = await runOnce(canResume ? useSid : null, cont);
+    // sessão expirada/deletada no servidor → re-roda 1x SEM resume, semeando o handoff salvo (não some o turno).
     // casa a frase REAL do claude ("No conversation found with session ID ...") além das variantes antigas.
     const resumeMorto = /no conversation found|conversation .*not found|session.*(not found|expired|inv[aá]lid|n[aã]o encontrad)|found with session/i;
     if (out.result == null && canResume && resumeMorto.test(out.err || "")) {
-      console.log("[ponte] sessão não encontrada — recomeçando sem --resume");
-      out = await runOnce(false);
+      console.log("[ponte] sessão não encontrada — recomeçando sem --resume (com handoff/brain)");
+      const seed = cont || _store || (useSid && sidExists(useSid) ? readTail(useSid) : "");
+      out = await runOnce(null, seed);
       // se o retry SEM resume também falhou, o sid antigo está morto: devolve sid:null pra NÃO re-gravar o id morto
       if (out.result == null) out.sid = null;
     }
     if (out.result == null) {
       console.error("[ponte] claude falhou:", String(out.err || "").slice(-400));   // stack/stderr só no LOG, nunca no chat
-      return { result: "⚠️ Deu erro do meu lado processando isso. Tenta de novo? Se insistir, me manda 'reinicia'.", sid: out.sid, ctx: out.ctx || 0 };
+      // ok:false → processOne NÃO persiste, preservando o estado de compactação ({sid:null,handoff})
+      //            pra o próximo turno re-semear em vez de virar amnésia.
+      return { result: "⚠️ Deu erro do meu lado processando isso. Tenta de novo? Se insistir, me manda 'reinicia'.", sid: out.sid, ctx: out.ctx || 0, ok: false };
     }
-    return { result: out.result, sid: out.sid, ctx: out.ctx || 0 };
+    return { result: out.result, sid: out.sid, ctx: out.ctx || 0, ok: true };
   })();
 }
 
@@ -278,7 +501,7 @@ function dlFile(fileId, dest) {
 const MAX_FILE_BYTES = Number(process.env.MAX_FILE_MB || 15) * 1024 * 1024;   // recusa anexo grande (enche disco / pendura)
 function transcribe(audioPath) {
   return new Promise((resolve, reject) => {
-    const proc = spawn(VOICE_PY, [VOICE_HANDLER, "transcribe", audioPath], { stdio: ["ignore", "pipe", "pipe"] });
+    const proc = trackKid(spawn(VOICE_PY, [VOICE_HANDLER, "transcribe", audioPath], { stdio: ["ignore", "pipe", "pipe"] }));
     let out = "", err = "";
     proc.stdout.on("data", d => (out += d)); proc.stderr.on("data", d => (err += d));
     const t = setTimeout(() => { proc.kill("SIGTERM"); reject(new Error("transcribe timeout")); }, 4 * 60 * 1000);
@@ -355,9 +578,12 @@ function processOne(msg, chatId, threadId, key, cfg) {
         return send(chatId, `⚠️ Não consegui iniciar a instalação do áudio. Tenta de novo daqui a pouco.`, threadId); }
       return send(chatId, `🎤 Ligando o áudio (transcrição local, sem chave)... baixo o modelo e me reinicio — leva uns minutos. Te aviso com o "✅ No ar!".`, threadId);
     }
-    return ask(key, text, cfg, chatId, threadId).then(async ({ result, sid, ctx }) => {
-      if (sid) { sessions[key] = { sid, ctx: ctx || 0 }; saveSessions(); }
-      else if (sessions[key]) { delete sessions[key]; saveSessions(); }   // sid morto: apaga em vez de re-gravar o id morto → próximo turno começa sessão NOVA
+    return ask(key, text, cfg, chatId, threadId).then(async ({ result, sid, ctx, ok }) => {
+      // ok:true → persiste a sessão pelo motor (floor/turns/compactCount/handoff/priorSummary).
+      // persistSession faz no-op se sid for null (sid morto): NÃO re-grava o id morto, e PRESERVA o
+      // estado de compactação ({sid:null,handoff,priorSummary}) que já estava salvo → próximo turno re-semeia.
+      // ok:false → também NÃO sobrescreve, pelo mesmo motivo (turno que falhou não vira amnésia).
+      if (ok) persistSession(key, sid, ctx, cfg.model);
       await send(chatId, result, threadId);
     }).finally(() => { for (const f of files) { try { fs.unlinkSync(f); } catch {} } });   // limpa mídia só DEPOIS do Read
   }).catch((e) => console.error("[ponte] erro:", e.message))
@@ -419,5 +645,5 @@ async function poll() {
     }
   }
 }
-console.log(`[ponte-fina] no ar · ${Object.keys(topics).length} tópicos roteados · owner=${OWNER} grupo=${GROUP}`);
+console.log(`[ponte-fina] no ar · ${Object.keys(topics).length} tópicos roteados · owner=${OWNER} grupo=${GROUP} · ctx redondo: SOFT=${SOFT_FRAC} HARD=${HARD_FRAC} floor=${STATIC_FLOOR}`);
 poll();
