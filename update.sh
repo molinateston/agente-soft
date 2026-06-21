@@ -173,7 +173,21 @@ if [ "$NEED_RELOAD" -eq 1 ]; then
   done
 fi
 
+# ---- Migração idempotente: saudação de boot vira CONDICIONAL (.greet) -
+# Sem isto, o "✅ No ar!" do ExecStartPost dispara a CADA reinício — inclusive
+# no update agendado de fundo (acorda o dono de madrugada à toa). Patch: se o
+# serviço ainda tem a saudação SEM o gate .greet, embute o gate. Resultado:
+# instalação e /atualiza criam o .greet (saúdam); update agendado NÃO cria = silencioso.
+SVC="$HOME/.config/systemd/user/agente.service"
+if [ -f "$SVC" ] && grep -q 'No ar' "$SVC" && ! grep -q '\.greet' "$SVC"; then
+  sed -i "s#/bin/sh -c 'sleep 5;#/bin/sh -c '[ -f \"$HOME/lean-bridge/.greet\" ] || exit 0; rm -f \"$HOME/lean-bridge/.greet\"; sleep 5;#" "$SVC"
+  systemctl --user daemon-reload 2>>"$LOG"
+  say "migração: saudação de boot agora é condicional (.greet) — update agendado fica silencioso."
+fi
+
 # ---- 4/5 Reinício -----------------------------------------------------
+# NÃO cria .greet aqui de propósito: update AGENDADO = silencioso. (instalação e
+# /atualiza criam o .greet antes; só esses saúdam.)
 systemctl --user restart agente
 sleep 4
 

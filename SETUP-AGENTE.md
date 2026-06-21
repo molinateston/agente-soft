@@ -198,7 +198,7 @@ EnvironmentFile=$HOME/lean-bridge/.env
 Environment=HOME=%h
 Environment=PATH=/usr/local/bin:/usr/bin:/bin:%h/.npm-global/bin:%h/.local/bin
 ExecStart=$NODE_BIN $HOME/lean-bridge/bridge.cjs
-ExecStartPost=/bin/sh -c 'sleep 5; curl -s -X POST "https://api.telegram.org/bot\$\${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="\$\${OWNER_CHAT_ID}" --data-urlencode "text=✅ No ar! Sou o \$\${AGENT_NAME}, agente do \$\${OWNER_NAME}. Pode mandar." >/dev/null 2>&1 || true'
+ExecStartPost=/bin/sh -c '[ -f "$HOME/lean-bridge/.greet" ] || exit 0; rm -f "$HOME/lean-bridge/.greet"; sleep 5; curl -s -X POST "https://api.telegram.org/bot\$\${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="\$\${OWNER_CHAT_ID}" --data-urlencode "text=✅ No ar! Sou o \$\${AGENT_NAME}, agente do \$\${OWNER_NAME}. Pode mandar." >/dev/null 2>&1 || true'
 Restart=always
 RestartSec=3
 StandardOutput=append:$HOME/lean-bridge/bridge.log
@@ -207,6 +207,7 @@ StandardError=append:$HOME/lean-bridge/bridge.log
 WantedBy=default.target
 EOF
 XDG_RUNTIME_DIR=/run/user/$(id -u) DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus systemctl --user daemon-reload
+touch ~/lean-bridge/.greet   # autoriza a saudação "No ar!" no 1º boot da instalação (update agendado NÃO cria este flag → fica silencioso; só /atualiza e instalação saúdam)
 XDG_RUNTIME_DIR=/run/user/$(id -u) DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus systemctl --user enable --now agente
 XDG_RUNTIME_DIR=/run/user/$(id -u) DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus systemctl --user is-enabled agente   # confirma que ficou habilitado (deve imprimir "enabled")
 ```

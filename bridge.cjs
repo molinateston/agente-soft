@@ -344,6 +344,7 @@ function processOne(msg, chatId, threadId, key, cfg) {
     // comando /atualiza — o agente se atualiza sozinho: dispara o agente-update.service (roda
     // num cgroup separado, sobrevive ao restart, valida e reverte sozinho se quebrar). Sem cota.
     if (/^\/atualiza/i.test(text.trim())) {
+      try { fs.writeFileSync(`${WORKDIR}/.greet`, ""); } catch {}   // VOCÊ pediu → saúda "No ar!" quando voltar. Update agendado NÃO cria este flag = silencioso.
       try { spawn("systemctl", ["--user", "start", "agente-update.service"], { detached: true, stdio: "ignore" }).unref(); } catch {}
       return send(chatId, `🔄 Atualizando pra última versão do método... o update roda separado e me reinicia sozinho. Já volto com o "✅ No ar!".`, threadId);
     }
