@@ -75,3 +75,4 @@ say "tudo pronto, reiniciando o agente pra ligar o áudio..."
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 systemctl --user restart agente >>"$LOG" 2>&1 || pkill -f bridge.cjs >>"$LOG" 2>&1 || true
 say "✅ áudio ligado."
+tg "🎤 Áudio ligado! Já pode mandar mensagem de voz que eu transcrevo e respondo."

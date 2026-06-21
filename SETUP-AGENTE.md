@@ -59,6 +59,24 @@ mkdir -p ~/lean-bridge/persona ~/lean-bridge/brain
 cp ~/agente-soft/bridge.cjs ~/lean-bridge/bridge.cjs
 node --check ~/lean-bridge/bridge.cjs
 
+# Semeia o índice de memória (brain/MAPA.md) pro PROTOCOLO DE RECALL ter o que ler desde
+# o dia 1. Sem isso, em cliente novo o Read do MAPA falha e o recall vira no-op (o agente
+# não acha as notas que vai criando). Só cria se não existir (não sobrescreve memória).
+[ -f ~/lean-bridge/brain/MAPA.md ] || cat > ~/lean-bridge/brain/MAPA.md <<'MAPAEOF'
+# MAPA — índice da memória do dono
+
+> Índice de tudo que o agente sabe sobre o dono e o negócio dele. ANTES de responder algo
+> que toque histórico/decisões/números/pessoas, abra a nota certa daqui (Read) e responda
+> A PARTIR dela — nunca de memória. Fato novo permanente (decisão, número, preferência,
+> pessoa) → grava uma nota em brain/ e adiciona a linha aqui.
+
+## Decisões
+## Projetos
+## Pessoas
+## Preferências do dono
+## Números do negócio
+MAPAEOF
+
 # Skills do método (o cérebro). Repo público de fonte-da-verdade:
 mkdir -p ~/.claude
 [ -d ~/.claude/skills/.git ] && (cd ~/.claude/skills && git pull -q) || \

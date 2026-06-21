@@ -559,6 +559,11 @@ function processOne(msg, chatId, threadId, key, cfg) {
   console.log(`[ponte] ${cfg.label || "?"} (${cfg.model}/${cfg.effort || "def"}) chat=${chatId} thread=${threadId || "-"} mtid=${msg.message_thread_id || "-"} ${media}`.trimEnd());
   tg("sendChatAction", { chat_id: chatId, action: "typing", ...(threadId ? { message_thread_id: Number(threadId) } : {}) });
   resolveInput(msg).then(({ text, files }) => {
+    // Áudio recebido mas a transcrição ainda não está ligada nesta VPS: em vez de ficar
+    // MUDO (pro dono leigo é indistinguível de bot quebrado), orienta o /audio.
+    if (!text && (msg.voice || msg.audio) && !VOICE_ENABLED) {
+      return send(chatId, `🎤 Recebi seu áudio, mas a transcrição ainda não está ligada aqui. Manda /audio uma vez que eu ligo (local, sem chave) — leva uns minutos e depois é só falar.`, threadId);
+    }
     if (!text) return;
     // comando instantâneo /id (e variantes) — reporta chat/tópico SEM gastar cota do Claude
     if (/^\/(id|topic_?id|grupo_?id|chat_?id)\b/i.test(text.trim())) {

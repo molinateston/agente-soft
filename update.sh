@@ -32,6 +32,29 @@ say(){ echo "[$(date '+%F %H:%M:%S')] $*" | tee -a "$LOG"; }
 mkdir -p "$BRIDGE_DIR" "$BRIDGE_DIR/backups"
 chmod 700 "$BRIDGE_DIR/backups" 2>/dev/null || true   # estrutura de backup não fica legível por outros usuários locais
 
+# --- Aviso ao dono (best-effort) lendo token+owner do .env ---------------
+GREET="$BRIDGE_DIR/.greet"
+env_get(){ grep -E "^$1=" "$BRIDGE_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2- | sed 's/[[:space:]]*#.*$//; s/^"//; s/"$//'; }
+tg(){ local T O; T="$(env_get TELEGRAM_BOT_TOKEN)"; O="$(env_get OWNER_CHAT_ID)"; [ -n "$T" ] && [ -n "$O" ] && \
+  curl -s --max-time 15 "https://api.telegram.org/bot${T}/sendMessage" \
+  --data-urlencode "chat_id=${O}" --data-urlencode "text=$1" >/dev/null 2>&1 || true; }
+
+# Se este update foi disparado por /atualiza, o bridge cria o .greet ANTES. Mas há 5
+# saídas-precoces aqui ANTES do restart (HALT, claude ausente, "já na última", disco,
+# snapshot) — nelas o .greet ficaria órfão (saudação fantasma no próximo boot) E o dono
+# nunca ouviria de volta. O trap fecha os dois furos: avisa o dono (só se foi /atualiza)
+# e limpa o flag. Desarmado logo antes do restart, pra aí o .greet ser consumido pelo
+# ExecStartPost (= saúda "✅ No ar!"). Update AGENDADO não tem .greet → trap fica mudo.
+on_exit(){
+  local rc=$?
+  if [ -f "$GREET" ]; then
+    if [ "$rc" -eq 0 ]; then tg "✅ Já tava na última versão, tudo certo. Segui no ar."
+    else tg "⚠️ Tentei atualizar e não consegui agora — segui no ar na versão atual. Tento de novo no automático."; fi
+    rm -f "$GREET" 2>/dev/null || true
+  fi
+}
+trap on_exit EXIT
+
 # Rotação do log: roda toda semana via timer, então sem isto o upgrade.log cresce
 # pra sempre. Se passar de ~5MB, mantém só a cauda (últimos ~500KB).
 if [ -f "$LOG" ] && [ "$(wc -c <"$LOG" 2>/dev/null || echo 0)" -gt 5242880 ]; then
@@ -180,14 +203,22 @@ fi
 # instalação e /atualiza criam o .greet (saúdam); update agendado NÃO cria = silencioso.
 SVC="$HOME/.config/systemd/user/agente.service"
 if [ -f "$SVC" ] && grep -q 'No ar' "$SVC" && ! grep -q '\.greet' "$SVC"; then
-  sed -i "s#/bin/sh -c 'sleep 5;#/bin/sh -c '[ -f \"$HOME/lean-bridge/.greet\" ] || exit 0; rm -f \"$HOME/lean-bridge/.greet\"; sleep 5;#" "$SVC"
+  # casa QUALQUER 'sleep N;' — as 2 primeiras releases gravavam 'sleep 2;' incondicional,
+  # a terceira 'sleep 5;'. Sem o [0-9]+ o cliente 'sleep 2' nunca migrava e acordava o
+  # dono '✅ No ar!' de madrugada pra sempre (a cada boot/restart, não só 1x/semana).
+  sed -E -i "s#(/bin/sh -c ')sleep [0-9]+;#\1[ -f \"$HOME/lean-bridge/.greet\" ] || exit 0; rm -f \"$HOME/lean-bridge/.greet\"; sleep 5;#" "$SVC"
   systemctl --user daemon-reload 2>>"$LOG"
   say "migração: saudação de boot agora é condicional (.greet) — update agendado fica silencioso."
+  # re-snapshota o serviço JÁ migrado, pra um rollback restaurar a versão condicional
+  # (.greet) e não ressuscitar a saudação incondicional.
+  cp -p "$SVC" "$BACKUP_DIR/agente.service" 2>/dev/null || true
 fi
 
 # ---- 4/5 Reinício -----------------------------------------------------
 # NÃO cria .greet aqui de propósito: update AGENDADO = silencioso. (instalação e
-# /atualiza criam o .greet antes; só esses saúdam.)
+# /atualiza criam o .greet antes; só esses saúdam.) Desarma o trap: daqui o .greet
+# (se houver, foi um /atualiza) deve ser consumido pelo ExecStartPost = saúda "✅ No ar!".
+trap - EXIT
 systemctl --user restart agente
 sleep 4
 
@@ -196,6 +227,18 @@ FAIL=0
 node --check "$BRIDGE_DIR/bridge.cjs" || FAIL=1
 systemctl --user is-active --quiet agente || FAIL=1
 ls "$SKILLS_DIR"/*/SKILL.md >/dev/null 2>&1 || FAIL=1
+# 2ª checagem ~18s depois: pega crash-loop TARDIO (sobe, passa o is-active de 4s, e morre
+# no 1º getUpdates ou batendo no StartLimitBurst). is-failed pega o systemd desistindo.
+if [ "$FAIL" -eq 0 ]; then
+  sleep 18
+  systemctl --user is-active --quiet agente || FAIL=1
+  systemctl --user is-failed --quiet agente && FAIL=1
+fi
+# Timer de auto-update sobreviveu ao push? Um .timer/.service quebrado mataria o
+# auto-update da frota EM SILÊNCIO — aqui isso vira FAIL e dispara o rollback.
+if [ "$UNITS_CHANGED" -eq 1 ] || [ "$NEED_RELOAD" -eq 1 ]; then
+  systemctl --user is-active --quiet agente-update.timer || { say "⚠️ agente-update.timer não ficou ativo após o update."; FAIL=1; }
+fi
 if [ "$FAIL" -eq 0 ]; then
   say "✅ UPDATE OK (skills em $NEW_SHA)."
   exit 0

@@ -8,3 +8,5 @@ persona/
 brain/
 backups/
 *.log
+__pycache__/
+*.pyc
