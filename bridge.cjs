@@ -37,9 +37,39 @@ const OWNER       = String(process.env.OWNER_CHAT_ID || "");   // DM do dono
 const GROUP       = String(process.env.GROUP_CHAT_ID || "");   // grupo com tópicos
 // allowlist de remetentes no GRUPO: só esses from.id podem comandar (OWNER sempre incluso).
 // vazio = grupo fecha (só OWNER fala). Anti-abuso: qualquer membro do grupo teria Bash livre na VPS.
-const ALLOWED_SENDERS = new Set(
-  String(process.env.ALLOWED_SENDERS || "").split(",").map(s => s.trim()).filter(Boolean).concat(OWNER ? [OWNER] : [])
-);
+// DINÂMICA: re-lê o .env a cada mensagem → liberar/bloquear membro NÃO precisa reiniciar o serviço
+// (antes era const de boot; o restart pra aplicar matava a resposta do agente e disparava a saudação).
+const ENV_FILE = `${__dirname}/.env`;
+function envVal(key) {
+  try {
+    for (const line of fs.readFileSync(ENV_FILE, "utf8").split("\n")) {
+      const m = line.match(/^\s*([A-Za-z0-9_]+)\s*=\s*(.*?)\s*$/);
+      if (m && m[1] === key) return m[2].replace(/\s+#.*$/, "").trim().replace(/^["']|["']$/g, "");
+    }
+  } catch {}
+  return "";
+}
+function allowedSenders() {
+  return new Set(
+    envVal("ALLOWED_SENDERS").split(",").map(s => s.trim()).filter(Boolean).concat(OWNER ? [OWNER] : [])
+  );
+}
+// registra quem manda msg no GRUPO (id + nome) num arquivo rolante, pro agente achar o id de
+// alguém e liberá-lo sem pedir "/id". Grava ANTES do gate (captura até quem ainda não foi liberado).
+const SENDERS_FILE = `${__dirname}/recent-senders.json`;
+function recordSender(from) {
+  if (!from || !from.id) return;
+  try {
+    let list = []; try { list = JSON.parse(fs.readFileSync(SENDERS_FILE, "utf8")); } catch {}
+    if (!Array.isArray(list)) list = [];
+    const id = String(from.id);
+    if (list[0] && String(list[0].id) === id) return;       // já é o mais recente → evita reescrever à toa
+    const name = [from.first_name, from.last_name].filter(Boolean).join(" ") || from.username || id;
+    list = list.filter(s => String(s.id) !== id);
+    list.unshift({ id, name, username: from.username || "" });
+    fs.writeFileSync(SENDERS_FILE, JSON.stringify(list.slice(0, 50), null, 1));
+  } catch {}
+}
 const WORKDIR     = process.env.WORK_DIR || __dirname;
 const BRAIN       = process.env.BRAIN_DIR || `${WORKDIR}/brain`;
 const PERSONA_DIR = process.env.PERSONA_DIR || `${WORKDIR}/persona`;
@@ -628,9 +658,10 @@ async function poll() {
         const isOwner  = chatId === OWNER || senderId === OWNER;
         const isGroup  = chatId === GROUP;
         if (!isOwner && !isGroup) continue;                 // só dono ou o grupo
+        if (isGroup && msg.from) recordSender(msg.from);    // registra id+nome (pro dono liberar sem pedir /id)
         // GRUPO fecha por remetente: só quem está na allowlist (OWNER sempre incluso) comanda.
-        // Sem isso, qualquer membro do grupo teria Bash livre na VPS.
-        if (isGroup && !isOwner && !ALLOWED_SENDERS.has(senderId)) {
+        // Sem isso, qualquer membro do grupo teria Bash livre na VPS. allowlist DINÂMICA (re-lida do .env).
+        if (isGroup && !isOwner && !allowedSenders().has(senderId)) {
           console.log(`[ponte] grupo: remetente ${senderId} fora da allowlist — ignorado`);
           continue;
         }
