@@ -7,10 +7,11 @@
 # NÃO instala tmux, Postgres, Caddy, pm2 nem túnel — a ponte é node puro.
 #
 # Roda UMA vez, numa VPS Ubuntu 22+ (como root, via Browser Terminal):
-#   curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/bootstrap.sh | sudo bash
+#   sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/bootstrap.sh)"
+# (esta forma — e NÃO 'curl | sudo bash' — preserva o terminal pra eu ABRIR o Claude sozinho no fim.)
 #
-# Depois dele: você roda `claude`, loga na SUA conta (cola o CÓDIGO de login
-# que a Anthropic mostra — NÃO o token da API), e cola o prompt-instalador.
+# Ele instala tudo e ABRE o Claude pra você. Aí é só: logar na SUA conta (cola o CÓDIGO
+# de login que a Anthropic mostra — NÃO o token da API) e colar o prompt-instalador.
 # O Claude faz o resto lendo o SETUP-AGENTE.md.
 # =====================================================================
 set -euo pipefail
@@ -30,7 +31,7 @@ if ! grep -qi ubuntu /etc/os-release 2>/dev/null; then
   exit 1
 fi
 if [[ "${EUID}" -ne 0 ]]; then
-  echo "✗ Rode como root:  curl -fsSL .../bootstrap.sh | sudo bash" >&2
+  echo "✗ Rode como root:  sudo bash -c \"\$(curl -fsSL .../bootstrap.sh)\"" >&2
   exit 1
 fi
 
@@ -89,41 +90,21 @@ cat <<'NEXT'
 
 ============================================
  ✅ AMBIENTE PRONTO.
+============================================
 
- Próximos 2 passos (faça como usuário 'agente'):
+ Vou ABRIR O CLAUDE pra você agora — você NÃO precisa digitar mais nada
+ de comando. Quando ele abrir, é só:
 
-   sudo -iu agente
-   claude
+ 1) LOGIN na SUA conta Claude (Pro/Max — a conta que paga o agente):
+     • Tema (cor): setas ↑↓ + Enter.
+     • Método de login: "Conta Claude / Sign in with Claude account" (setas + Enter).
+       NUNCA "API key".
+     • Confiar nesta pasta? → Yes / Enter.
+     • Abre o LINK no navegador → loga → autoriza → a Anthropic mostra um
+       CÓDIGO → cola o código aqui e Enter. (Esse código NÃO é o token da API.)
 
- 1) Login na SUA conta Claude (Pro/Max — é a conta que paga o agente):
-
-    a) Na PRIMEIRA vez, o `claude` faz umas perguntas rápidas ANTES
-       do link. Responda assim:
-        • Tema (cor): use as SETAS ↑↓ e aperte Enter.
-        • Método de login: escolha "Conta Claude / Sign in with
-          Claude account" (use as SETAS + Enter).
-          NUNCA escolha "API key".
-        • Confiar nesta pasta? → aceite (Yes / Enter).
-
-    b) Aí aparece um LINK → abra no navegador → logue na SUA conta
-       Claude → autorize.
-
-    c) Depois de autorizar, a Anthropic mostra um CÓDIGO na tela.
-       COPIE esse código e COLE de volta aqui no terminal
-       (botão direito → Colar) e aperte Enter.
-
-    ⚠️ Esse código NÃO é o token da API. É o código de login que
-       aparece DEPOIS de você autorizar no navegador.
-
- 2) Ainda dentro do `claude`, cole EXATAMENTE este
-    PROMPT-INSTALADOR (já está pronto abaixo).
-    (Pra colar: botão direito → Colar, ou Ctrl+Shift+V —
-     Ctrl+V comum às vezes não cola em terminal.)
-
- ⚠️ Cole o bloco INTEIRO de uma vez e aperte Enter só UMA vez.
-    É normal aparecer várias linhas antes de enviar — pode mandar.
-    Se enviar antes de terminar de colar, é só mandar o resto na
-    mensagem seguinte: o Claude entende e continua.
+ 2) Cole o PROMPT abaixo (ou copie da página /squad) e dê Enter UMA vez.
+    (Colar: botão direito → Colar, ou Ctrl+Shift+V.)
 
 ----------8<---------- COPIE A PARTIR DAQUI ----------8<----------
 Quero instalar meu Agente Soft (Telegram + Claude) nesta VPS.
@@ -141,7 +122,23 @@ Sobe a ponte, baixa as skills do método, sobe o serviço, valida, e me
 confirma quando estiver no ar. Se travar, me explica em português simples.
 ----------8<---------- ATÉ AQUI ----------8<----------
 
- 💾 Perdeu este texto depois de abrir o `claude`? O MESMO prompt está aqui:
+ 💾 O mesmo prompt também está em:
     https://raw.githubusercontent.com/molinateston/agente-soft/main/prompt-instalador.txt
 ============================================
 NEXT
+
+# Abre o Claude JÁ como usuário 'agente' — o dono não digita 'sudo -iu agente' nem 'claude'.
+# Precisa de TTY (terminal de verdade): por isso o comando de instalação é
+#   sudo bash -c "$(curl -fsSL .../bootstrap.sh)"   — NÃO  'curl ... | sudo bash'  (esse não tem TTY).
+if [ -t 0 ] && [ -t 1 ]; then
+  echo ""
+  echo "   (abrindo o Claude em 3s — faça o login e cole o prompt acima...)"
+  sleep 3
+  exec sudo -iu agente claude || echo "   ✗ Não abriu sozinho. Rode na mão:  sudo -iu agente claude"
+else
+  echo ""
+  echo "   ⚠️ Sem terminal interativo (você usou 'curl | bash'). Rode na mão:"
+  echo "        sudo -iu agente claude"
+  echo "      Da próxima vez use o comando que abre o Claude sozinho:"
+  echo "        sudo bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/bootstrap.sh)\""
+fi

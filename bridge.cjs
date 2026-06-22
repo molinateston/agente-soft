@@ -155,7 +155,9 @@ const saveSessions = () => {
 // env reduzido pro filho: NÃO passa o token do Telegram (a ponte fala com o TG, o claude não precisa).
 // As DEMAIS chaves do .env (Cloudflare/Notion/Apify/OAuth) vão de PROPÓSITO: é a agência do agente
 // operar as APIs do DONO. Cada cliente tem o próprio .env (chaves dele), não há vazamento cruzado.
-const childEnv = () => { const e = { ...process.env }; delete e.TELEGRAM_BOT_TOKEN; return e; };
+// TZ p/ horário de Brasília (VPS roda em UTC; sem isto o agente acha que é 3h mais tarde — "já
+// passou das 11h" às 9h). Cliente pode sobrescrever pondo TZ no .env. Vale o childEnv (o claude herda).
+const childEnv = () => { const e = { ...process.env, TZ: process.env.TZ || "America/Sao_Paulo" }; delete e.TELEGRAM_BOT_TOKEN; return e; };
 
 // rastreio de filhos vivos: o filho de compactação roda detached (process group próprio);
 // trackKid registra pra poder matar no timeout, killTree mata a ÁRVORE (não deixa órfão queimando cota).

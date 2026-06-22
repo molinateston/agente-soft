@@ -12,16 +12,11 @@ Runtime **lean**: node puro, login nativo do Claude (na conta Pro/Max, não na A
 
 > 💡 **Como colar no Browser Terminal:** clique com o **botão direito** dentro do terminal e escolha **Colar** (jeito mais garantido). Se preferir teclado, use **Ctrl+Shift+V** — o Ctrl+V comum às vezes não cola em terminal. Vale pra todos os comandos abaixo, inclusive o prompt do passo 5.
 
-3. **Instale o ambiente** (1 comando — leva ~2-5 min; é normal a tela ficar parada, NÃO feche):
+3. **Instale e abra o Claude** (1 comando — leva ~2-5 min; é normal a tela ficar parada, NÃO feche). Ele instala tudo e **abre o Claude sozinho** no fim — você não digita mais nada de comando:
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/bootstrap.sh | sudo bash
+   sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/bootstrap.sh)"
    ```
-4. **Logue o Claude na sua conta:**
-   ```bash
-   sudo -iu agente
-   claude
-   ```
-   Na **primeira vez**, antes do link, o `claude` faz umas perguntas rápidas — responda assim:
+4. **Logue na sua conta Claude** (o Claude já abriu sozinho). Na **primeira vez**, antes do link, ele faz umas perguntas rápidas — responda assim:
    - **Tema** (cor da tela): escolha qualquer um com as **SETAS** ↑↓ e aperte **Enter**.
    - **Método de login**: escolha **"Conta Claude" / "Sign in with Claude account"** (use as SETAS + Enter). **NUNCA** escolha a opção de **API key** — não é por aí.
    - **Confiar na pasta**: ele pergunta se confia neste diretório → confirme (geralmente "Yes, proceed" / "Sim").
