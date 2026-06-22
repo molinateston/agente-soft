@@ -98,6 +98,7 @@ const HARD_FRAC    = Number(process.env.HARD_FRAC || 0.78);   // backstop bruto 
 const STATIC_FLOOR = Number(process.env.STATIC_FLOOR || 30000); // piso estático estimado (system+tools+persona); seed do floor por sessão
 const SNAPSHOT_EVERY = Number(process.env.SNAPSHOT_EVERY || 8); // a cada N turnos guarda um tail-handoff (sobrevive a poda willow)
 const COMPACT_TIMEOUT_MS = Number(process.env.COMPACT_TIMEOUT_SEG || 120) * 1000;
+const MEMVIVA_FILE = process.env.MEMVIVA_FILE || `${BRAIN}/MEMORIA-VIVA.md`;   // memória de trabalho (decisões/projetos/pendências ATIVAS): SEMPRE no contexto (estilo NAIA)
 // janela de contexto por modelo (p/ escalar SOFT/HARD e limiar de órfão — não queimar cota no cliente sonnet)
 const winFor = (m) => ({ "opus": 200000, "opus[1m]": 1000000, "sonnet": 400000, "sonnet[1m]": 1000000, "haiku": 200000 }[m] || 200000);
 // dir de sessões do Claude Code = hash do cwd com que o claude roda (= WORKDIR, via spawn cwd). Não-alfanumérico -> '-'.
@@ -158,6 +159,26 @@ const saveSessions = () => {
 // TZ p/ horário de Brasília (VPS roda em UTC; sem isto o agente acha que é 3h mais tarde — "já
 // passou das 11h" às 9h). Cliente pode sobrescrever pondo TZ no .env. Vale o childEnv (o claude herda).
 const childEnv = () => { const e = { ...process.env, TZ: process.env.TZ || "America/Sao_Paulo" }; delete e.TELEGRAM_BOT_TOKEN; return e; };
+
+// lê as primeiras N linhas de um arquivo pequeno (MEMÓRIA VIVA). Arquivos pequenos: readFileSync ok.
+const readLines = (file, maxLines) => { try { return fs.readFileSync(file, "utf8").split("\n").slice(0, maxLines).join("\n").trim(); } catch { return ""; } };
+
+// HORÁRIO LOCAL (Brasília) — injetado no INPUT de TODO turno e TODO tópico. A VPS roda em UTC;
+// sem isto o agente acha que é 3h mais tarde ("já passou das 11h" às 9h). Intl converte mesmo
+// com o processo em UTC. Vai no input (não no system-prompt) pra não estourar o cache.
+function timeBlock() {
+  try {
+    const f = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", weekday: "long",
+      day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
+    return `[AGORA: ${f.format(new Date())} — horário de Brasília (America/Sao_Paulo). Use ESTE horário, NUNCA o UTC.]`;
+  } catch { return ""; }
+}
+// HISTÓRICO COMPLETO — paridade com o terminal: o resumo da compactação é PARCIAL (lossy). A conversa
+// INTEIRA (todos os tópicos, tudo desde o início, inclusive pré-compactação) vive no disco em jsonl.
+// Damos o caminho + a ordem de grepar quando houver dúvida, em vez de confiar só no resumo. Estável → cacheável.
+function convoBlock() {
+  return `[PROTOCOLO DE MEMÓRIA — OBRIGATÓRIO antes de responder (é o que te deixa preciso como no terminal): você NÃO confia no que "acha que lembra", você RECUPERA. Antes de afirmar, propor ou decidir algo que toque o passado, decisões, projetos, números ou combinados: (1) leia a MEMÓRIA VIVA injetada acima (decisões/projetos/pendências ATIVAS); (2) o histórico COMPLETO de TODAS as conversas está em ${projDir()}/*.jsonl — se a dúvida não fechar com a memória viva nem com o resumo, FAÇA grep (ex: \`grep -rli "publer" ${projDir()}\`) e leia o trecho que casar; (3) NUNCA chute "acho que decidimos X": ou está escrito, ou você confere no histórico, ou você PERGUNTA; (4) quando aparecer decisão/combinado/pendência NOVA (inclusive "NÃO fazer X"), ESCREVA na hora em ${MEMVIVA_FILE} (o que não tá escrito não existe). Essa é a sua memória estilo-terminal: storage durável + recuperação forçada.]`;
+}
 
 // rastreio de filhos vivos: o filho de compactação roda detached (process group próprio);
 // trackKid registra pra poder matar no timeout, killTree mata a ÁRVORE (não deixa órfão queimando cota).
@@ -231,7 +252,7 @@ function readConvoText(sid, capChars = 60000, maxBytes = 1048576) {
 let _compactChain = Promise.resolve();
 function withCompactSlot(fn) { const run = _compactChain.then(fn, fn); _compactChain = run.catch(() => {}); return run; }
 
-const COMPACT_PROMPT = "Resuma NOSSA conversa para retomar sem perder o fio, em no máximo ~1500 tokens, em tópicos, falando na 2ª pessoa ('você pediu…', 'decidimos…'). Inclua: (1) o assunto/projeto em aberto, (2) decisões já tomadas, (3) fatos sobre mim/meu negócio que importam, (4) o próximo passo concreto. Responda SÓ o resumo, nada além dele.";
+const COMPACT_PROMPT = "Resuma NOSSA conversa pra retomar SEM PERDER NENHUMA DECISÃO, em até ~3500 tokens, em tópicos, na 2ª pessoa ('você pediu…', 'decidimos…'). É CRÍTICO preservar de forma LITERAL: (1) TODA decisão — INCLUSIVE as NEGATIVAS ('decidimos NÃO usar X', 'NÃO é no Y, é no Z'); (2) escolhas específicas (ferramenta, canal, nome, número, data, formato) e o porquê; (3) restrições/combinados ('sempre/nunca X'); (4) o projeto em aberto + o próximo passo concreto; (5) fatos do meu negócio que importam. NUNCA troque uma decisão por 'discutimos opções' — escreva QUAL foi a decisão. Na dúvida sobre um detalhe, INCLUA o detalhe. Responda SÓ o resumo.";
 
 // CAMADA 2 — helper genérico: roda o claude SÓ pra resumir e devolve o texto do result (ou null).
 // SEMPRE sonnet (janela 400k, barato): mesmo que o modelo do cliente seja opus[1m], o resumo cabe
@@ -239,7 +260,7 @@ const COMPACT_PROMPT = "Resuma NOSSA conversa para retomar sem perder o fio, em 
 // puro (robusto); 'stdinText' é o que entra.
 function _runSummary(extraArgs, stdinText) {
   return new Promise((resolve) => {
-    const args = ["-p", "--model", "sonnet", "--effort", "low", "--max-turns", "1", "--output-format", "stream-json", "--verbose",
+    const args = ["-p", "--model", "sonnet", "--effort", "medium", "--max-turns", "1", "--output-format", "stream-json", "--verbose",
                   "--add-dir", WORKDIR, ...extraArgs];   // sonnet: resumo é tarefa simples e barata; --max-turns 1: single-shot
     let proc; try { proc = trackKid(spawn(CLAUDE_BIN, args, { cwd: WORKDIR, env: childEnv(), detached: true })); }
     catch { return resolve(null); }
@@ -366,9 +387,11 @@ function ask(key, text, cfg, chatId, threadId) {
   // roda o claude uma vez. resumeSid=null força sessão nova; 'cont' é o resumo de continuação a injetar.
   function runOnce(resumeSid, cont) {
     return new Promise((resolve) => {
+      // HORÁRIO de Brasília vai no INPUT (não no system-prompt: evita cache-bust). Prepende ao texto do usuário.
+      const userText = [timeBlock(), text].filter(Boolean).join("\n\n");
       const args = ["-p", "--model", cfg.model, "--output-format", "stream-json", "--verbose",
                     "--permission-mode", "bypassPermissions",   // agência total: escreve/edita arquivo + roda Bash (acesso já é só OWNER/allowlist)
-                    "--add-dir", WORKDIR, "--add-dir", BRAIN, "--add-dir", TMP_DIR];
+                    "--add-dir", WORKDIR, "--add-dir", BRAIN, "--add-dir", TMP_DIR, "--add-dir", projDir()];
       if (cfg.effort) args.push("--effort", cfg.effort);                 // quanto ele PENSA: high=estratégico, medium=operacional, low=casual
       if (resumeSid) args.push("--resume", resumeSid);
       // identidade: doutrina-base FORTE (do repo agente-soft, auto-atualiza → cai em todos os clientes)
@@ -381,6 +404,13 @@ function ask(key, text, cfg, chatId, threadId) {
       // ONDE VOCÊ ESTÁ: o agente sempre sabe o chat/tópico atual → reporta o id, se auto-configura, e não precisa de getUpdates/@userinfobot
       const loc = `## ONDE VOCÊ ESTÁ AGORA\nVocê está respondendo no chat_id=${chatId}` + (threadId ? `, dentro do tópico topic_id=${threadId}` : ` (sem tópico — DM ou chat principal)`) + (cfg.label ? `, sala "${cfg.label}"` : "") + `. Se pedirem o id deste grupo/tópico, é ESTE — você JÁ sabe, não use getUpdates nem @userinfobot. Pra te configurar nesta sala, grave este chat_id/topic_id no seu .env (GROUP_CHAT_ID) ou no topics.json e reinicie.`;
       sysPrompt += "\n\n" + loc;
+      // MEMÓRIA VIVA — decisões/projetos/pendências ATIVAS, injetadas TODO turno (estilo terminal): o
+      // agente lê SEMPRE antes de responder e ESCREVE aqui na hora quando algo é decidido/combinado/fica
+      // pendente. Estável entre turnos = cai no prompt cache, barato.
+      const memviva = readLines(MEMVIVA_FILE, 120);
+      if (memviva) sysPrompt += (sysPrompt ? "\n\n" : "") + `# MEMÓRIA VIVA — decisões/projetos/pendências ATIVAS (leia SEMPRE antes de responder; ESCREVA aqui na hora quando algo for decidido/combinado/ficar pendente):\n${memviva}`;
+      // PROTOCOLO DE MEMÓRIA — paridade c/ terminal: aponta o histórico COMPLETO no disco + manda grepar na dúvida
+      sysPrompt += (sysPrompt ? "\n\n" : "") + convoBlock();
       // A CONVERSA CONTINUA — injeta o resumo do que já falamos TODO turno (não só no 1º depois da
       // compactação), pra o agente NUNCA achar que "começou agora". Compactar economiza espaço; a
       // conversa segue sendo UMA só. 'cont' = handoff de sessão nova recém-semeada OU resumo persistido.
@@ -461,7 +491,7 @@ function ask(key, text, cfg, chatId, threadId) {
       });
       proc.on("error", async () => { done({ result: null, sid: finalSid, ctx: 0, err: err || "não consegui rodar o claude" }); });
 
-      try { proc.stdin.write(text); proc.stdin.end(); } catch {}
+      try { proc.stdin.write(userText); proc.stdin.end(); } catch {}
     });
   }
 

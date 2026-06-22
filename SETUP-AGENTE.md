@@ -77,6 +77,23 @@ node --check ~/lean-bridge/bridge.cjs
 ## Números do negócio
 MAPAEOF
 
+# Semeia a MEMÓRIA VIVA (decisões/projetos/pendências ATIVAS) — injetada em TODO turno. É o que faz
+# o agente não perder o fio (estilo terminal): "o que não tá escrito aqui, não existe". Só cria se faltar.
+[ -f ~/lean-bridge/brain/MEMORIA-VIVA.md ] || cat > ~/lean-bridge/brain/MEMORIA-VIVA.md <<'MEMVIVAEOF'
+# MEMÓRIA VIVA — decisões, projetos e pendências ATIVAS (sempre no contexto do agente)
+
+> Memória de trabalho: o que está DECIDIDO, EM ANDAMENTO e PENDENTE agora.
+> Regra: **"o que não tá escrito aqui, não existe."** Quando o dono decidir algo (inclusive "NÃO fazer X"),
+> um projeto andar, ou ficar algo aguardando → ESCREVA aqui NA HORA. É lido em TODO turno, TODO tópico.
+> Mantém curto e atual: decisão morta sai daqui.
+
+## ✅ Decisões ativas (inclusive as negativas — "NÃO é X, é Y")
+
+## 🚧 Projetos em andamento
+
+## ⏳ Pendências / aguardando o dono
+MEMVIVAEOF
+
 # Skills do método (o cérebro). Repo público de fonte-da-verdade:
 mkdir -p ~/.claude
 [ -d ~/.claude/skills/.git ] && (cd ~/.claude/skills && git pull -q) || \
