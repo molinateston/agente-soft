@@ -372,7 +372,12 @@ async function send(chatId, text, threadId) {
 // ---------- Claude Code (o cérebro) · stream-json + painel de progresso ao vivo ----------
 // Verdade final = sempre o evento `result` (mesmo contrato do json de antes). O streaming
 // só ADICIONA heartbeat: se qualquer linha falhar, cai no comportamento de erro de hoje.
-const ASK_TIMEOUT_MS = Number(process.env.ASK_TIMEOUT_SEG || 900) * 1000;   // watchdog: mata o claude travado (default 15min)
+const ASK_TIMEOUT_MS = Number(process.env.ASK_TIMEOUT_SEG || 900) * 1000;   // (legado) — substituído pelo watchdog de INATIVIDADE abaixo
+// WATCHDOG DE INATIVIDADE (paridade com o terminal: NÃO tem teto fixo de 15min). Mata SÓ se o claude
+// TRAVAR de verdade (nenhum output por STALL_MS) ou bater o teto absoluto (anti-runaway). Tarefa longa
+// que está ATIVA trabalhando roda até o fim.
+const STALL_MS    = Number(process.env.STALL_MIN || 10) * 60000;     // sem NENHUM output por X min = travou
+const HARD_CAP_MS = Number(process.env.HARD_CAP_MIN || 120) * 60000; // teto absoluto (anti-runaway), bem alto
 
 function ask(key, text, cfg, chatId, threadId) {
   const base = threadId ? { message_thread_id: Number(threadId) } : {};
@@ -420,7 +425,7 @@ function ask(key, text, cfg, chatId, threadId) {
       const proc = trackKid(spawn(CLAUDE_BIN, args, { cwd: WORKDIR, env: childEnv(), detached: true }));
 
       const t0 = Date.now();
-      let buf = "", err = "", finalResult = null, finalSid = null, finalUsage = null, settled = false, timedOut = false;
+      let buf = "", err = "", finalResult = null, finalSid = null, finalUsage = null, settled = false, timedOut = false, lastActivity = Date.now();
       let finalIsError = false, finalErrors = "";
       let lastAction = "começando…", panelId = null;
       const elapsed = () => { const s = Math.round((Date.now() - t0) / 1000);
@@ -447,20 +452,25 @@ function ask(key, text, cfg, chatId, threadId) {
 
       // (C) watchdog: se o claude travar (loop de tool, MCP morto, rede caída) o close nunca dispara.
       //     SIGTERM e, se persistir, SIGKILL — pra busy/fila SEMPRE destravarem.
-      const watchdog = setTimeout(() => {
-        timedOut = true;
-        killTree(proc, "SIGTERM");
-        setTimeout(() => killTree(proc, "SIGKILL"), 5000);
-      }, ASK_TIMEOUT_MS);
+      const watchdog = setInterval(() => {
+        const idle = Date.now() - lastActivity, total = Date.now() - t0;
+        if (idle > STALL_MS || total > HARD_CAP_MS) {
+          timedOut = (total > HARD_CAP_MS) ? "cap" : "stall";
+          clearInterval(watchdog);
+          killTree(proc, "SIGTERM");
+          setTimeout(() => killTree(proc, "SIGKILL"), 5000);
+        }
+      }, 20000);   // checa a cada 20s
 
       const cleanup = async () => {
-        clearInterval(typingTimer); clearInterval(panelTimer); clearTimeout(watchdog);
+        clearInterval(typingTimer); clearInterval(panelTimer); clearInterval(watchdog);
         if (panelId != null) { try { await tg("deleteMessage", { chat_id: chatId, message_id: panelId }); } catch {} }
       };
       const done = async (payload) => { if (settled) return; settled = true; await cleanup(); resolve(payload); };
 
       proc.stderr.on("data", d => (err += d));
       proc.stdout.on("data", (d) => {
+        lastActivity = Date.now();   // QUALQUER output do claude reseta o relógio de "travada" (não é teto fixo)
         buf += d; let nl;
         while ((nl = buf.indexOf("\n")) >= 0) {
           const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
@@ -484,7 +494,7 @@ function ask(key, text, cfg, chatId, threadId) {
         const dur = elapsed(), hadPanel = panelId != null;
         if (hadPanel) console.log(`[ponte] ✅ tarefa concluída em ${dur} (teve painel de progresso)`);
         const ctx = finalUsage ? ((finalUsage.input_tokens||0) + (finalUsage.cache_read_input_tokens||0) + (finalUsage.cache_creation_input_tokens||0)) : 0;
-        if (timedOut)            done({ result: `⚠️ A tarefa passou de ${Math.round(ASK_TIMEOUT_MS/60000)}min e foi interrompida. Tenta de novo, talvez quebrando em pedaços menores.`, sid: finalSid, ctx, err });
+        if (timedOut)            done({ result: timedOut === "cap" ? `⚠️ A tarefa bateu o teto de segurança (${Math.round(HARD_CAP_MS/60000)}min) e eu parei — provavelmente travou. Me diz que eu retomo.` : `⚠️ A tarefa ficou ${Math.round(STALL_MS/60000)}min sem dar nenhum sinal (travou) e eu cortei. Me fala que eu retomo.`, sid: finalSid, ctx, err });
         else if (finalIsError && finalResult == null) done({ result: null, sid: finalSid, ctx, err: (finalErrors || err || buf) });   // result vazio + is_error → erro (tratado fora)
         else if (finalResult != null) done({ result: finalResult || "(resposta vazia)", sid: finalSid, ctx, err });
         else                     done({ result: null, sid: finalSid, ctx, err: (err || buf) });   // result=null → erro (tratado fora)
