@@ -639,6 +639,32 @@ const running = () => Object.values(busy).filter(Boolean).length;
 process.on("uncaughtException",  (e) => console.error("[ponte] uncaughtException:", e && e.stack || e));
 process.on("unhandledRejection", (e) => console.error("[ponte] unhandledRejection:", e && (e.stack || e.message) || e));
 
+// FIX H — lock de instância única: dois bridges brigam pelo getUpdates (409) e corrompem sessions.json
+// (last-writer). Portado do lean-bridge (LEON), já provado lá.
+const LOCK_FILE = `${WORKDIR}/.bridge.lock`;
+function acquireLock() {
+  try { const fd = fs.openSync(LOCK_FILE, "wx"); fs.writeFileSync(fd, String(process.pid)); fs.closeSync(fd); return; }   // O_EXCL
+  catch {}
+  let oldPid = 0; try { oldPid = Number(fs.readFileSync(LOCK_FILE, "utf8")) || 0; } catch {}
+  let alive = false; try { if (oldPid) { process.kill(oldPid, 0); alive = true; } } catch {}
+  if (alive) { console.error(`[ponte] já existe ponte rodando (pid ${oldPid}) — saindo pra não duplicar getUpdates/corromper sessões`); process.exit(1); }
+  try { fs.writeFileSync(LOCK_FILE, String(process.pid)); console.error(`[ponte] lock órfão (pid morto ${oldPid}) retomado`); } catch {}
+}
+// FIX G — encerramento limpo: mata filhos claude vivos e solta o lock (não deixa órfão queimando cota no restart).
+let _shuttingDown = false;
+function shutdown(sig) {
+  if (_shuttingDown) return; _shuttingDown = true;
+  console.error(`[ponte] ${sig} — matando ${kids.size} filho(s) e saindo`);
+  for (const p of kids) killTree(p, "SIGTERM");   // mata a árvore (cabeça + braços), não só o pai
+  setTimeout(() => {
+    for (const p of kids) killTree(p, "SIGKILL");
+    try { if (Number(fs.readFileSync(LOCK_FILE, "utf8")) === process.pid) fs.unlinkSync(LOCK_FILE); } catch {}
+    process.exit(0);
+  }, kids.size ? 4000 : 0);   // sem filho em voo = restart instantâneo
+}
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT",  () => shutdown("SIGINT"));
+
 // processa UMA mensagem; ao TERMINAR (sempre, via finally) libera o busy e drena a fila do tópico
 function processOne(msg, chatId, threadId, key, cfg) {
   busy[key] = true;
@@ -757,5 +783,6 @@ async function poll() {
     }
   }
 }
+acquireLock();   // FIX H — garante instância única antes de abrir o long-poll (evita 409 + sessions.json corrompido)
 console.log(`[ponte-fina] no ar · ${Object.keys(topics).length} tópicos roteados · owner=${OWNER} grupo=${GROUP} · ctx redondo: SOFT=${SOFT_FRAC} HARD=${HARD_FRAC} floor=${STATIC_FLOOR}`);
 poll();
