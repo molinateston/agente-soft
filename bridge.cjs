@@ -703,7 +703,8 @@ async function poll() {
         if (isGroup && msg.from) recordSender(msg.from);    // registra id+nome (pro dono liberar sem pedir /id)
         // GRUPO fecha por remetente: só quem está na allowlist (OWNER sempre incluso) comanda.
         // Sem isso, qualquer membro do grupo teria Bash livre na VPS. allowlist DINÂMICA (re-lida do .env).
-        if (isGroup && !isOwner && !allowedSenders().has(senderId)) {
+        const _allow = allowedSenders();   // ALLOWED_SENDERS=* abre o grupo pra TODOS (config no .env, SEM editar código)
+        if (isGroup && !isOwner && !_allow.has("*") && !_allow.has(senderId)) {
           console.log(`[ponte] grupo: remetente ${senderId} fora da allowlist — ignorado`);
           continue;
         }
