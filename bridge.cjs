@@ -712,6 +712,14 @@ async function poll() {
         if (!hasInput) continue;                             // nada que eu saiba processar
         const key = `${chatId}:${threadId || "main"}`;       // 1 sessão por chat+tópico
         const cfg = route(threadId);
+        // /atualiza FURA A FILA — funciona MESMO travado: dispara o update separado (que reinicia e mata a trava).
+        // Sem isto, /atualiza ficava ENFILEIRADO atrás da sessão presa → o cliente só destravava pela VPS (errado).
+        if (/^\/atualiza/i.test((msg.text || msg.caption || "").trim())) {
+          try { fs.writeFileSync(`${WORKDIR}/.greet`, ""); } catch {}
+          try { spawn("systemctl", ["--user", "start", "agente-update.service"], { detached: true, stdio: "ignore" }).unref(); } catch {}
+          send(chatId, `🔄 Atualizando pra última versão... o update roda separado e me reinicio sozinho (mato qualquer trava). Já volto com o "✅ No ar!".`, threadId).catch(() => {});
+          continue;
+        }
         if (busy[key] || running() >= MAX_CONCURRENT) {       // tópico ocupado OU teto global → ENFILEIRA (não descarta)
           const q = (queue[key] = queue[key] || []);
           if (q.length < QMAX) { q.push({ msg, chatId, threadId, cfg }); console.log(`[ponte] fila: +1 em ${key} (${q.length} aguardando)`); }
