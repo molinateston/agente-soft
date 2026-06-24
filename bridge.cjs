@@ -571,12 +571,15 @@ function dlFile(fileId, dest) {
   });
 }
 const MAX_FILE_BYTES = Number(process.env.MAX_FILE_MB || 15) * 1024 * 1024;   // recusa anexo grande (enche disco / pendura)
-function transcribe(audioPath) {
+function transcribe(audioPath, durationSec = 0) {
   return new Promise((resolve, reject) => {
     const proc = trackKid(spawn(VOICE_PY, [VOICE_HANDLER, "transcribe", audioPath], { stdio: ["ignore", "pipe", "pipe"] }));
     let out = "", err = "";
     proc.stdout.on("data", d => (out += d)); proc.stderr.on("data", d => (err += d));
-    const t = setTimeout(() => { proc.kill("SIGTERM"); reject(new Error("transcribe timeout")); }, 4 * 60 * 1000);
+    // timeout PROPORCIONAL à duração (whisper int8 em CPU leva ~6x real-time) — piso 4min, teto via VOICE_TIMEOUT_SEG (default 20min).
+    const capSec = Number(process.env.VOICE_TIMEOUT_SEG || 1200);
+    const toMs = Math.min(capSec, Math.max(240, (durationSec || 0) * 6)) * 1000;
+    const t = setTimeout(() => { proc.kill("SIGTERM"); setTimeout(() => { try { proc.kill("SIGKILL"); } catch {} }, 5000); reject(new Error("transcribe timeout")); }, toMs);
     proc.on("close", (code) => { clearTimeout(t); code === 0 ? resolve(out) : reject(new Error("voz exit " + code + ": " + err.slice(-160))); });
   });
 }
@@ -589,9 +592,21 @@ async function resolveInput(msg) {
   const voice = msg.voice || msg.audio;
   if (voice && VOICE_ENABLED) {
     const dest = `${TMP_DIR}/v-${voice.file_unique_id || Date.now()}.ogg`;
-    try { await dlFile(voice.file_id, dest); const t = (await transcribe(dest)).trim(); if (t) text = text ? `${text}\n${t}` : t; }
-    catch (e) { console.error("[ponte] voz:", e.message); }
-    finally { try { fs.unlinkSync(dest); } catch {} }   // voz é consumida aqui mesmo (vira texto)
+    if (voice.file_size && voice.file_size > MAX_FILE_BYTES) {
+      const a = `[ÁUDIO grande demais (>${MAX_FILE_MB()}MB) — não baixei. Avise o dono e peça pra mandar mais curto ou por texto.]`;
+      text = text ? `${text}\n${a}` : a;
+    } else {
+      try { await dlFile(voice.file_id, dest); const t = (await transcribe(dest, voice.duration || 0)).trim(); if (t) text = text ? `${text}\n${t}` : t; }
+      catch (e) {
+        console.error("[ponte] voz:", e.message);
+        // NUNCA ficar mudo: propaga o MOTIVO da falha pro text → o Claude AVISA o dono em vez de sumir.
+        const a = /timeout/i.test(e.message)
+          ? "[ÁUDIO LONGO: a transcrição passou do tempo limite e foi cortada. Diga ao dono que o áudio é longo demais pro transcritor desta VPS e peça pra MANDAR EM PARTES menores ou ESCREVER o ponto. NUNCA diga que 'nada chegou'.]"
+          : `[ÁUDIO: não consegui transcrever (${e.message.slice(0, 80)}). Avise o dono e peça pra repetir ou mandar por texto.]`;
+        text = text ? `${text}\n${a}` : a;
+      }
+      finally { try { fs.unlinkSync(dest); } catch {} }   // voz é consumida aqui mesmo (vira texto)
+    }
   }
   const photo = (msg.photo && msg.photo[msg.photo.length - 1]) ||
     (msg.document && /^image\//.test(msg.document.mime_type || "") ? msg.document : null);
