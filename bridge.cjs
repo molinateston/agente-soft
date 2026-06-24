@@ -630,7 +630,17 @@ function processOne(msg, chatId, threadId, key, cfg) {
   const media = `${msg.voice || msg.audio ? "🎤" : ""}${msg.photo ? "🖼️" : ""}${msg.document ? "📎" : ""}`;
   console.log(`[ponte] ${cfg.label || "?"} (${cfg.model}/${cfg.effort || "def"}) chat=${chatId} thread=${threadId || "-"} mtid=${msg.message_thread_id || "-"} ${media}`.trimEnd());
   tg("sendChatAction", { chat_id: chatId, action: "typing", ...(threadId ? { message_thread_id: Number(threadId) } : {}) });
+  // ÁUDIO: avisa que tá OUVINDO + mantém o "digitando" vivo durante a transcrição. Sem isto, áudio longo
+  // fica MUDO enquanto transcreve (minutos) e parece travado — o dono não sabe que ela tá ouvindo.
+  let _audioTyping = null;
+  const _voiceMsg = msg.voice || msg.audio;
+  if (_voiceMsg && VOICE_ENABLED) {
+    const _dur = _voiceMsg.duration ? ` (~${Math.ceil(_voiceMsg.duration / 60)}min)` : "";
+    send(chatId, `🎤 Ouvindo seu áudio${_dur}... transcrevendo, já te respondo.`, threadId).catch(() => {});
+    _audioTyping = setInterval(() => { tg("sendChatAction", { chat_id: chatId, action: "typing", ...(threadId ? { message_thread_id: Number(threadId) } : {}) }).catch(() => {}); }, 4000);
+  }
   resolveInput(msg).then(({ text, files }) => {
+    if (_audioTyping) { clearInterval(_audioTyping); _audioTyping = null; }
     // Áudio recebido mas a transcrição ainda não está ligada nesta VPS: em vez de ficar
     // MUDO (pro dono leigo é indistinguível de bot quebrado), orienta o /audio.
     if (!text && (msg.voice || msg.audio) && !VOICE_ENABLED) {
