@@ -47,6 +47,25 @@ if ! systemctl --user is-active --quiet agente; then
   exit 0
 fi
 
+# ---- 1b) ZUMBI? serviço active mas parou de pollar (ACHADO 13) -------
+# A ponte toca ${BRIDGE_DIR}/.alive a cada poll bem-sucedido. Se o serviço
+# está active mas .alive não muda há >180s, o event-loop travou (zumbi):
+# reinicia. Só checa se o arquivo existe (versão antiga da ponte não toca).
+ALIVE="$BRIDGE_DIR/.alive"
+if [ -f "$ALIVE" ]; then
+  AGE=$(( $(date +%s) - $(stat -c %Y "$ALIVE" 2>/dev/null || echo 0) ))
+  if [ "$AGE" -gt 180 ]; then
+    say "ZUMBI — active mas .alive parado ha ${AGE}s — reiniciando"
+    systemctl --user restart agente; sleep 4
+    if systemctl --user is-active --quiet agente; then
+      say "zumbi reiniciado OK"; alert "⚠️ Seu agente tinha travado (estava de pé mas parou de responder) — eu reiniciei sozinho e já voltou."
+    else
+      say "restart de zumbi FALHOU"; alert "‼️ Seu agente travou e não voltou no restart. Precisa olhar a VPS (logs em ~/lean-bridge/bridge.log)."
+    fi
+    exit 0
+  fi
+fi
+
 # ---- 2) login nativo vivo? ------------------------------------------
 # O probe `claude -p` falha por DOIS motivos bem diferentes: (a) login
 # expirado DE VERDADE, ou (b) limite/saturação momentânea da conta (rate

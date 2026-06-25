@@ -40,14 +40,26 @@ const GROUP       = String(process.env.GROUP_CHAT_ID || "");   // grupo com tóp
 // DINÂMICA: re-lê o .env a cada mensagem → liberar/bloquear membro NÃO precisa reiniciar o serviço
 // (antes era const de boot; o restart pra aplicar matava a resposta do agente e disparava a saudação).
 const ENV_FILE = `${__dirname}/.env`;
-function envVal(key) {
+// Cache do .env por mtime: re-lê SÓ quando o arquivo muda (ex.: /atualiza reescreve o .env).
+// Evita IO síncrono no hot path (toda mensagem do grupo) sem perder a dinâmica da allowlist.
+let _envCache = { mtimeMs: -1, map: {} };
+function envMap() {
+  let mtimeMs;
+  try { mtimeMs = fs.statSync(ENV_FILE).mtimeMs; } catch { return _envCache.map; }
+  if (mtimeMs === _envCache.mtimeMs) return _envCache.map;
+  const map = {};
   try {
     for (const line of fs.readFileSync(ENV_FILE, "utf8").split("\n")) {
       const m = line.match(/^\s*([A-Za-z0-9_]+)\s*=\s*(.*?)\s*$/);
-      if (m && m[1] === key) return m[2].replace(/\s+#.*$/, "").trim().replace(/^["']|["']$/g, "");
+      if (m) map[m[1]] = m[2].replace(/\s+#.*$/, "").trim().replace(/^["']|["']$/g, "");
     }
-  } catch {}
-  return "";
+  } catch { return _envCache.map; }
+  _envCache = { mtimeMs, map };
+  return map;
+}
+function envVal(key) {
+  const v = envMap()[key];
+  return v === undefined ? "" : v;
 }
 function allowedSenders() {
   return new Set(
@@ -327,6 +339,7 @@ function persistSession(key, sid, ctx, model) {
 
 // ---------- Telegram ----------
 function tg(method, body) {
+  if (process.env.TEST_NO_TG) return Promise.resolve({ ok: true, result: { message_id: 1 } });   // seam de teste offline (espelha o lean-bridge)
   return new Promise((resolve) => {
     const data = JSON.stringify(body);
     const req = https.request({
@@ -740,6 +753,7 @@ async function poll() {
     ]); }
     catch (e) { console.error("[ponte] getUpdates:", e && e.message); }
     if (!r || !r.ok) { await new Promise((res) => setTimeout(res, 3000)); continue; }   // backoff: evita busy-loop quando a rede cai
+    try { fs.writeFileSync(`${WORKDIR}/.alive`, String(Date.now())); } catch {}   // ACHADO 13 — heartbeat de liveness: healthcheck reinicia se .alive parar (bridge zumbi: active mas não pollando)
     for (const u of r.result) {
       try {
         offset = u.update_id + 1;
@@ -782,6 +796,11 @@ async function poll() {
     }
   }
 }
-acquireLock();   // FIX H — garante instância única antes de abrir o long-poll (evita 409 + sessions.json corrompido)
-console.log(`[ponte-fina] no ar · ${Object.keys(topics).length} tópicos roteados · owner=${OWNER} grupo=${GROUP} · ctx redondo: SOFT=${SOFT_FRAC} HARD=${HARD_FRAC} floor=${STATIC_FLOOR}`);
-poll();
+// no modo SERVIÇO: garante instância única e sobe o poll. No modo TESTE (require): só exporta o miolo puro.
+if (require.main === module) {
+  acquireLock();   // FIX H — garante instância única antes de abrir o long-poll (evita 409 + sessions.json corrompido)
+  console.log(`[ponte-fina] no ar · ${Object.keys(topics).length} tópicos roteados · owner=${OWNER} grupo=${GROUP} · ctx redondo: SOFT=${SOFT_FRAC} HARD=${HARD_FRAC} floor=${STATIC_FLOOR}`);
+  poll();
+} else module.exports = { readLines, readTail, tailBytes, timeBlock, convoBlock, winFor, projDir, sidExists, persistSession, gate,
+  ask, compactSession, withCompactSlot, chunk,
+  _state: () => sessions, _setSessions: (s) => { sessions = s; }, SOFT_FRAC, HARD_FRAC, STATIC_FLOOR };
