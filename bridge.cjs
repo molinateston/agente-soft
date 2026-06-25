@@ -751,6 +751,39 @@ function drainAll() {
   }
 }
 
+// ---------- AGENDADOR DURÁVEL (promessas) — sobrevive a restart E SEMPRE dá retorno ----------
+// O harness só agenda "session-only" (morre quando a sessão de resposta acaba). Aqui uma promessa é um
+// arquivo ${WORKDIR}/promises/<id>.json = {when:<epoch ms ou ISO>, chatId, threadId, prompt, desc}.
+// Dispara na hora (ou assim que o serviço volta de um restart, avisando do atraso); o RESULTADO/erro vai
+// pro dono pelo fluxo normal — NUNCA falha calado.
+const PROMISES_DIR = `${WORKDIR}/promises`;
+try { fs.mkdirSync(PROMISES_DIR, { recursive: true }); } catch {}
+function firePromise(job) {
+  const cfg = route(job.chatId, job.threadId);
+  const lateMin = Math.round((Date.now() - job.when) / 60000);
+  const lateNote = lateMin > 2
+    ? `\n\n[ESTA TAREFA ESTAVA AGENDADA pra ${new Date(job.when).toLocaleString("pt-BR")} e está ~${lateMin}min ATRASADA (o serviço ficou fora nesse meio). Execute agora E avise o dono do atraso, com honestidade.]`
+    : "";
+  const msg = { text: `${job.prompt}${lateNote}`, ...(job.threadId ? { message_thread_id: Number(job.threadId) } : {}) };
+  const key = `promise:${job.chatId}:${job.threadId || "main"}`;
+  if (busy[key] || running() >= MAX_CONCURRENT) (queue[key] = queue[key] || []).push({ msg, chatId: job.chatId, threadId: job.threadId, cfg });
+  else processOne(msg, job.chatId, job.threadId, key, cfg);
+}
+function checkPromises() {
+  let files; try { files = fs.readdirSync(PROMISES_DIR).filter(f => f.endsWith(".json")); } catch { return; }
+  for (const f of files) {
+    const fp = `${PROMISES_DIR}/${f}`;
+    let job; try { job = JSON.parse(fs.readFileSync(fp, "utf8")); } catch { continue; }
+    const when = typeof job.when === "number" ? job.when : Date.parse(job.when);
+    if (job.done || !when || !job.prompt || !job.chatId) continue;
+    if (when > Date.now()) continue;                                  // ainda não venceu
+    job.when = when; job.done = true; job.firedAt = Date.now();
+    try { fs.writeFileSync(fp, JSON.stringify(job)); } catch {}        // marca ANTES de rodar → idempotente (nunca 2×)
+    console.log(`[ponte] promessa ${f} disparada (era pra ${new Date(when).toISOString()})`);
+    try { firePromise(job); } catch (e) { console.error("[ponte] promessa erro:", e.message); }
+  }
+}
+
 async function poll() {
   while (true) {
     let r;
@@ -808,6 +841,7 @@ if (require.main === module) {
   acquireLock();   // FIX H — garante instância única antes de abrir o long-poll (evita 409 + sessions.json corrompido)
   console.log(`[ponte-fina] no ar · ${Object.keys(topics).length} tópicos roteados · owner=${OWNER} grupo=${GROUP} · ctx redondo: SOFT=${SOFT_FRAC} HARD=${HARD_FRAC} floor=${STATIC_FLOOR}`);
   poll();
+  checkPromises(); setInterval(checkPromises, 30000);   // agendador DURÁVEL: dispara promessas vencidas (inclusive as perdidas num restart) + checa a cada 30s
 } else module.exports = { readLines, readTail, tailBytes, timeBlock, convoBlock, winFor, projDir, sidExists, persistSession, gate,
   ask, compactSession, withCompactSlot, chunk,
   _state: () => sessions, _setSessions: (s) => { sessions = s; }, SOFT_FRAC, HARD_FRAC, STATIC_FLOOR };
