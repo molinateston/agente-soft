@@ -134,7 +134,12 @@ let topics = {};
 try { topics = JSON.parse(fs.readFileSync(TOPICS_FILE, "utf8")); }
 catch (e) { console.error("[ponte] topics.json ilegível, usando fallback:", e.message); }
 const DEFAULT = topics.general || { model: process.env.CLAUDE_MODEL || "sonnet", effort: process.env.CLAUDE_EFFORT || "medium", persona: "main.md", label: "Geral" };
-const route = (threadId) => (threadId && topics[threadId]) || DEFAULT;
+// route re-lê o topics.json AO VIVO (cache por mtime): adicionar/mudar tópico vale na PRÓXIMA mensagem, SEM restart.
+let _topicsMtime = -1, _topicsLive = topics;
+const route = (threadId) => {
+  try { const m = fs.statSync(TOPICS_FILE).mtimeMs; if (m !== _topicsMtime) { _topicsLive = JSON.parse(fs.readFileSync(TOPICS_FILE, "utf8")); _topicsMtime = m; } } catch {}
+  return (threadId && _topicsLive[threadId]) || _topicsLive.general || DEFAULT;
+};
 
 let sessions = {};
 try { sessions = JSON.parse(fs.readFileSync(SESS_FILE, "utf8")); }
@@ -562,7 +567,7 @@ function ask(key, text, cfg, chatId, threadId) {
       console.error("[ponte] claude falhou:", String(out.err || "").slice(-400));   // stack/stderr só no LOG, nunca no chat
       // ok:false → processOne NÃO persiste, preservando o estado de compactação ({sid:null,handoff})
       //            pra o próximo turno re-semear em vez de virar amnésia.
-      return { result: "⚠️ Deu erro do meu lado processando isso. Tenta de novo? Se insistir, me manda 'reinicia'.", sid: out.sid, ctx: out.ctx || 0, ok: false };
+      return { result: "⚠️ Deu erro do meu lado processando essa — manda de novo daqui a pouco. (Quase sempre é sobrecarga passageira, já passa; reiniciar não resolve isso.)", sid: out.sid, ctx: out.ctx || 0, ok: false };
     }
     return { result: out.result, sid: out.sid, ctx: out.ctx || 0, ok: true };
   })();
