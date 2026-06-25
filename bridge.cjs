@@ -136,9 +136,11 @@ catch (e) { console.error("[ponte] topics.json ilegível, usando fallback:", e.m
 const DEFAULT = topics.general || { model: process.env.CLAUDE_MODEL || "sonnet", effort: process.env.CLAUDE_EFFORT || "medium", persona: "main.md", label: "Geral" };
 // route re-lê o topics.json AO VIVO (cache por mtime): adicionar/mudar tópico vale na PRÓXIMA mensagem, SEM restart.
 let _topicsMtime = -1, _topicsLive = topics;
-const route = (threadId) => {
+const route = (chatId, threadId) => {
   try { const m = fs.statSync(TOPICS_FILE).mtimeMs; if (m !== _topicsMtime) { _topicsLive = JSON.parse(fs.readFileSync(TOPICS_FILE, "utf8")); _topicsMtime = m; } } catch {}
-  return (threadId && _topicsLive[threadId]) || _topicsLive.general || DEFAULT;
+  const t = _topicsLive;
+  // chave COMPOSTA chatId:threadId — o Telegram numera thread POR grupo, então sem o chatId grupos diferentes COLIDEM. Fallback: thread solto (legado) -> geral.
+  return (threadId && t[`${chatId}:${threadId}`]) || (threadId && t[threadId]) || t.general || DEFAULT;
 };
 
 let sessions = {};
@@ -154,7 +156,7 @@ let _hyg = 0;
 for (const k in sessions) {
   const s = sessions[k];
   if (s && typeof s === "object") {
-    const mdl = s.model || (route(k.split(":")[1]) || {}).model || "sonnet";   // usa o modelo SALVO (tópico pode ter sido removido)
+    const mdl = s.model || (route(k.split(":")[0], k.split(":")[1]) || {}).model || "sonnet";   // usa o modelo SALVO (tópico pode ter sido removido)
     if ((s.ctx || 0) > 1.25 * winFor(mdl)) { s.ctx = 0; s.floor = STATIC_FLOOR; _hyg++; }
   }
 }
@@ -780,7 +782,7 @@ async function poll() {
         const hasInput = msg.text || msg.caption || msg.voice || msg.audio || msg.photo || msg.document;
         if (!hasInput) continue;                             // nada que eu saiba processar
         const key = `${chatId}:${threadId || "main"}`;       // 1 sessão por chat+tópico
-        const cfg = route(threadId);
+        const cfg = route(chatId, threadId);
         // /atualiza FURA A FILA — funciona MESMO travado: dispara o update separado (que reinicia e mata a trava).
         // Sem isto, /atualiza ficava ENFILEIRADO atrás da sessão presa → o cliente só destravava pela VPS (errado).
         if (/^\/atualiza/i.test((msg.text || msg.caption || "").trim())) {
