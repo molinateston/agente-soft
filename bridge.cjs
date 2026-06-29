@@ -115,6 +115,7 @@ const AVISO_PESADA_MS = Number(process.env.AVISO_PESADA_SEG || 25) * 1000; // pa
 const SOFT_FRAC    = Number(process.env.SOFT_FRAC || 0.62);   // fração da janela de CONVERSA onde COMPACTA (resumo)
 const HARD_FRAC    = Number(process.env.HARD_FRAC || 0.78);   // backstop bruto se a compactação falhar
 const STATIC_FLOOR = Number(process.env.STATIC_FLOOR || 30000); // piso estático estimado (system+tools+persona); seed do floor por sessão
+const FLOOR_CAP    = Number(process.env.FLOOR_CAP || 60000);    // TETO do piso: enxoval real nunca passa disto. Floor acima = turno pesado/fan-out envenenando → trava aqui, senão o SOFT despenca e compacta a cada 1-2 msgs ("esquece o que falávamos")
 const SNAPSHOT_EVERY = Number(process.env.SNAPSHOT_EVERY || 8); // a cada N turnos guarda um tail-handoff (sobrevive a poda willow)
 const COMPACT_TIMEOUT_MS = Number(process.env.COMPACT_TIMEOUT_SEG || 120) * 1000;
 const MEMVIVA_FILE = process.env.MEMVIVA_FILE || `${BRAIN}/MEMORIA-VIVA.md`;   // memória de trabalho (decisões/projetos/pendências ATIVAS): SEMPRE no contexto (estilo NAIA)
@@ -326,8 +327,8 @@ async function compactSession(sid, cfg) {
 // ctxConv = crescimento da CONVERSA (ctx total - piso estático); SOFT/HARD escalam pela janela do modelo.
 function gate(prev, model) {
   const win = winFor(model);
-  const ctx = (prev && typeof prev === "object") ? (prev.ctx || 0) : 0;
-  const floor = Math.min((prev && typeof prev === "object" && prev.floor) || STATIC_FLOOR, win - 20000);
+  const ctx = Math.min((prev && typeof prev === "object") ? (prev.ctx || 0) : 0, win);   // clampa fan-out agregado: ctx de UMA sessão não excede a janela
+  const floor = Math.min((prev && typeof prev === "object" && prev.floor) || STATIC_FLOOR, FLOOR_CAP, win - 20000);   // CAP: ignora floor envenenado (inclusive legado)
   const ctxConv = Math.max(0, ctx - floor);
   return { win, floor, ctxConv, SOFT: SOFT_FRAC * (win - floor), HARD: HARD_FRAC * (win - floor) };
 }
@@ -339,8 +340,8 @@ function persistSession(key, sid, ctx, model) {
   const prev = sessions[key];
   const same = prev && typeof prev === "object" && prev.sid === sid;
   // floor = MIN(ctx>0 já visto neste sid) ≈ piso estático puro; ignora leitura ctx=0 (cache-miss/erro)
-  const floor = same ? (ctx > 0 ? Math.min(prev.floor || ctx, ctx) : (prev.floor || STATIC_FLOOR))
-                     : (ctx > 0 ? ctx : STATIC_FLOOR);
+  const floor = Math.min(FLOOR_CAP, same ? (ctx > 0 ? Math.min(prev.floor || ctx, ctx) : (prev.floor || STATIC_FLOOR))
+                                         : (ctx > 0 ? ctx : STATIC_FLOOR));   // CAP: nunca grava piso envenenado por turno pesado/fan-out
   const turns = (same ? (prev.turns || 0) : 0) + 1;
   const compactCount = same ? (prev.compactCount || 0) : 0;
   let handoff = same ? (prev.handoff || "") : "";
@@ -452,7 +453,7 @@ function ask(key, text, cfg, chatId, threadId) {
       const proc = trackKid(spawn(CLAUDE_BIN, args, { cwd: WORKDIR, env: childEnv(), detached: true }));
 
       const t0 = Date.now();
-      let buf = "", err = "", finalResult = null, finalSid = null, finalUsage = null, settled = false, timedOut = false, lastActivity = Date.now();
+      let buf = "", err = "", finalResult = null, finalSid = null, finalUsage = null, mainUsage = null, settled = false, timedOut = false, lastActivity = Date.now();
       let finalIsError = false, finalErrors = "";
       let lastAction = "começando…", panelId = null;
       const elapsed = () => { const s = Math.round((Date.now() - t0) / 1000);
@@ -505,6 +506,7 @@ function ask(key, text, cfg, chatId, threadId) {
           let ev; try { ev = JSON.parse(line); } catch { continue; }   // linha parcial/ruído: ignora
           if (ev.session_id && !finalSid) finalSid = ev.session_id;     // sid já vem no init
           if (ev.type === "assistant" && ev.message && ev.message.content) {
+            if (ev.message.usage && !ev.isSidechain) mainUsage = ev.message.usage;   // usage da SESSÃO PRINCIPAL (não dos braços) = contexto real; result.usage agrega o fan-out e infla
             for (const c of ev.message.content) {
               if (c.type === "tool_use") {
                 const alvo = (c.input && (c.input.description || c.input.command || c.input.file_path || c.input.pattern)) || "";
@@ -520,7 +522,8 @@ function ask(key, text, cfg, chatId, threadId) {
       proc.on("close", async () => {
         const dur = elapsed(), hadPanel = panelId != null;
         if (hadPanel) console.log(`[ponte] ✅ tarefa concluída em ${dur} (teve painel de progresso)`);
-        const ctx = finalUsage ? ((finalUsage.input_tokens||0) + (finalUsage.cache_read_input_tokens||0) + (finalUsage.cache_creation_input_tokens||0)) : 0;
+        const _u = mainUsage || finalUsage;   // mainUsage = contexto da conversa principal; finalUsage (result) agrega o fan-out e infla
+        const ctx = _u ? ((_u.input_tokens||0) + (_u.cache_read_input_tokens||0) + (_u.cache_creation_input_tokens||0)) : 0;
         if (timedOut)            done({ result: timedOut === "cap" ? `⚠️ A tarefa bateu o teto de segurança (${Math.round(HARD_CAP_MS/60000)}min) e eu parei — provavelmente travou. Me diz que eu retomo.` : `⚠️ A tarefa ficou ${Math.round(STALL_MS/60000)}min sem dar nenhum sinal (travou) e eu cortei. Me fala que eu retomo.`, sid: finalSid, ctx, err });
         else if (finalIsError && finalResult == null) done({ result: null, sid: finalSid, ctx, err: (finalErrors || err || buf) });   // result vazio + is_error → erro (tratado fora)
         else if (finalResult != null) done({ result: finalResult || "(resposta vazia)", sid: finalSid, ctx, err });
