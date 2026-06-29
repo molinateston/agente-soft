@@ -112,8 +112,8 @@ const HEARTBEAT_MS    = Number(process.env.HEARTBEAT_SEG || 12) * 1000;   // ree
 const AVISO_PESADA_MS = Number(process.env.AVISO_PESADA_SEG || 25) * 1000; // painel só nasce depois disso
 
 // ---------- CONTEXTO REDONDO: knobs (motor portado do LEON — compactação semeada + continuidade) ----------
-const SOFT_FRAC    = Number(process.env.SOFT_FRAC || 0.62);   // fração da janela de CONVERSA onde COMPACTA (resumo)
-const HARD_FRAC    = Number(process.env.HARD_FRAC || 0.78);   // backstop bruto se a compactação falhar
+const SOFT_FRAC    = Number(process.env.SOFT_FRAC || 0.80);   // fração da janela de CONVERSA onde COMPACTA (resumo)
+const HARD_FRAC    = Number(process.env.HARD_FRAC || 0.88);   // backstop bruto se a compactação falhar
 const STATIC_FLOOR = Number(process.env.STATIC_FLOOR || 30000); // piso estático estimado (system+tools+persona); seed do floor por sessão
 const FLOOR_CAP    = Number(process.env.FLOOR_CAP || 60000);    // TETO do piso: enxoval real nunca passa disto. Floor acima = turno pesado/fan-out envenenando → trava aqui, senão o SOFT despenca e compacta a cada 1-2 msgs ("esquece o que falávamos")
 const SNAPSHOT_EVERY = Number(process.env.SNAPSHOT_EVERY || 8); // a cada N turnos guarda um tail-handoff (sobrevive a poda willow)
