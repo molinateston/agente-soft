@@ -397,6 +397,51 @@ async function send(chatId, text, threadId) {
   for (const piece of chunk(text, 4000)) await sendChunk(chatId, piece, base);
 }
 
+// ---------- ENTREGA DE ARQUIVO (imagem/doc que o AGENTE gera) — porta do LEON ----------
+const SENDABLE_IMG = /\.(png|jpe?g|gif|webp)$/i;
+const SENDABLE_DOC = /\.(pdf|mp4|mov|mp3|wav|ogg|m4a|zip|docx?|xlsx?|pptx?|csv)$/i;
+function tgSendFile(method, field, chatId, filePath, base) {
+  return new Promise((resolve) => {
+    if (process.env.TEST_NO_TG) return resolve({ ok: true });
+    let buf; try { buf = fs.readFileSync(filePath); } catch { return resolve(null); }
+    const fname = (filePath.split("/").pop() || "arquivo").replace(/[\r\n"\\]/g, "_");
+    const bd = "----lean" + Date.now();
+    const pre = [];
+    const fld = (n, v) => pre.push(`--${bd}\r\nContent-Disposition: form-data; name="${n}"\r\n\r\n${v}\r\n`);
+    fld("chat_id", chatId);
+    if (base && base.message_thread_id) fld("message_thread_id", base.message_thread_id);
+    const head = Buffer.from(pre.join("") + `--${bd}\r\nContent-Disposition: form-data; name="${field}"; filename="${fname}"\r\nContent-Type: application/octet-stream\r\n\r\n`, "utf8");
+    const tail = Buffer.from(`\r\n--${bd}--\r\n`, "utf8");
+    const body = Buffer.concat([head, buf, tail]);
+    const req = https.request({
+      hostname: "api.telegram.org", path: `/bot${TG_TOKEN}/${method}`, method: "POST",
+      headers: { "Content-Type": `multipart/form-data; boundary=${bd}`, "Content-Length": body.length }
+    }, (res) => { let b = ""; res.on("data", c => (b += c)); res.on("end", () => { try { resolve(JSON.parse(b)); } catch { resolve(null); } }); });
+    req.on("error", () => resolve(null));
+    req.setTimeout(120000, () => { req.destroy(); resolve(null); });
+    req.write(body); req.end();
+  });
+}
+async function deliverFiles(chatId, text, threadId) {
+  if (!text) return;
+  const base = threadId ? { message_thread_id: Number(threadId) } : {};
+  const seen = new Set();
+  const re = /\/(?:tmp|home|root|mnt|var|opt|srv)\/[^\s'"`)\]>]+\.[A-Za-z0-9]{2,5}/g;
+  let m;
+  while ((m = re.exec(text))) {
+    const p = m[0].replace(/[.,;:)]+$/, "");
+    if (seen.has(p)) continue; seen.add(p);
+    if (!SENDABLE_IMG.test(p) && !SENDABLE_DOC.test(p)) continue;
+    let st; try { st = fs.statSync(p); } catch { continue; }
+    if (!st.isFile() || st.size === 0 || st.size > 50 * 1024 * 1024) continue;
+    try {
+      if (SENDABLE_IMG.test(p) && st.size <= 10 * 1024 * 1024) await tgSendFile("sendPhoto", "photo", chatId, p, base);
+      else await tgSendFile("sendDocument", "document", chatId, p, base);
+      console.log(`[ponte] 📤 arquivo entregue: ${p} (${Math.round(st.size/1024)}KB)`);
+    } catch (e) { console.error("[ponte] falha ao entregar arquivo:", p, e.message); }
+  }
+}
+
 // ---------- Claude Code (o cérebro) · stream-json + painel de progresso ao vivo ----------
 // Verdade final = sempre o evento `result` (mesmo contrato do json de antes). O streaming
 // só ADICIONA heartbeat: se qualquer linha falhar, cai no comportamento de erro de hoje.
@@ -742,6 +787,7 @@ function processOne(msg, chatId, threadId, key, cfg) {
       // ok:false → também NÃO sobrescreve, pelo mesmo motivo (turno que falhou não vira amnésia).
       if (ok) persistSession(key, sid, ctx, cfg.model);
       await send(chatId, result, threadId);
+      try { await deliverFiles(chatId, result, threadId); } catch (e) { console.error("[ponte] deliverFiles:", e.message); }
     });   // NÃO apaga img/doc aqui (era o bug: 1ª foto sumia antes da 2ª msg): ficam no TMP_DIR pra referência cross-mensagem; sweepTmp() limpa por idade.
   }).catch((e) => console.error("[ponte] erro:", e.message))
     .finally(() => { clearInterval(_typing); busy[key] = false; drainAll(); });
