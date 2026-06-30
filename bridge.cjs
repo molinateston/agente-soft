@@ -435,7 +435,10 @@ async function deliverFiles(chatId, text, threadId) {
     let st; try { st = fs.statSync(p); } catch { continue; }
     if (!st.isFile() || st.size === 0 || st.size > 50 * 1024 * 1024) continue;
     try {
+      const ext = (p.toLowerCase().match(/\.[a-z0-9]+$/) || [""])[0];
+      const isAudio = [".mp3", ".m4a", ".ogg", ".oga", ".opus", ".wav"].includes(ext);
       if (SENDABLE_IMG.test(p) && st.size <= 10 * 1024 * 1024) await tgSendFile("sendPhoto", "photo", chatId, p, base);
+      else if (isAudio) { const r = await tgSendFile("sendAudio", "audio", chatId, p, base); if (!r || !r.ok) await tgSendFile("sendDocument", "document", chatId, p, base); }  // áudio → player nativo do TG (1x/1.5x/2x); cai pra doc se o TG recusar o formato
       else await tgSendFile("sendDocument", "document", chatId, p, base);
       console.log(`[ponte] 📤 arquivo entregue: ${p} (${Math.round(st.size/1024)}KB)`);
     } catch (e) { console.error("[ponte] falha ao entregar arquivo:", p, e.message); }
