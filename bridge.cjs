@@ -731,14 +731,18 @@ function acquireLock() {
 // FIX G — encerramento limpo: mata filhos claude vivos e solta o lock (não deixa órfão queimando cota no restart).
 let _shuttingDown = false;
 function shutdown(sig) {
-  if (_shuttingDown) return; _shuttingDown = true;
-  console.error(`[ponte] ${sig} — matando ${kids.size} filho(s) e saindo`);
-  for (const p of kids) killTree(p, "SIGTERM");   // mata a árvore (cabeça + braços), não só o pai
-  setTimeout(() => {
-    for (const p of kids) killTree(p, "SIGKILL");
-    try { if (Number(fs.readFileSync(LOCK_FILE, "utf8")) === process.pid) fs.unlinkSync(LOCK_FILE); } catch {}
-    process.exit(0);
-  }, kids.size ? 4000 : 0);   // sem filho em voo = restart instantâneo
+  if (_shuttingDown) return; _shuttingDown = true;   // o poll (while !_shuttingDown) para de pegar mensagem nova
+  // DRENA: espera a(s) resposta(s) EM VOO terminarem antes de morrer — restart NUNCA mata a resposta do dono.
+  const DRAIN_MS = Number(process.env.DRAIN_SEG || 75) * 1000;   // < TimeoutStopSec (90s) do serviço, senão o systemd SIGKILL antes
+  const t0 = Date.now();
+  console.error(`[ponte] ${sig} — drenando ${running()} tarefa(s) em voo (até ${Math.round(DRAIN_MS / 1000)}s) antes de sair`);
+  (function drain() {
+    if (running() === 0 || Date.now() - t0 >= DRAIN_MS) {
+      for (const p of kids) killTree(p, "SIGKILL");   // mata só o que estourou o dreno (raro: tarefa longa demais)
+      try { if (Number(fs.readFileSync(LOCK_FILE, "utf8")) === process.pid) fs.unlinkSync(LOCK_FILE); } catch {}
+      process.exit(0);
+    } else setTimeout(drain, 1000);
+  })();
 }
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT",  () => shutdown("SIGINT"));
@@ -844,7 +848,8 @@ function checkPromises() {
 }
 
 async function poll() {
-  while (true) {
+  while (!_shuttingDown) {   // no shutdown: para de pegar mensagem nova; o dreno espera as em voo terminarem
+
     let r;
     try { r = await Promise.race([
       tg("getUpdates", { offset, timeout: 30 }),
