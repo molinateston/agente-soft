@@ -15,7 +15,7 @@
 //     "# A CONVERSA CONTINUA" → o agente NUNCA acha que "começou agora".
 // O resumo é SEMPRE via sonnet (janela 400k), mesmo que o modelo do cliente seja outro.
 // =====================================================================
-const { spawn } = require("child_process");
+const { spawn, spawnSync } = require("child_process");
 const fs = require("fs");
 const https = require("https");
 const os = require("os");
@@ -490,6 +490,7 @@ function ask(key, text, cfg, chatId, threadId) {
                     "--permission-mode", "bypassPermissions",   // agência total: escreve/edita arquivo + roda Bash (acesso já é só OWNER/allowlist)
                     "--add-dir", WORKDIR, "--add-dir", BRAIN, "--add-dir", TMP_DIR, "--add-dir", projDir()];
       if (cfg.effort) args.push("--effort", cfg.effort);                 // quanto ele PENSA: high=estratégico, medium=operacional, low=casual
+      if (TURN_BUDGET_USD > 0) args.push("--max-budget-usd", String(TURN_BUDGET_USD));   // teto de USD por turno (antes só o TEMPO parava um loop caro)
       if (resumeSid) args.push("--resume", resumeSid);
       // identidade: doutrina-base FORTE (do repo agente-soft, auto-atualiza → cai em todos os clientes)
       // + a persona específica do dono (nome/tom). A base vem PRIMEIRO pra cravar "você é o agente
@@ -738,6 +739,7 @@ const MAX_CONCURRENT = Number(process.env.MAX_CONCURRENT || 3);   // teto GLOBAL
 const running = () => Object.values(busy).filter(Boolean).length;
 // ESCALADA DE ERRO: falhas consecutivas por tópico — na 3ª a mensagem deixa de dizer "é passageiro".
 const _failStreak = {};
+const TURN_BUDGET_USD = Number(process.env.TURN_BUDGET_USD || 8);   // teto de custo por turno (anti-runaway; 0 desliga)
 
 // não derrubar o processo por exceção solta: loga e segue (o serviço tem Restart=always de qualquer jeito)
 process.on("uncaughtException",  (e) => console.error("[ponte] uncaughtException:", e && e.stack || e));
@@ -942,6 +944,7 @@ async function poll() {
             `fila: ${filas.length ? filas.join(", ") : "vazia"}`,
             `promessas pendentes: ${promCount}${promNext ? ` (próxima: ${new Date(promNext).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })})` : ""}`,
             `transcrição de áudio: ${VOICE_ENABLED ? "✅" : "desligada"}`,
+            (d => d.length ? `dependências: ⚠️ ${d.join(" · ")}` : `dependências: ✅`)(depsCheck()),
             falhas.length ? `últimas falhas no log:\n${falhas.join("\n")}` : `últimas falhas no log: nenhuma recente ✅`,
           ].join("\n");
           send(chatId, txt, threadId).catch(() => {});
@@ -964,11 +967,22 @@ async function poll() {
   }
 }
 // no modo SERVIÇO: garante instância única e sobe o poll. No modo TESTE (require): só exporta o miolo puro.
+// SELF-CHECK de dependências (boot + /status): pega claude não-executável e ffmpeg sumido.
+// No boot AVISA o dono SÓ se algo estiver quebrado (silêncio = saudável; sem spam a cada restart).
+function depsCheck() {
+  const probs = [];
+  try { fs.accessSync(CLAUDE_BIN, fs.constants.X_OK); } catch { probs.push(`claude não-executável (${CLAUDE_BIN})`); }
+  if (VOICE_ENABLED) { try { if (spawnSync("which", ["ffmpeg"]).status !== 0) probs.push("ffmpeg ausente (transcrição degradada)"); } catch {} }
+  return probs;
+}
+
 if (require.main === module) {
   acquireLock();   // FIX H — garante instância única antes de abrir o long-poll (evita 409 + sessions.json corrompido)
   console.log(`[ponte-fina] no ar · ${Object.keys(topics).length} tópicos roteados · owner=${OWNER} grupo=${GROUP} · ctx redondo: SOFT=${SOFT_FRAC} HARD=${HARD_FRAC} floor=${STATIC_FLOOR}`);
   poll();
   checkPromises(); setInterval(checkPromises, 30000);   // agendador DURÁVEL: dispara promessas vencidas (inclusive as perdidas num restart) + checa a cada 30s
+  // SELF-CHECK do boot: fala SÓ se algo estiver quebrado (o "no ar" cego anunciava saúde sem checar nada)
+  setTimeout(() => { const probs = depsCheck(); if (probs.length) send(OWNER, `⚠️ Subi com pendência(s):\n· ${probs.join("\n· ")}\nManda /status pra acompanhar.`).catch(() => {}); }, 3000);
 } else module.exports = { readLines, readTail, tailBytes, timeBlock, convoBlock, winFor, projDir, sidExists, persistSession, gate,
   ask, compactSession, withCompactSlot, chunk,
   _state: () => sessions, _setSessions: (s) => { sessions = s; }, SOFT_FRAC, HARD_FRAC, STATIC_FLOOR };
