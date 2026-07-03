@@ -155,7 +155,11 @@ let sessions = {};
 try { sessions = JSON.parse(fs.readFileSync(SESS_FILE, "utf8")); }
 catch (e) {
   try { sessions = JSON.parse(fs.readFileSync(`${SESS_FILE}.bak`, "utf8")); console.error("[ponte] sessions.json corrompido, restaurei do .bak"); }
-  catch { if (fs.existsSync(SESS_FILE)) console.error("[ponte] sessions.json ilegível (e sem .bak), começando vazio:", e.message); }
+  catch { if (fs.existsSync(SESS_FILE)) {
+    console.error("[ponte] sessions.json ilegível (e sem .bak), começando vazio:", e.message);
+    // PERDA DE ESTADO NUNCA É CALADA: o dono fica sabendo que o fio pode ter se perdido (3s: espera o boot assentar)
+    setTimeout(() => send(OWNER, "⚠️ Meu registro de sessões corrompeu e recomecei sem ele. As conversas continuam, mas posso ter perdido o fio de algum tópico — se eu parecer perdido, me relembra em 1 linha.").catch(() => {}), 3000);
+  } }
 }
 // CAMADA 1 — higiene de ctx órfão no boot: zera ctx fisicamente impossível (herdado de outra
 // linhagem de sessão). Limiar = 1.25× janela do modelo da sessão (250k opus / 500k sonnet),
@@ -185,7 +189,8 @@ const saveSessions = () => {
 // operar as APIs do DONO. Cada cliente tem o próprio .env (chaves dele), não há vazamento cruzado.
 // TZ p/ horário de Brasília (VPS roda em UTC; sem isto o agente acha que é 3h mais tarde — "já
 // passou das 11h" às 9h). Cliente pode sobrescrever pondo TZ no .env. Vale o childEnv (o claude herda).
-const childEnv = () => { const e = { ...process.env, TZ: process.env.TZ || "America/Sao_Paulo" }; delete e.TELEGRAM_BOT_TOKEN; return e; };
+// mescla o .env FRESCO (envMap) por spawn: chave nova/trocada no .env já vale aqui, sem restart.
+const childEnv = () => { const e = { ...process.env, ...envMap(), TZ: process.env.TZ || "America/Sao_Paulo" }; delete e.TELEGRAM_BOT_TOKEN; return e; };
 
 // lê as primeiras N linhas de um arquivo pequeno (MEMÓRIA VIVA). Arquivos pequenos: readFileSync ok.
 const readLines = (file, maxLines) => { try { return fs.readFileSync(file, "utf8").split("\n").slice(0, maxLines).join("\n").trim(); } catch { return ""; } };
@@ -437,18 +442,29 @@ async function deliverFiles(chatId, text, threadId) {
     try {
       const ext = (p.toLowerCase().match(/\.[a-z0-9]+$/) || [""])[0];
       const isAudio = [".mp3", ".m4a", ".ogg", ".oga", ".opus", ".wav"].includes(ext);
-      if (SENDABLE_IMG.test(p) && st.size <= 10 * 1024 * 1024) await tgSendFile("sendPhoto", "photo", chatId, p, base);
-      else if (isAudio) { const r = await tgSendFile("sendAudio", "audio", chatId, p, base); if (!r || !r.ok) await tgSendFile("sendDocument", "document", chatId, p, base); }  // áudio → player nativo do TG (1x/1.5x/2x); cai pra doc se o TG recusar o formato
-      else await tgSendFile("sendDocument", "document", chatId, p, base);
-      console.log(`[ponte] 📤 arquivo entregue: ${p} (${Math.round(st.size/1024)}KB)`);
-    } catch (e) { console.error("[ponte] falha ao entregar arquivo:", p, e.message); }
+      let sent = null;
+      if (SENDABLE_IMG.test(p) && st.size <= 10 * 1024 * 1024) {
+        sent = await tgSendFile("sendPhoto", "photo", chatId, p, base);
+        if (!(sent && sent.ok)) sent = await tgSendFile("sendDocument", "document", chatId, p, base);   // foto recusada → tenta como documento
+      }
+      else if (isAudio) { sent = await tgSendFile("sendAudio", "audio", chatId, p, base); if (!(sent && sent.ok)) sent = await tgSendFile("sendDocument", "document", chatId, p, base); }  // áudio → player nativo do TG; cai pra doc se recusar
+      else sent = await tgSendFile("sendDocument", "document", chatId, p, base);
+      if (sent && sent.ok) console.log(`[ponte] 📤 arquivo entregue: ${p} (${Math.round(st.size/1024)}KB)`);
+      else {
+        // ENTREGA FALHOU ≠ SILÊNCIO: o dono fica sabendo que o arquivo EXISTE e onde está (antes era só log)
+        console.error("[ponte] entrega FALHOU:", p, (sent && sent.description) || "sem resposta do Telegram");
+        send(chatId, `⚠️ Gerei o arquivo mas o Telegram recusou a entrega (${p.split("/").pop()}${sent && sent.description ? ": " + String(sent.description).slice(0, 80) : ""}). Ele está salvo em ${p} — me pede que eu tento de novo ou converto.`, threadId).catch(() => {});
+      }
+    } catch (e) {
+      console.error("[ponte] falha ao entregar arquivo:", p, e.message);
+      send(chatId, `⚠️ Gerei o arquivo mas não consegui te entregar (${p.split("/").pop()}): ${String(e.message).slice(0, 80)}. Ele está salvo em ${p}.`, threadId).catch(() => {});
+    }
   }
 }
 
 // ---------- Claude Code (o cérebro) · stream-json + painel de progresso ao vivo ----------
 // Verdade final = sempre o evento `result` (mesmo contrato do json de antes). O streaming
 // só ADICIONA heartbeat: se qualquer linha falhar, cai no comportamento de erro de hoje.
-const ASK_TIMEOUT_MS = Number(process.env.ASK_TIMEOUT_SEG || 900) * 1000;   // (legado) — substituído pelo watchdog de INATIVIDADE abaixo
 // WATCHDOG DE INATIVIDADE (paridade com o terminal: NÃO tem teto fixo de 15min). Mata SÓ se o claude
 // TRAVAR de verdade (nenhum output por STALL_MS) ou bater o teto absoluto (anti-runaway). Tarefa longa
 // que está ATIVA trabalhando roda até o fim.
@@ -627,8 +643,16 @@ function ask(key, text, cfg, chatId, threadId) {
       console.error("[ponte] claude falhou:", String(out.err || "").slice(-400));   // stack/stderr só no LOG, nunca no chat
       // ok:false → processOne NÃO persiste, preservando o estado de compactação ({sid:null,handoff})
       //            pra o próximo turno re-semear em vez de virar amnésia.
+      // ESCALADA: na 3ª falha seguida do MESMO tópico, para de dizer "é passageiro" — mostra a causa
+      // e pede o dono (erro permanente tipo login vencido/chave morta não pode virar loop infinito).
+      const streak = (_failStreak[key] = (_failStreak[key] || 0) + 1);
+      if (streak >= 3) {
+        const causa = String(out.err || "").split("\n").map(s => s.trim()).filter(Boolean).pop() || "";
+        return { result: `🚨 Já falhei ${streak} vezes seguidas nesse tópico — isso NÃO parece passageiro.${causa ? `\nÚltimo erro: ${causa.slice(0, 200)}` : ""}\nManda /status que eu te mostro o quadro; se for login/chave/cota, manda /atualiza ou fala comigo que eu te digo o que precisa.`, sid: out.sid, ctx: out.ctx || 0, ok: false };
+      }
       return { result: "⚠️ Deu erro do meu lado processando essa — manda de novo daqui a pouco. (Quase sempre é sobrecarga passageira, já passa; reiniciar não resolve isso.)", sid: out.sid, ctx: out.ctx || 0, ok: false };
     }
+    _failStreak[key] = 0;   // sucesso zera a régua
     return { result: out.result, sid: out.sid, ctx: out.ctx || 0, ok: true };
   })();
 }
@@ -712,6 +736,8 @@ let offset = 0, busy = {}, queue = {};
 const QMAX = 8;   // teto da fila por tópico (anti-abuso)
 const MAX_CONCURRENT = Number(process.env.MAX_CONCURRENT || 3);   // teto GLOBAL de claudes simultâneos (anti-OOM na VPS pequena)
 const running = () => Object.values(busy).filter(Boolean).length;
+// ESCALADA DE ERRO: falhas consecutivas por tópico — na 3ª a mensagem deixa de dizer "é passageiro".
+const _failStreak = {};
 
 // não derrubar o processo por exceção solta: loga e segue (o serviço tem Restart=always de qualquer jeito)
 process.on("uncaughtException",  (e) => console.error("[ponte] uncaughtException:", e && e.stack || e));
@@ -888,11 +914,48 @@ async function poll() {
           send(chatId, `🔄 Atualizando pra última versão... o update roda separado e me reinicio sozinho (mato qualquer trava). Já volto com o "✅ No ar!".`, threadId).catch(() => {});
           continue;
         }
+        // /status → saúde do agente SEM sair do Telegram: uptime, ocupado/fila, promessas, últimas
+        // falhas do log. Instantâneo (sem Claude). Também fura a fila (funciona mesmo com tópico travado).
+        if (/^\/status/i.test((msg.text || "").trim())) {
+          let promCount = 0, promNext = 0;
+          try {
+            for (const f of fs.readdirSync(PROMISES_DIR).filter(x => x.endsWith(".json"))) {
+              try { const j = JSON.parse(fs.readFileSync(`${PROMISES_DIR}/${f}`, "utf8"));
+                if (!j.done) { promCount++; const w = typeof j.when === "number" ? j.when : Date.parse(j.when);
+                  if (w && (!promNext || w < promNext)) promNext = w; } } catch {}
+            }
+          } catch {}
+          const upMin = Math.floor(process.uptime() / 60);
+          const up = upMin < 60 ? `${upMin}min` : `${Math.floor(upMin / 60)}h${upMin % 60 ? (upMin % 60) + "min" : ""}`;
+          const ocup = Object.keys(busy).filter(k => busy[k]);
+          const filas = Object.entries(queue).filter(([, q]) => q && q.length).map(([k, q]) => `${k} (${q.length})`);
+          let falhas = [];
+          try {
+            falhas = tailBytes(`${WORKDIR}/bridge.log`, 65536).split("\n")
+              .filter(l => /falh|erro|error|corromp|ileg[ií]vel|timeout|não consegui|FALHOU/i.test(l) && !/getUpdates|status/i.test(l))
+              .slice(-3).map(l => "· " + l.slice(0, 150));
+          } catch {}
+          const txt = [
+            `🩺 status`,
+            `no ar há: ${up}`,
+            `ocupado agora: ${ocup.length ? `${ocup.length}/${MAX_CONCURRENT} (${ocup.join(", ")})` : "nada (ocioso)"}`,
+            `fila: ${filas.length ? filas.join(", ") : "vazia"}`,
+            `promessas pendentes: ${promCount}${promNext ? ` (próxima: ${new Date(promNext).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })})` : ""}`,
+            `transcrição de áudio: ${VOICE_ENABLED ? "✅" : "desligada"}`,
+            falhas.length ? `últimas falhas no log:\n${falhas.join("\n")}` : `últimas falhas no log: nenhuma recente ✅`,
+          ].join("\n");
+          send(chatId, txt, threadId).catch(() => {});
+          continue;
+        }
         if (busy[key] || running() >= MAX_CONCURRENT) {       // tópico ocupado OU teto global → ENFILEIRA (não descarta)
           const q = (queue[key] = queue[key] || []);
           if (q.length < QMAX) { q.push({ msg, chatId, threadId, cfg }); console.log(`[ponte] fila: +1 em ${key} (${q.length} aguardando)`); }
-          else { console.log(`[ponte] fila CHEIA em ${key} (${QMAX}) — excedente ignorado`);
-                 send(OWNER, "⚠️ Tô com muita coisa na fila desse tópico e tive que ignorar a última. Manda de novo daqui a pouco.", threadId).catch(() => {}); }
+          else { console.log(`[ponte] fila CHEIA em ${key} (${QMAX}) — excedente descartado`);
+                 // O AVISO VAI NO LUGAR CERTO (mesmo chat+tópico da mensagem perdida, não na DM com thread de grupo)
+                 // e CITA o que foi descartado — a mensagem fica recuperável. Falha do aviso é logada, nunca engolida.
+                 const _perdida = String(msg.text || msg.caption || "").slice(0, 120);
+                 send(chatId, `⚠️ Fila cheia nesse tópico — tive que descartar sua última${_perdida ? `: «${_perdida}${String(msg.text || msg.caption || "").length > 120 ? "…" : ""}»` : "."} Me manda de novo daqui a pouco.`, threadId)
+                   .catch((e) => console.error("[ponte] aviso de fila cheia FALHOU:", e && e.message)); }
           continue;
         }
         processOne(msg, chatId, threadId, key, cfg);
