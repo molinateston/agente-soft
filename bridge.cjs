@@ -385,16 +385,48 @@ function chunk(text, max = 4000) {
   return out;
 }
 // envia um pedaço: tenta Markdown; se o TG recusar (400), reenvia texto puro; respeita 429 (retry_after)
+// DIAGRAMAÇÃO NO TELEGRAM: o Claude escreve markdown (**bold**, `code`, ## título) que o parse_mode
+// "Markdown" LEGADO REJEITA (não entende `**`) → caía no fallback texto-cru com os asteriscos à mostra.
+// Fix: converte pro HTML do Telegram (robusto) e, se falhar, manda LIMPO (stripMd), NUNCA cru.
+function mdToTgHtml(s) {
+  const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const CB = [], IC = [];
+  s = String(s);
+  s = s.replace(/```[\w-]*\n?([\s\S]*?)```/g, (_m, c) => { CB.push(c.replace(/\n$/, "")); return ` CB${CB.length - 1} `; });
+  s = s.replace(/`([^`\n]+)`/g, (_m, c) => { IC.push(c); return ` IC${IC.length - 1} `; });
+  s = esc(s);
+  s = s.replace(/^#{1,6}\s+(.+)$/gm, "<b>$1</b>");
+  s = s.replace(/\*\*\*([^\n*]+)\*\*\*/g, "<b><i>$1</i></b>");
+  s = s.replace(/\*\*([^\n*]+)\*\*/g, "<b>$1</b>");
+  s = s.replace(/(^|[\s(>])\*([^\n*]+)\*(?=[\s.,;:)!?<]|$)/gm, "$1<i>$2</i>");
+  s = s.replace(/(^|[\s(>])_([^\n_]+)_(?=[\s.,;:)!?<]|$)/gm, "$1<i>$2</i>");
+  s = s.replace(/^\s*[-*•]\s+/gm, "• ");
+  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2">$1</a>');
+  s = s.replace(/\*\*/g, "");
+  s = s.replace(/ IC(\d+) /g, (_m, i) => `<code>${esc(IC[+i])}</code>`);
+  s = s.replace(/ CB(\d+) /g, (_m, i) => `<pre>${esc(CB[+i])}</pre>`);
+  return s;
+}
+function stripMd(s) {
+  return String(s)
+    .replace(/```[\w-]*\n?([\s\S]*?)```/g, "$1").replace(/`([^`\n]+)`/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/\*\*\*([^\n*]+)\*\*\*/g, "$1").replace(/\*\*([^\n*]+)\*\*/g, "$1")
+    .replace(/(^|[\s(])[*_]([^\n*_]+)[*_]/gm, "$1$2")
+    .replace(/^\s*[-*]\s+/gm, "• ")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, "$1 ($2)");
+}
 async function sendChunk(chatId, text, base) {
-  let r = await tg("sendMessage", { chat_id: chatId, text, parse_mode: "Markdown", ...base });
+  const html = mdToTgHtml(text);
+  let r = await tg("sendMessage", { chat_id: chatId, text: html, parse_mode: "HTML", ...base });
   if (r && r.ok) return;
   if (r && !r.ok && r.error_code === 429 && r.parameters && r.parameters.retry_after) {
     await new Promise(res => setTimeout(res, (r.parameters.retry_after + 1) * 1000));
-    r = await tg("sendMessage", { chat_id: chatId, text, parse_mode: "Markdown", ...base });
+    r = await tg("sendMessage", { chat_id: chatId, text: html, parse_mode: "HTML", ...base });
     if (r && r.ok) return;
   }
-  // fallback: Markdown inválido (** crus etc.) → manda como texto puro
-  const r2 = await tg("sendMessage", { chat_id: chatId, text, ...base });
+  // fallback: HTML inválido (tag cortada) → manda LIMPO (stripMd), nunca cru com os markers
+  const r2 = await tg("sendMessage", { chat_id: chatId, text: stripMd(text), ...base });
   if (!(r2 && r2.ok)) console.error("[ponte] sendMessage falhou:", r2 && r2.description ? r2.description : (r && r.description) || "?");
 }
 async function send(chatId, text, threadId) {
