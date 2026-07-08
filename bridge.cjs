@@ -190,7 +190,17 @@ const saveSessions = () => {
 // TZ p/ horário de Brasília (VPS roda em UTC; sem isto o agente acha que é 3h mais tarde — "já
 // passou das 11h" às 9h). Cliente pode sobrescrever pondo TZ no .env. Vale o childEnv (o claude herda).
 // mescla o .env FRESCO (envMap) por spawn: chave nova/trocada no .env já vale aqui, sem restart.
-const childEnv = () => { const e = { ...process.env, ...envMap(), TZ: process.env.TZ || "America/Sao_Paulo" }; delete e.TELEGRAM_BOT_TOKEN; return e; };
+// TEMP em DISCO REAL, NÃO no tmpfs /tmp (pequeno — enche com whisper/download de vídeo e trava TUDO com ENOSPC = "echo dá exit 1"; blindagem 08/jul).
+const WORK_TMP = process.env.LEAN_TMPDIR || `${process.env.HOME || "/tmp"}/.lean-tmp`;
+try { fs.mkdirSync(WORK_TMP, { recursive: true }); } catch {}
+const childEnv = () => { const e = { ...process.env, ...envMap(), TZ: process.env.TZ || "America/Sao_Paulo", TMPDIR: WORK_TMP, TMP: WORK_TMP, TEMP: WORK_TMP }; delete e.TELEGRAM_BOT_TOKEN; return e; };
+// GUARD do /tmp: se o tmpfs ficar baixo, limpa só REGENERÁVEL/ANTIGO e avisa o dono CEDO. Nunca toca sessão claude ativa.
+let _lastDiskWarn = 0;
+function tmpFreeMB(dir = "/tmp") { try { const s = fs.statfsSync(dir); return Math.floor((s.bavail * s.bsize) / 1048576); } catch { try { const o = require("child_process").execSync(`df -Pm ${dir} | tail -1`, { timeout: 5000 }).toString(); return Number(o.trim().split(/\s+/)[3]); } catch { return null; } } }
+function guardTmp() { try { const free = tmpFreeMB("/tmp"), rootFree = tmpFreeMB("/");
+  if (((rootFree !== null && rootFree < 8000) || (free !== null && free < 900)) && Date.now() - _lastDiskWarn > 21600000) { _lastDiskWarn = Date.now(); if (typeof send === "function" && typeof OWNER !== "undefined") send(OWNER, `📊 Espaço começando a apertar (disco: ${rootFree}MB · /tmp: ${free}MB livres). Ainda NÃO trava — o temp pesado vai pro disco grande e eu limpo o /tmp sozinho. Aviso cedo: se quiser eu limpar mais fundo, é só falar.`).catch(() => {}); }
+  if (free === null || free > 500) return;
+  require("child_process").execSync(`rm -rf /tmp/snap-private-tmp/* 2>/dev/null; find /tmp -maxdepth 2 -type f \\( -name "*.mp4" -o -name "*.wav" -o -name "*.webm" -o -name "*.mkv" -o -name "*.mp3" \\) -mmin +60 -delete 2>/dev/null; find "${WORK_TMP}" -type f -mmin +360 -delete 2>/dev/null`, { timeout: 20000, stdio: "ignore" }); const now = tmpFreeMB("/tmp"); console.log(`[ponte] guardTmp: /tmp ${free}MB -> ${now}MB`); if (typeof send === "function" && typeof OWNER !== "undefined") send(OWNER, `🧹 /tmp estava quase cheio (${free}MB) — limpei temporários regeneráveis pra não travar. Liberou pra ${now}MB.`).catch(() => {}); } catch (e) { console.error("[ponte] guardTmp:", e.message); } }
 
 // lê as primeiras N linhas de um arquivo pequeno (MEMÓRIA VIVA). Arquivos pequenos: readFileSync ok.
 const readLines = (file, maxLines) => { try { return fs.readFileSync(file, "utf8").split("\n").slice(0, maxLines).join("\n").trim(); } catch { return ""; } };
@@ -1012,6 +1022,7 @@ if (require.main === module) {
   acquireLock();   // FIX H — garante instância única antes de abrir o long-poll (evita 409 + sessions.json corrompido)
   console.log(`[ponte-fina] no ar · ${Object.keys(topics).length} tópicos roteados · owner=${OWNER} grupo=${GROUP} · ctx redondo: SOFT=${SOFT_FRAC} HARD=${HARD_FRAC} floor=${STATIC_FLOOR}`);
   poll();
+  guardTmp(); setInterval(guardTmp, 300000);   // blindagem /tmp (tmpfs pequeno enche com whisper/vídeo e trava): limpa regenerável + avisa cedo, a cada 5min (08/jul)
   checkPromises(); setInterval(checkPromises, 30000);   // agendador DURÁVEL: dispara promessas vencidas (inclusive as perdidas num restart) + checa a cada 30s
   // SELF-CHECK do boot: fala SÓ se algo estiver quebrado (o "no ar" cego anunciava saúde sem checar nada)
   setTimeout(() => { const probs = depsCheck(); if (probs.length) send(OWNER, `⚠️ Subi com pendência(s):\n· ${probs.join("\n· ")}\nManda /status pra acompanhar.`).catch(() => {}); }, 3000);
