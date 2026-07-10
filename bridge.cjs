@@ -201,6 +201,15 @@ function guardTmp() { try { const free = tmpFreeMB("/tmp"), rootFree = tmpFreeMB
   if (((rootFree !== null && rootFree < 8000) || (free !== null && free < 900)) && Date.now() - _lastDiskWarn > 21600000) { _lastDiskWarn = Date.now(); if (typeof send === "function" && typeof OWNER !== "undefined") send(OWNER, `📊 Espaço começando a apertar (disco: ${rootFree}MB · /tmp: ${free}MB livres). Ainda NÃO trava — o temp pesado vai pro disco grande e eu limpo o /tmp sozinho. Aviso cedo: se quiser eu limpar mais fundo, é só falar.`).catch(() => {}); }
   if (free === null || free > 500) return;
   require("child_process").execSync(`rm -rf /tmp/snap-private-tmp/* 2>/dev/null; find /tmp -maxdepth 2 -type f \\( -name "*.mp4" -o -name "*.wav" -o -name "*.webm" -o -name "*.mkv" -o -name "*.mp3" \\) -mmin +60 -delete 2>/dev/null; find "${WORK_TMP}" -type f -mmin +360 -delete 2>/dev/null`, { timeout: 20000, stdio: "ignore" }); const now = tmpFreeMB("/tmp"); console.log(`[ponte] guardTmp: /tmp ${free}MB -> ${now}MB`); if (typeof send === "function" && typeof OWNER !== "undefined") send(OWNER, `🧹 /tmp estava quase cheio (${free}MB) — limpei temporários regeneráveis pra não travar. Liberou pra ${now}MB.`).catch(() => {}); } catch (e) { console.error("[ponte] guardTmp:", e.message); } }
+// DETECTOR B (MISSÃO) — job pesado deixado rodando em BACKGROUND (fire-and-forget legítimo, ex whisper/transcrição 45-90min).
+// SÓ frases inerentemente PENDENTES/futuras: PID/ETA/"segundo plano" só contam ATRÁS de um gerúndio (transcrevendo/rodando…)
+// e o número é exigido DENTRO da âncora — assim "PID 40231 terminou" ou "rodei em segundo plano, já salvo" NÃO casam.
+function missaoBackground(txt) { return /volto\s+(pra|para)\s+(checar|conferir|ver|acompanhar)|continuo\s+(dali|de\s+onde)|\bstill\s+running\b|(processando|transcrevendo|renderizando|baixando|gerando|rodando)\b[^.\n]{0,60}\b(background|segundo\s+plano|PID\s*\d|ETA\b\s*[:=\-]?\s*\d)/i.test(String(txt || "")); }
+// DETECTOR mestre de missão NÃO-concluída (impede o "✅ concluída" falso). Pega (a) infra morta no meio (ENOSPC/disco);
+// (b) limite de imagem/API ("exceeds the dimension limit / start a new session with fewer images"); (c) a cauda IDÊNTICA de
+// missaoBackground (defesa-em-profundidade). No roteamento o galho bg é checado ANTES → quando missaoTravou decide FALHOU o
+// texto já é comprovadamente NÃO-bg (falha real, não menção).
+function missaoTravou(txt) { return /\b(SIGABRT|ENOSPC)\b|sem\s+shell|bash\s+(caiu|quebr|morr|trav|abort)|exit\s*1\s+em\b|disco\s+(cheio|lotad)|sem\s+espaço\s+(em\s+disco|no\s+disco|em\s+\/|pra\s+(gravar|salvar))|no\s+space\s+left|não\s+consegui\s+(abrir|rodar|baixar|gerar|concluir|transcrever)|missão\s+(não|nao)\s+conclu|exceeds?\s+the\s+dimension|dimension\s+limit\s+for|many[-\s]image\s+request|with\s+fewer\s+images|start\s+a\s+new\s+session\s+with\s+fewer|estour\w+\s+(o\s+)?limite\s+de\s+imag|imagem\s+(grande\s+demais|muito\s+grande)|volto\s+(pra|para)\s+(checar|conferir|ver|acompanhar)|continuo\s+(dali|de\s+onde)|\bstill\s+running\b|(processando|transcrevendo|renderizando|baixando|gerando|rodando)\b[^.\n]{0,60}\b(background|segundo\s+plano|PID\s*\d|ETA\b\s*[:=\-]?\s*\d)/i.test(String(txt || "")); }
 
 // lê as primeiras N linhas de um arquivo pequeno (MEMÓRIA VIVA). Arquivos pequenos: readFileSync ok.
 const readLines = (file, maxLines) => { try { return fs.readFileSync(file, "utf8").split("\n").slice(0, maxLines).join("\n").trim(); } catch { return ""; } };
@@ -513,7 +522,26 @@ async function deliverFiles(chatId, text, threadId) {
 const STALL_MS    = Number(process.env.STALL_MIN || 10) * 60000;     // sem NENHUM output por X min = travou
 const HARD_CAP_MS = Number(process.env.HARD_CAP_MIN || 120) * 60000; // teto absoluto (anti-runaway), bem alto
 
-function ask(key, text, cfg, chatId, threadId) {
+// ---------- MODO MISSÃO (tarefa longa deliberada: lote de fotos/depoimentos, transcrição longa, à prova de sofá) ----------
+// Portado do LEON. Motivação: o cliente que manda MUITO volume estourava os tetos normais (TURN_BUDGET_USD=8,
+// HARD_CAP_MIN=120) SEM checkpoint — a tarefa morria no meio, sem retomar. O modo missão solta os tetos, reporta
+// marco a marco enquanto roda, e RETOMA sozinho se o processo cair (trilho DURÁVEL em disco, igual às promessas).
+// São tetos PARALELOS aos do turno normal (STALL_MS/HARD_CAP_MS acima) — só valem quando `mission` está presente.
+const MISSAO_BUDGET_USD   = Number(process.env.MISSAO_BUDGET_USD || 50);      // teto GENEROSO de custo da missão (vs 8 do turno normal)
+const MISSAO_CAP_MS       = Number(process.env.MISSAO_CAP_MIN || 240) * 60000;   // teto de tempo (4h) — a tarefa longa roda até aqui
+const MISSAO_STALL_MS     = Number(process.env.MISSAO_STALL_MIN || 20) * 60000;  // "travou" = sem NENHUM sinal por 20min (missão espera jobs longos)
+const MISSAO_MAX_RETRIES  = Number(process.env.MISSAO_MAX_RETRIES || 3);      // após N retomadas sem concluir, desiste e AVISA o dono (não vira loop eterno)
+const MISSAO_BG_RECHECK_MS = Number(process.env.MISSAO_BG_RECHECK_MIN || 8) * 60000; // job em background: espera N min antes de reacordar o agente pra CHECAR o arquivo (NÃO conta retry de crash)
+const MISSAO_BG_MAX       = Number(process.env.MISSAO_BG_MAX || 8);           // teto de re-checagens de bg SEM PID vivo (8×8min≈64min); com PID VIVO a espera estende até o CAP de 4h, sem tocar em retries
+const MISSAO_RETAIN_DAYS  = Number(process.env.MISSAO_RETAIN_DAYS || 7);      // FAXINA: missão FECHADA (done/failed) há mais que isso vira lixo → apaga o par .json/.progress. running NUNCA é tocada
+const MISSOES_DIR = `${WORKDIR}/missions`;
+try { fs.mkdirSync(MISSOES_DIR, { recursive: true }); } catch {}
+const missionFile = (id) => `${MISSOES_DIR}/${id}.json`;
+function saveMission(m) { try { fs.writeFileSync(missionFile(m.id), JSON.stringify(m)); } catch (e) { console.error("[ponte] saveMission:", e.message); } }
+function loadMission(id) { try { return JSON.parse(fs.readFileSync(missionFile(id), "utf8")); } catch { return null; } }
+function newMissionId() { return `m${Date.now().toString(36)}${Math.floor(Math.random() * 1e4).toString(36)}`; }
+
+function ask(key, text, cfg, chatId, threadId, mission) {
   const base = threadId ? { message_thread_id: Number(threadId) } : {};
   const _s    = sessions[key];
   const _sid  = (_s && typeof _s === "object") ? _s.sid : _s;
@@ -526,13 +554,15 @@ function ask(key, text, cfg, chatId, threadId) {
   // roda o claude uma vez. resumeSid=null força sessão nova; 'cont' é o resumo de continuação a injetar.
   function runOnce(resumeSid, cont) {
     return new Promise((resolve) => {
+      const isMissao = !!mission;   // MODO MISSÃO: tarefa longa deliberada (budget/tempo soltos + reports de marco + retomada durável)
       // HORÁRIO de Brasília vai no INPUT (não no system-prompt: evita cache-bust). Prepende ao texto do usuário.
       const userText = [timeBlock(), text].filter(Boolean).join("\n\n");
       const args = ["-p", "--model", cfg.model, "--output-format", "stream-json", "--verbose",
                     "--permission-mode", "bypassPermissions",   // agência total: escreve/edita arquivo + roda Bash (acesso já é só OWNER/allowlist)
                     "--add-dir", WORKDIR, "--add-dir", BRAIN, "--add-dir", TMP_DIR, "--add-dir", projDir()];
       if (cfg.effort) args.push("--effort", cfg.effort);                 // quanto ele PENSA: high=estratégico, medium=operacional, low=casual
-      if (TURN_BUDGET_USD > 0) args.push("--max-budget-usd", String(TURN_BUDGET_USD));   // teto de USD por turno (antes só o TEMPO parava um loop caro)
+      if (isMissao) args.push("--max-budget-usd", String(MISSAO_BUDGET_USD));   // MODO MISSÃO: teto GENEROSO — a tarefa longa não morre por custo no meio
+      else if (TURN_BUDGET_USD > 0) args.push("--max-budget-usd", String(TURN_BUDGET_USD));   // teto de USD por turno (antes só o TEMPO parava um loop caro)
       if (resumeSid) args.push("--resume", resumeSid);
       // identidade: doutrina-base FORTE (do repo agente-soft, auto-atualiza → cai em todos os clientes)
       // + a persona específica do dono (nome/tom). A base vem PRIMEIRO pra cravar "você é o agente
@@ -557,12 +587,15 @@ function ask(key, text, cfg, chatId, threadId) {
       if (cont) sysPrompt += `\n\n# A CONVERSA CONTINUA — NÃO recomece do zero\nVocê JÁ vinha conversando com o dono; este trecho é CONTINUAÇÃO da mesma conversa (ela foi compactada pra caber, só isso). Resumo do que já falaram antes deste ponto:\n${cont}\n\nRegra: trate como continuação natural. NUNCA diga "a conversa começou agora", "não tenho histórico desta sessão" nem peça pra ele repetir o que já foi dito. Se perguntarem o que falaram antes, responda a partir DESTE resumo.`;
       if (sysPrompt.trim()) args.push("--append-system-prompt", sysPrompt);
       // detached: process group próprio → killTree(-pgid) não deixa subagente órfão queimando cota
-      const proc = trackKid(spawn(CLAUDE_BIN, args, { cwd: WORKDIR, env: childEnv(), detached: true }));
+      // missão injeta MISSAO_PROGRESS no filho → o agente escreve marcos nesse arquivo e a ponte posta como report
+      let _env = childEnv();
+      if (isMissao) _env = { ..._env, MISSAO_ID: mission.id, MISSAO_PROGRESS: mission.progressFile };
+      const proc = trackKid(spawn(CLAUDE_BIN, args, { cwd: WORKDIR, env: _env, detached: true }));
 
       const t0 = Date.now();
       let buf = "", err = "", finalResult = null, finalSid = null, finalUsage = null, mainUsage = null, settled = false, timedOut = false, lastActivity = Date.now();
       let finalIsError = false, finalErrors = "";
-      let lastAction = "começando…", panelId = null;
+      let lastAction = "começando…", panelId = null, _lastMarco = "";
       const elapsed = () => { const s = Math.round((Date.now() - t0) / 1000);
         return s < 60 ? `${s}s` : `${Math.floor(s / 60)}min${s % 60 ? (s % 60) + "s" : ""}`; };
 
@@ -571,26 +604,62 @@ function ask(key, text, cfg, chatId, threadId) {
         tg("sendChatAction", { chat_id: chatId, action: "typing", ...base }).catch(() => {});
       }, 4000);
 
-      // (B) UM painel editável — nasce só depois do limiar; depois reescreve no lugar (sem notificar)
+      // (B) UM painel editável — nasce só depois do limiar; depois reescreve no lugar (sem notificar).
+      // Na MISSÃO o painel é um CRONÔMETRO VIVO (nasce logo, edita a cada 12s): o dono VÊ o tempo subindo e o
+      // último marco, com certeza de que tá trabalhando. Turno normal = painel discreto (só depois do limiar).
       const panelTick = async () => {
-        const txt = `⏳ Tô na sua tarefa. Última coisa: ${lastAction} · ${elapsed()}`;
+        const txt = isMissao
+          ? `🎯 Missão em andamento · ⏱️ ${elapsed()}${_lastMarco ? `\n📍 ${_lastMarco}` : ""}\n⚙️ agora: ${lastAction}`
+          : `⏳ Tô na sua tarefa. Última coisa: ${lastAction} · ${elapsed()}`;
         try {
           if (panelId == null) {
             const r = await tg("sendMessage", { chat_id: chatId, text: txt, ...base });
-            if (r && r.ok && r.result) { panelId = r.result.message_id; console.log(`[ponte] ⏳ painel de progresso ON · tarefa longa · chat=${chatId} thread=${threadId || "-"}`); }
+            if (r && r.ok && r.result) { panelId = r.result.message_id; console.log(`[ponte] ${isMissao ? "🎯 cronômetro de missão" : "⏳ painel de progresso"} ON · chat=${chatId} thread=${threadId || "-"}`); }
           } else {
             await tg("editMessageText", { chat_id: chatId, message_id: panelId, text: txt, ...base });
           }
         } catch {}   // painel é enfeite: erro aqui NUNCA derruba a tarefa
       };
-      const panelTimer = setInterval(() => { if (Date.now() - t0 >= AVISO_PESADA_MS) panelTick(); }, HEARTBEAT_MS);
+      const avisoMs = isMissao ? 6000 : AVISO_PESADA_MS;   // missão: cronômetro nasce em ~6s (o dono quer ver JÁ que tá rodando); turno normal espera o limiar
+      const panelTimer = setInterval(() => { if (Date.now() - t0 >= avisoMs) panelTick(); }, HEARTBEAT_MS);
+
+      // REPORTS DE MISSÃO: o agente escreve marcos em $MISSAO_PROGRESS; a ponte posta cada linha nova como
+      // mensagem no tópico (report que FICA, não o painel que se apaga). Também bate o heartbeat + grava o
+      // sid da sessão no registro durável → é o que permite RETOMAR do ponto se o processo cair.
+      let _progressPos = 0, progressTimer = null, _progressBootMsg = false, progressBootTimer = null;
+      const _pumpProgress = () => {
+        try { const m = loadMission(mission.id); if (m && m.status === "running") { m.lastHeartbeat = Date.now(); if (finalSid && !m.sid) m.sid = finalSid; saveMission(m); } } catch {}
+        try {
+          const st = fs.statSync(mission.progressFile);
+          if (st.size > _progressPos) {
+            const fd = fs.openSync(mission.progressFile, "r"); const b = Buffer.alloc(st.size - _progressPos);
+            fs.readSync(fd, b, 0, b.length, _progressPos); fs.closeSync(fd);
+            const txt = b.toString("utf8"); const cut = txt.lastIndexOf("\n");
+            if (cut >= 0) {   // só processa linhas COMPLETAS (até o último \n); resto fica pro próximo ciclo (não posta echo pela metade)
+              _progressPos += Buffer.byteLength(txt.slice(0, cut + 1), "utf8");
+              for (const linha of txt.slice(0, cut).split("\n").map(s => s.trim()).filter(Boolean)) { _lastMarco = linha; send(chatId, `📍 ${linha}`, threadId).catch(() => {}); }
+            }
+          }
+        } catch {}
+      };
+      if (isMissao) {
+        // primeira leitura em ~1s (senão marco escrito e processo que morre <15s NUNCA é lido); depois 15s.
+        setTimeout(_pumpProgress, 1000);
+        progressTimer = setInterval(_pumpProgress, 15000);
+        progressBootTimer = setTimeout(() => {
+          try { const st = fs.statSync(mission.progressFile); if (st.size === 0 && !_progressBootMsg) { _progressBootMsg = true; send(chatId, `🚧 Missão em bootstrap — ainda sem marco no disco. Se demorar >5min sem 📍, algo travou.`, threadId).catch(() => {}); } } catch {}
+        }, 90000);
+      }
 
       // (C) watchdog: se o claude travar (loop de tool, MCP morto, rede caída) o close nunca dispara.
       //     SIGTERM e, se persistir, SIGKILL — pra busy/fila SEMPRE destravarem.
+      //     Missão: teto e "travou" MUITO maiores (roda até 4h; espera jobs longos de 20min) — é o modo à prova de sofá.
+      const stallMs = isMissao ? MISSAO_STALL_MS : STALL_MS;
+      const capMs   = isMissao ? MISSAO_CAP_MS : HARD_CAP_MS;
       const watchdog = setInterval(() => {
         const idle = Date.now() - lastActivity, total = Date.now() - t0;
-        if (idle > STALL_MS || total > HARD_CAP_MS) {
-          timedOut = (total > HARD_CAP_MS) ? "cap" : "stall";
+        if (idle > stallMs || total > capMs) {
+          timedOut = (total > capMs) ? "cap" : "stall";
           clearInterval(watchdog);
           killTree(proc, "SIGTERM");
           setTimeout(() => killTree(proc, "SIGKILL"), 5000);
@@ -598,7 +667,7 @@ function ask(key, text, cfg, chatId, threadId) {
       }, 20000);   // checa a cada 20s
 
       const cleanup = async () => {
-        clearInterval(typingTimer); clearInterval(panelTimer); clearInterval(watchdog);
+        clearInterval(typingTimer); clearInterval(panelTimer); clearInterval(watchdog); if (progressTimer) clearInterval(progressTimer); if (progressBootTimer) clearTimeout(progressBootTimer);
         if (panelId != null) { try { await tg("deleteMessage", { chat_id: chatId, message_id: panelId }); } catch {} }
       };
       const done = async (payload) => { if (settled) return; settled = true; await cleanup(); resolve(payload); };
@@ -611,7 +680,12 @@ function ask(key, text, cfg, chatId, threadId) {
           const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
           if (!line) continue;
           let ev; try { ev = JSON.parse(line); } catch { continue; }   // linha parcial/ruído: ignora
-          if (ev.session_id && !finalSid) finalSid = ev.session_id;     // sid já vem no init
+          if (ev.session_id && !finalSid) {
+            finalSid = ev.session_id;     // sid já vem no init
+            // MISSÃO: grava o sid JÁ na 1ª aparição (não espera o timer) → se a missão crashar cedo, a retomada
+            // ainda tem o sid pra --resume (não perde o histórico da sessão).
+            if (isMissao) { try { const mm = loadMission(mission.id); if (mm && mm.status === "running" && !mm.sid) { mm.sid = finalSid; saveMission(mm); } } catch {} }
+          }
           if (ev.type === "assistant" && ev.message && ev.message.content) {
             if (ev.message.usage && !ev.isSidechain) mainUsage = ev.message.usage;   // usage da SESSÃO PRINCIPAL (não dos braços) = contexto real; result.usage agrega o fan-out e infla
             for (const c of ev.message.content) {
@@ -631,7 +705,13 @@ function ask(key, text, cfg, chatId, threadId) {
         if (hadPanel) console.log(`[ponte] ✅ tarefa concluída em ${dur} (teve painel de progresso)`);
         const _u = mainUsage || finalUsage;   // mainUsage = contexto da conversa principal; finalUsage (result) agrega o fan-out e infla
         const ctx = _u ? ((_u.input_tokens||0) + (_u.cache_read_input_tokens||0) + (_u.cache_creation_input_tokens||0)) : 0;
-        if (timedOut)            done({ result: timedOut === "cap" ? `⚠️ A tarefa bateu o teto de segurança (${Math.round(HARD_CAP_MS/60000)}min) e eu parei — provavelmente travou. Me diz que eu retomo.` : `⚠️ A tarefa ficou ${Math.round(STALL_MS/60000)}min sem dar nenhum sinal (travou) e eu cortei. Me fala que eu retomo.`, sid: finalSid, ctx, err });
+        if (timedOut) {
+          const capMin = Math.round(capMs/60000), stallMin = Math.round(stallMs/60000);
+          const msgTimeout = isMissao
+            ? (timedOut === "cap" ? `⚠️ A missão bateu o teto de tempo (${capMin}min). Vou retomar de onde parou automaticamente.` : `⚠️ A missão ficou ${stallMin}min sem sinal (parece travada). Vou retomar de onde parou automaticamente.`)
+            : (timedOut === "cap" ? `⚠️ A tarefa bateu o teto de segurança (${capMin}min) e eu parei — provavelmente travou. Me diz que eu retomo.` : `⚠️ A tarefa ficou ${stallMin}min sem dar nenhum sinal (travou) e eu cortei. Me fala que eu retomo.`);
+          done({ result: msgTimeout, sid: finalSid, ctx, err, timedOut });
+        }
         else if (finalIsError && finalResult == null) done({ result: null, sid: finalSid, ctx, err: (finalErrors || err || buf) });   // result vazio + is_error → erro (tratado fora)
         else if (finalResult != null) done({ result: finalResult || "(resposta vazia)", sid: finalSid, ctx, err });
         else                     done({ result: null, sid: finalSid, ctx, err: (err || buf) });   // result=null → erro (tratado fora)
@@ -696,7 +776,7 @@ function ask(key, text, cfg, chatId, threadId) {
       return { result: "⚠️ Deu erro do meu lado processando essa — manda de novo daqui a pouco. (Quase sempre é sobrecarga passageira, já passa; reiniciar não resolve isso.)", sid: out.sid, ctx: out.ctx || 0, ok: false };
     }
     _failStreak[key] = 0;   // sucesso zera a régua
-    return { result: out.result, sid: out.sid, ctx: out.ctx || 0, ok: true };
+    return { result: out.result, sid: out.sid, ctx: out.ctx || 0, ok: true, timedOut: out.timedOut };
   })();
 }
 
@@ -817,9 +897,13 @@ function shutdown(sig) {
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT",  () => shutdown("SIGINT"));
 
-// processa UMA mensagem; ao TERMINAR (sempre, via finally) libera o busy e drena a fila do tópico
-function processOne(msg, chatId, threadId, key, cfg) {
+// processa UMA mensagem; ao TERMINAR (sempre, via finally) libera o busy e drena a fila do tópico.
+// `mission` opcional: quando presente, roda no MODO MISSÃO (budget/tempo soltos, reports de marco, retomada durável).
+function processOne(msg, chatId, threadId, key, cfg, mission) {
   busy[key] = true;
+  // HEARTBEAT DA MISSÃO no nível do processOne: bate a VIDA INTEIRA da missão (incl. entre runOnce, durante
+  // compactação), não só dentro de um runOnce ativo. É o pulso durável enquanto a missão está SENDO processada.
+  const _missHb = mission ? setInterval(() => { try { const m = loadMission(mission.id); if (m && m.status === "running") { m.lastHeartbeat = Date.now(); saveMission(m); } } catch {} }, 12000) : null;
   const media = `${msg.voice || msg.audio ? "🎤" : ""}${msg.photo ? "🖼️" : ""}${msg.document ? "📎" : ""}`;
   console.log(`[ponte] ${cfg.label || "?"} (${cfg.model}/${cfg.effort || "def"}) chat=${chatId} thread=${threadId || "-"} mtid=${msg.message_thread_id || "-"} ${media}`.trimEnd());
   // FIX 9: "digitando" vivo o turno INTEIRO (transcrição + ask + COMPACTAÇÃO até 120s). Sem heartbeat o
@@ -857,29 +941,79 @@ function processOne(msg, chatId, threadId, key, cfg) {
         return send(chatId, `⚠️ Não consegui iniciar a instalação do áudio. Tenta de novo daqui a pouco.`, threadId); }
       return send(chatId, `🎤 Ligando o áudio (transcrição local, sem chave)... baixo o modelo e me reinicio — leva uns minutos. Te aviso com o "✅ No ar!".`, threadId);
     }
-    return ask(key, text, cfg, chatId, threadId).then(async ({ result, sid, ctx, ok }) => {
+    return ask(key, text, cfg, chatId, threadId, mission).then(async ({ result, sid, ctx, ok, timedOut }) => {
       // ok:true → persiste a sessão pelo motor (floor/turns/compactCount/handoff/priorSummary).
       // persistSession faz no-op se sid for null (sid morto): NÃO re-grava o id morto, e PRESERVA o
       // estado de compactação ({sid:null,handoff,priorSummary}) que já estava salvo → próximo turno re-semeia.
       // ok:false → também NÃO sobrescreve, pelo mesmo motivo (turno que falhou não vira amnésia).
       if (ok) persistSession(key, sid, ctx, cfg.model);
-      await send(chatId, result, threadId);
+      if (mission && ok && timedOut) {
+        // TIMEOUT (CAP 4h / STALL 20min): o runOnce já devolveu mensagem HONESTA de "vou retomar". ⛔ NÃO é conclusão —
+        // o furo seria cair no galho "✅ concluída" e SUMIR do checkMissions. Mantém running + zera heartbeat pro
+        // checkMissions retomar; entrega a msg como está.
+        const m = loadMission(mission.id); if (m && m.status === "running") { m.lastHeartbeat = 0; saveMission(m); }
+        await send(chatId, result, threadId);
+      } else if (mission && ok && missaoBackground(result)) {
+        // FIRE-AND-FORGET: turno voltou "ok" MAS deixou job pesado rodando e o entregável AINDA não existe →
+        // NÃO é conclusão. bg ANTES de falhou/concluída (conservador: trabalho pendente vira "⏳ em andamento",
+        // auto-curável, NUNCA "✅" falso nem retry cedo). Mantém running, agenda re-checagem ADIANTE, guarda o PID.
+        const m = loadMission(mission.id);
+        if (m && m.status === "running") {
+          m.awaitingBg = true; m.resumeAfter = Date.now() + MISSAO_BG_RECHECK_MS; m.lastHeartbeat = Date.now();
+          const _pid = String(result).match(/\bPID\s*(\d+)/i); if (_pid) m.bgPid = Number(_pid[1]);
+          saveMission(m);
+        }
+        await send(chatId, `⏳ Missão EM ANDAMENTO — deixei o processo pesado rodando (transcrição/render/download longo) e volto sozinho pra FECHAR quando o arquivo estiver pronto. Ainda NÃO terminei — nada de "concluída" até o entregável existir.\n\n${result}`, threadId);
+      } else if (mission && ok && missaoTravou(result)) {
+        // FALHOU (só chega aqui quem NÃO é bg — o galho acima já capturou): infra (ENOSPC/disco) OU limite da API
+        // (imagem grande demais). NÃO reporta sucesso falso. Mantém running, zera heartbeat pra retomar. Se foi limite
+        // de imagem, ZERA o sid → a retomada abre SESSÃO NOVA (a API exige "fewer images"; resumir recarregaria as
+        // imagens e bateria de novo). Contexto vai por TEXTO (seed/priorSummary).
+        const m = loadMission(mission.id);
+        if (m && m.status === "running") { m.lastHeartbeat = 0; if (/exceeds?\s+the\s+dimension|dimension\s+limit\s+for|with\s+fewer\s+images|start\s+a\s+new\s+session\s+with\s+fewer|estour\w+\s+(o\s+)?limite\s+de\s+imag/i.test(String(result))) m.sid = null; saveMission(m); }
+        await send(chatId, `⚠️ Missão NÃO concluída — um passo falhou no meio (infra/disco, ou limite da API tipo imagem grande demais). Não perdi o trabalho feito; retomo sozinho pra terminar com outra abordagem (em lotes / imagem menor). Se emperrar de novo, me chama.\n\n${result}`, threadId);
+      } else if (mission && ok) {
+        // MISSÃO CONCLUÍDA: só chega aqui quem NÃO deu timeout, NÃO tem sinal de bg e NÃO tem sinal de falha. Marca done no registro durável (o checkMissions não retoma mais) e entrega.
+        const m = loadMission(mission.id); if (m) { m.status = "done"; m.finishedAt = Date.now(); saveMission(m); }
+        // PONTE DE CONTEXTO (volta): grava o RESULTADO no resumo persistente da sessão do TÓPICO — senão o próximo
+        // turno normal acorda uma sessão que nunca viu a missão e o agente "perde o contexto". O priorSummary entra
+        // no system prompt de TODO turno do tópico via o bloco "A CONVERSA CONTINUA".
+        try {
+          const tkey = `${chatId}:${threadId || "main"}`;
+          const ts = sessions[tkey];
+          const nota = `\n\n[MISSÃO CONCLUÍDA agora há pouco NESTE tópico — o que foi pedido: ${String((m && m.prompt) || "").slice(0, 300)} | o que foi ENTREGUE ao dono:\n${String(result).slice(0, 3500)}]`;
+          if (ts && typeof ts === "object") { ts.priorSummary = (((ts.priorSummary || "") + nota)).slice(-9000); ts.updatedAt = Date.now(); }
+          else sessions[tkey] = { sid: (typeof ts === "string" ? ts : null), ctx: 0, floor: STATIC_FLOOR, turns: 0, compactCount: 0, handoff: "", priorSummary: nota.trim(), updatedAt: Date.now() };
+          saveSessions();
+        } catch (e) { console.error("[ponte] ponte de contexto missão→tópico:", e.message); }
+        await send(chatId, `✅ Missão concluída.\n\n${result}`, threadId);
+      } else {
+        // turno normal, OU missão que caiu/deu timeout de processo (fica "running" → checkMissions retoma sozinho; a msg já avisa)
+        await send(chatId, result, threadId);
+      }
       try { await deliverFiles(chatId, result, threadId); } catch (e) { console.error("[ponte] deliverFiles:", e.message); }
     });   // NÃO apaga img/doc aqui (era o bug: 1ª foto sumia antes da 2ª msg): ficam no TMP_DIR pra referência cross-mensagem; sweepTmp() limpa por idade.
   }).catch((e) => console.error("[ponte] erro:", e.message))
-    .finally(() => { clearInterval(_typing); busy[key] = false; drainAll(); });
+    .finally(() => { clearInterval(_typing); if (_missHb) clearInterval(_missHb); busy[key] = false; drainAll(); });
 }
 
 // drena filas respeitando o teto GLOBAL: enquanto houver slot, pega o próximo de algum tópico livre
 function drainAll() {
-  for (const k of Object.keys(queue)) {
+  // O DONO NUNCA ESPERA ATRÁS DE MISSÃO: (1) fila INTERATIVA drena PRIMEIRO, missão por último;
+  // (2) missão nunca ocupa o ÚLTIMO slot — fica sempre 1 livre pro turno interativo do dono.
+  const keys = Object.keys(queue).sort((a, b) => (a.startsWith("missao:") ? 1 : 0) - (b.startsWith("missao:") ? 1 : 0));
+  for (const k of keys) {
     if (running() >= MAX_CONCURRENT) break;
+    // ANTI-STARVATION: se a missão tá enfileirada há >5min, ela ROMPE a reserva do slot do dono (senão fica presa
+    // pra sempre em cenário de vários tópicos ativos). Missão nova continua respeitando a reserva.
+    const _q = queue[k]; const _starved = _q && _q[0] && _q[0].queuedAt && (Date.now() - _q[0].queuedAt > 300000);
+    if (k.startsWith("missao:") && !_starved && running() >= Math.max(1, MAX_CONCURRENT - 1)) continue;
     if (busy[k]) continue;
     const q = queue[k];
     if (q && q.length) {
       const n = q.shift();
       console.log(`[ponte] fila: processando próxima de ${k} (restam ${q.length})`);
-      processOne(n.msg, n.chatId, n.threadId, k, n.cfg);
+      processOne(n.msg, n.chatId, n.threadId, k, n.cfg, n.mission);   // mission opcional (só a fila de missão carrega)
     }
   }
 }
@@ -891,7 +1025,125 @@ function drainAll() {
 // pro dono pelo fluxo normal — NUNCA falha calado.
 const PROMISES_DIR = `${WORKDIR}/promises`;
 try { fs.mkdirSync(PROMISES_DIR, { recursive: true }); } catch {}
+
+// ---------- MODO MISSÃO: disparo + retomada durável ----------
+// Cria o registro em disco e dispara. `existing` = retomada (reusa id/prompt, incrementa retries).
+function startMission(chatId, threadId, prompt, cfg, existing) {
+  const id = existing ? existing.id : newMissionId();
+  const progressFile = `${MISSOES_DIR}/${id}.progress`;
+  let seed = existing ? (existing.seed || "") : "";
+  if (!existing) {
+    // PONTE DE CONTEXTO (ida): a missão roda em sessão PRÓPRIA (isolada, pro tópico ficar livre em paralelo) —
+    // então ela NASCE sabendo do que o tópico falava (senão "faz o que discutimos" viria cega). Pega o tail da
+    // sessão do tópico, ou o resumo persistido.
+    const tkey = `${chatId}:${threadId || "main"}`;
+    const ts = sessions[tkey];
+    const tsid = (ts && typeof ts === "object") ? ts.sid : ts;
+    seed = (tsid && sidExists(tsid) ? readTail(tsid, 12, 4000) : "") || (ts && typeof ts === "object" && ts.priorSummary) || "";
+    try { fs.writeFileSync(progressFile, ""); } catch {}
+    saveMission({ id, chatId, threadId: threadId || null, prompt, seed, status: "running", createdAt: Date.now(), startedAt: Date.now(), lastHeartbeat: Date.now(), sid: null, retries: 0, model: cfg.model, persona: cfg.persona });
+  }
+  const mission = { id, progressFile };
+  const key = `missao:${id}`;
+  const seedBlock = seed ? `\n\n[CONTEXTO DO TÓPICO onde a missão nasceu — as últimas trocas com o dono ANTES dela (pra você saber do que ele estava falando; NÃO responda isso, é pano de fundo):\n${seed}]` : "";
+  const missionPrompt = existing
+    ? `[RETOMADA DE MISSÃO (tentativa ${existing.retries}${existing.bgResumes ? `, verificação de background ${existing.bgResumes}` : ""}) — você JÁ fez parte do trabalho. PRIMEIRO confira o que já está pronto: arquivos que criou, checkpoint, E qualquer JOB que deixou rodando (cheque se o processo/PID terminou e se o ARQUIVO DE SAÍDA existe, com \`ls -la\`/\`test -s\`). Se o job ainda roda, ESPERE ele com polling em chamadas Bash curtas (\`sleep 480; ls -la <saída> 2>/dev/null; ps -p <PID> >/dev/null && echo RODANDO || echo FIM\`) até o arquivo aparecer — NÃO recomece do zero. Se um passo falhou por limite de imagem/API ("exceeds the dimension limit / fewer images"), refaça em LOTES menores e redimensione pra ≤2000px com ffmpeg/ImageMagick antes de reenviar. Só declare CONCLUÍDA quando o entregável EXISTIR de verdade (confira com \`ls -la\`). Reporte o que encontrou e siga até o fim.]\n\n${prompt}${seedBlock}`
+    : `${prompt}\n\n[MODO MISSÃO — tarefa longa, trabalhe até o ENTREGÁVEL final (não pare no meio, não peça licença). Reporte cada MARCO concluído escrevendo UMA linha curta no arquivo do env $MISSAO_PROGRESS, ex: \`echo "Etapa 2/5 ok: os 3 depoimentos processados" >> "$MISSAO_PROGRESS"\` — o dono recebe isso na hora. No fim, entregue o resultado completo aqui.]${seedBlock}`;
+  const msg = { text: missionPrompt, ...(threadId ? { message_thread_id: Number(threadId) } : {}) };
+  guardTmp();   // antes de uma missão pesada, garante o /tmp respirando (defesa extra além do TMPDIR no disco real)
+  // missão nunca ocupa o ÚLTIMO slot (fica 1 reservado pro turno interativo do dono — ele NUNCA espera)
+  if (busy[key] || running() >= Math.max(1, MAX_CONCURRENT - 1)) {
+    (queue[key] = queue[key] || []).push({ msg, chatId, threadId, cfg, mission, queuedAt: Date.now() });
+    const _slots = running(), _tot = MAX_CONCURRENT;
+    send(chatId, `🕓 Missão enfileirada (${_slots}/${_tot} slots ocupados). Começa assim que abrir vaga — te reporto os marcos aqui.`, threadId).catch(() => {});
+  } else processOne(msg, chatId, threadId, key, cfg, mission);
+  return id;
+}
+// Retomada: acha missões `running` órfãs (heartbeat velho = o processo morreu num restart/crash/cap) e re-dispara
+// do ponto (--resume via sid salvo). Desiste após MISSAO_MAX_RETRIES pra nunca virar loop.
+function checkMissions() {
+  let files; try { files = fs.readdirSync(MISSOES_DIR).filter(f => f.endsWith(".json")); } catch { return; }
+  for (const f of files) {
+    let m; try { m = JSON.parse(fs.readFileSync(`${MISSOES_DIR}/${f}`, "utf8")); } catch { continue; }
+    if (!m || m.status !== "running") continue;
+    const key = `missao:${m.id}`;
+    if (busy[key] || (queue[key] && queue[key].length)) continue;               // rodando OU já na fila → não retoma (evita retomada dupla)
+    // JOB EM BACKGROUND (fire-and-forget legítimo, ex whisper 45-90min): NÃO conta retry de crash. Espera resumeAfter e,
+    // quando vencer, reacorda o agente pra CONFERIR o arquivo e fechar. Contador próprio (bgResumes). VERIFICAÇÃO POR PID:
+    // se o processo do job ainda respira, a espera é FATO — NUNCA rebaixa pra crash nem marca failed enquanto o PID vive.
+    if (m.awaitingBg) {
+      if (Date.now() < (m.resumeAfter || 0)) continue;                          // dentro da janela do job → espera
+      if (m.bgPid) { let vivo = false; try { process.kill(m.bgPid, 0); vivo = true; } catch {}
+        if (vivo) { m.resumeAfter = Date.now() + MISSAO_BG_RECHECK_MS; m.lastHeartbeat = Date.now(); saveMission(m);
+          console.log(`[ponte] missão ${m.id} — job bg PID ${m.bgPid} ainda vivo; estende a espera (sem retry)`); continue; } }
+      if ((m.bgResumes || 0) >= MISSAO_BG_MAX) {                                 // PID morto/ausente E estourou o teto → vira retomada normal (aí sim conta retry)
+        m.awaitingBg = false; m.bgDied = !!m.bgPid; m.lastHeartbeat = 0; saveMission(m);
+        console.log(`[ponte] missão ${m.id} — bg esgotou (${m.bgResumes}/${MISSAO_BG_MAX}); PID morto/ausente → retomada normal`);
+        // NÃO dá continue: cai no .progress-check + retomada abaixo NESTA passada (se o job fechou e gravou marco, vira done ali)
+      } else {
+        m.bgResumes = (m.bgResumes || 0) + 1; m.awaitingBg = false; m.lastHeartbeat = Date.now(); saveMission(m);
+        if (m.sid && sidExists(m.sid)) { sessions[key] = { sid: m.sid, ctx: 0, floor: STATIC_FLOOR, turns: 1, compactCount: 0, model: m.model, updatedAt: Date.now() }; saveSessions(); }
+        console.log(`[ponte] missão ${m.id} — reacordando pra checar job em background (check ${m.bgResumes}/${MISSAO_BG_MAX})`);
+        send(m.chatId, `🔎 Checando o job pesado da missão (verificação ${m.bgResumes}) — se o arquivo já ficou pronto, fecho agora; se ainda roda, sigo esperando.`, m.threadId).catch(() => {});
+        try { startMission(m.chatId, m.threadId, m.prompt, route(m.chatId, m.threadId), m); } catch (e) { console.error("[ponte] rechecar bg:", e.message); }
+        continue;
+      }
+    }
+    if (Date.now() - (m.lastHeartbeat || m.startedAt || 0) < 90000) continue;   // heartbeat fresco → processo vivo (ou drenando)
+    // missão órfã mas com marco de conclusão no .progress ("N/N", "concluíd", "done", "finalizad", "entregue") → assume
+    // que fechou e MARCA done em vez de retomar em loop (senão reinicia eternamente uma missão já concluída).
+    try {
+      const _pf = `${MISSOES_DIR}/${m.id}.progress`;
+      const _prg = fs.existsSync(_pf) ? fs.readFileSync(_pf, "utf8") : "";
+      const _lastLines = _prg.split("\n").map(s => s.trim()).filter(Boolean).slice(-3).join(" · ").toLowerCase();
+      if (/\b(\d+)\s*\/\s*\1\b|concluíd|conclui|finaliz|entregu|missão\s+ok|missão\s+done|\bdone\b/i.test(_lastLines)) {
+        m.status = "done"; m.finishedAt = Date.now(); saveMission(m);
+        console.log(`[ponte] missão ${m.id} órfã com marco de conclusão → marcada done sem retomar`);
+        send(m.chatId, `✅ Missão ${m.id} fechada (o processo caiu mas o último marco indica conclusão). Se faltou algo, me manda de novo.`, m.threadId).catch(() => {});
+        continue;
+      }
+    } catch {}
+    if ((m.retries || 0) >= MISSAO_MAX_RETRIES) {
+      m.status = "failed"; m.finishedAt = Date.now(); saveMission(m);
+      send(m.chatId, m.bgDied
+        ? `🛑 O job pesado da missão (id ${m.id}) morreu sem gerar o arquivo e não fechou nas retomadas seguintes. Parei pra não rodar em loop — me diz como seguir.`
+        : `🛑 A missão não fechou depois de ${m.retries} tentativas — parei pra não rodar em loop. Me diz como seguir (id ${m.id}).`, m.threadId).catch(() => {});
+      continue;
+    }
+    m.retries = (m.retries || 0) + 1; m.lastHeartbeat = Date.now(); saveMission(m);
+    // semeia a sessão salva no key da missão → o ask faz --resume e o Claude vê tudo que já fez
+    if (m.sid && sidExists(m.sid)) { sessions[key] = { sid: m.sid, ctx: 0, floor: STATIC_FLOOR, turns: 1, compactCount: 0, model: m.model, updatedAt: Date.now() }; saveSessions(); }
+    console.log(`[ponte] missão ${m.id} órfã — retomando (tentativa ${m.retries})`);
+    send(m.chatId, `🔄 Retomando a missão de onde parou (o serviço tinha reiniciado). Tentativa ${m.retries}.`, m.threadId).catch(() => {});
+    try { startMission(m.chatId, m.threadId, m.prompt, route(m.chatId, m.threadId), m); } catch (e) { console.error("[ponte] retomar missão:", e.message); }
+  }
+}
+// FAXINA de retenção (higiene pura): apaga o par .json/.progress de missões já FECHADAS há +MISSAO_RETAIN_DAYS dias.
+// Conservador: só toca em status done/failed COM finishedAt vencido — missão running (ou sem finishedAt) fica INTACTA.
+function sweepMissions() {
+  let files; try { files = fs.readdirSync(MISSOES_DIR).filter(f => f.endsWith(".json")); } catch { return; }
+  const cutoff = Date.now() - MISSAO_RETAIN_DAYS * 86400000;
+  let apagadas = 0;
+  for (const f of files) {
+    let m; try { m = JSON.parse(fs.readFileSync(`${MISSOES_DIR}/${f}`, "utf8")); } catch { continue; }
+    if (!m || (m.status !== "done" && m.status !== "failed")) continue;   // running (ou registro ilegível) fica INTACTA
+    if (!m.finishedAt || m.finishedAt > cutoff) continue;                 // sem finishedAt ou ainda fresca → mantém
+    try { fs.unlinkSync(`${MISSOES_DIR}/${m.id}.json`); } catch {}
+    try { fs.unlinkSync(`${MISSOES_DIR}/${m.id}.progress`); } catch {}
+    apagadas++;
+  }
+  if (apagadas) console.log(`[ponte] sweepMissions: apagadas ${apagadas} missão(ões) fechada(s) há +${MISSAO_RETAIN_DAYS}d (par .json/.progress)`);
+}
+
 function firePromise(job) {
+  // AUTO-PROMOÇÃO A MISSÃO: o PRÓPRIO agente promove tarefa longa escrevendo a promessa com mission:true (doutrina)
+  // — o dono não precisa digitar /missao. Roteia pro trilho de missão (budget alto + reports de marco + retomada
+  // durável) em vez do turno comum, que morreria nos tetos normais.
+  if (job.mission) {
+    try { const mid = startMission(job.chatId, job.threadId, job.prompt, route(job.chatId, job.threadId)); console.log(`[ponte] promessa promovida a MISSÃO ${mid}`); }
+    catch (e) { console.error("[ponte] missão via promessa:", e.message); }
+    return;
+  }
   const cfg = route(job.chatId, job.threadId);
   const lateMin = Math.round((Date.now() - job.when) / 60000);
   const lateNote = lateMin > 2
@@ -907,9 +1159,11 @@ function checkPromises() {
   for (const f of files) {
     const fp = `${PROMISES_DIR}/${f}`;
     let job; try { job = JSON.parse(fs.readFileSync(fp, "utf8")); } catch { continue; }
-    const when = typeof job.when === "number" ? job.when : Date.parse(job.when);
-    if (job.done || !when || !job.prompt || !job.chatId) continue;
-    if (when > Date.now()) continue;                                  // ainda não venceu
+    // MISSÃO auto-promovida = "faça AGORA em background", NÃO é agendamento futuro → o `when` é irrelevante (o agente
+    // costuma pôr 0/agora). Sem este ramo, `when:0` caía no `!when` e a missão ficava PRESA pra sempre. Missão dispara já.
+    const when = job.mission ? Date.now() : (typeof job.when === "number" ? job.when : Date.parse(job.when));
+    if (job.done || !job.prompt || !job.chatId || (!job.mission && !when)) continue;
+    if (!job.mission && when > Date.now()) continue;                  // promessa agendada ainda não venceu (missão ignora)
     job.when = when; job.done = true; job.firedAt = Date.now();
     try { fs.writeFileSync(fp, JSON.stringify(job)); } catch {}        // marca ANTES de rodar → idempotente (nunca 2×)
     console.log(`[ponte] promessa ${f} disparada (era pra ${new Date(when).toISOString()})`);
@@ -979,11 +1233,27 @@ async function poll() {
               .filter(l => /falh|erro|error|corromp|ileg[ií]vel|timeout|não consegui|FALHOU/i.test(l) && !/getUpdates|status/i.test(l))
               .slice(-3).map(l => "· " + l.slice(0, 150));
           } catch {}
+          let missoesTxt = "missões rodando: nenhuma";
+          try {
+            const linhas = [];
+            for (const f of fs.readdirSync(MISSOES_DIR).filter(x => x.endsWith(".json"))) {
+              let m; try { m = JSON.parse(fs.readFileSync(`${MISSOES_DIR}/${f}`, "utf8")); } catch { continue; }
+              if (!m || m.status !== "running") continue;
+              const ageS = Math.round((Date.now() - (m.lastHeartbeat || m.startedAt || 0)) / 1000);
+              const idade = ageS < 90 ? `${ageS}s` : `${Math.round(ageS / 60)}min`;
+              const pulso = m.awaitingBg ? "job em background ⏳" : (ageS < 90 ? "vivo ✅" : `sem pulso há ${idade} ⚠️ (retomo sozinho)`);
+              let marco = "";
+              try { const pf = `${MISSOES_DIR}/${m.id}.progress`; if (fs.existsSync(pf)) { const ls = fs.readFileSync(pf, "utf8").split("\n").map(s => s.trim()).filter(Boolean); if (ls.length) marco = ls[ls.length - 1].slice(0, 90); } } catch {}
+              linhas.push(`· \`${m.id}\` — ${pulso} · tent ${m.retries || 0}${m.bgResumes ? `/bg ${m.bgResumes}` : ""}${marco ? `\n   último marco: ${marco}` : "\n   (ainda sem marco no .progress)"}`);
+            }
+            if (linhas.length) missoesTxt = `missões rodando:\n${linhas.join("\n")}`;
+          } catch {}
           const txt = [
             `🩺 status`,
             `no ar há: ${up}`,
             `ocupado agora: ${ocup.length ? `${ocup.length}/${MAX_CONCURRENT} (${ocup.join(", ")})` : "nada (ocioso)"}`,
             `fila: ${filas.length ? filas.join(", ") : "vazia"}`,
+            missoesTxt,
             `promessas pendentes: ${promCount}${promNext ? ` (próxima: ${new Date(promNext).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })})` : ""}`,
             `transcrição de áudio: ${VOICE_ENABLED ? "✅" : "desligada"}`,
             (d => d.length ? `dependências: ⚠️ ${d.join(" · ")}` : `dependências: ✅`)(depsCheck()),
@@ -991,6 +1261,26 @@ async function poll() {
           ].join("\n");
           send(chatId, txt, threadId).catch(() => {});
           continue;
+        }
+        // /missao <tarefa> → MODO MISSÃO: tarefa longa/volumosa (lote de fotos, transcrição longa) com budget alto,
+        // reports de marco e RETOMADA automática se cair. Sem argumento, lista as que estão rodando. Fura a fila.
+        {
+          const _cmd = (msg.text || "").trim().match(/^\/miss[ãa]o(es|ões)?\b/i);
+          if (_cmd) {
+            const tarefa = (msg.text || "").replace(/^\/miss[ãa]o(es|ões)?(@\w+)?\s*/i, "").trim();
+            if (!tarefa) {
+              const ativas = [];
+              try { for (const f of fs.readdirSync(MISSOES_DIR).filter(x => x.endsWith(".json"))) {
+                const m = JSON.parse(fs.readFileSync(`${MISSOES_DIR}/${f}`, "utf8"));
+                if (m && m.status === "running") ativas.push(`· \`${m.id}\` — ${String(m.prompt).slice(0, 60)}… (tentativa ${m.retries || 0})`);
+              } } catch {}
+              send(chatId, ativas.length ? `🎯 Missões rodando agora:\n${ativas.join("\n")}` : `Nenhuma missão rodando.\n\nAbre uma com \`/missao <a tarefa longa>\` — eu trabalho até o entregável (budget alto, teto 4h), te reporto cada marco, e retomo sozinho se cair. Você pode ir pedindo outras coisas em paralelo.`, threadId).catch(() => {});
+              continue;
+            }
+            const mid = startMission(chatId, threadId, tarefa, cfg);
+            send(chatId, `🎯 Missão aberta (id \`${mid}\`). Vou até o entregável, te reportando cada marco. Pode ir pedindo outras coisas — eu sigo nessa em paralelo, e se eu cair, retomo do ponto.`, threadId).catch(() => {});
+            continue;
+          }
         }
         if (busy[key] || running() >= MAX_CONCURRENT) {       // tópico ocupado OU teto global → ENFILEIRA (não descarta)
           const q = (queue[key] = queue[key] || []);
@@ -1025,6 +1315,8 @@ if (require.main === module) {
   poll();
   guardTmp(); setInterval(guardTmp, 300000);   // blindagem /tmp (tmpfs pequeno enche com whisper/vídeo e trava): limpa regenerável + avisa cedo, a cada 5min (08/jul)
   checkPromises(); setInterval(checkPromises, 30000);   // agendador DURÁVEL: dispara promessas vencidas (inclusive as perdidas num restart) + checa a cada 30s
+  setTimeout(checkMissions, 8000); setInterval(checkMissions, 30000);   // MODO MISSÃO: retoma no boot missão que caiu num restart (espera 8s o dreno assentar) + varre a cada 30s
+  setTimeout(sweepMissions, 15000); setInterval(sweepMissions, 21600000);   // FAXINA: apaga missão fechada (done/failed) há +MISSAO_RETAIN_DAYS dias — no boot (após o dreno assentar) + a cada 6h. running fica intacta
   // SELF-CHECK do boot: fala SÓ se algo estiver quebrado (o "no ar" cego anunciava saúde sem checar nada)
   setTimeout(() => { const probs = depsCheck(); if (probs.length) send(OWNER, `⚠️ Subi com pendência(s):\n· ${probs.join("\n· ")}\nManda /status pra acompanhar.`).catch(() => {}); }, 3000);
 } else module.exports = { readLines, readTail, tailBytes, timeBlock, convoBlock, winFor, projDir, sidExists, persistSession, gate,
