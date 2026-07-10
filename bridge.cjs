@@ -1009,12 +1009,13 @@ async function poll() {
   }
 }
 // no modo SERVIÇO: garante instância única e sobe o poll. No modo TESTE (require): só exporta o miolo puro.
-// SELF-CHECK de dependências (boot + /status): pega claude não-executável e ffmpeg sumido.
+// SELF-CHECK de dependências (boot + /status): pega claude não-executável.
 // No boot AVISA o dono SÓ se algo estiver quebrado (silêncio = saudável; sem spam a cada restart).
 function depsCheck() {
   const probs = [];
   try { fs.accessSync(CLAUDE_BIN, fs.constants.X_OK); } catch { probs.push(`claude não-executável (${CLAUDE_BIN})`); }
-  if (VOICE_ENABLED) { try { if (spawnSync("which", ["ffmpeg"]).status !== 0) probs.push("ffmpeg ausente (transcrição degradada)"); } catch {} }
+  // ffmpeg de sistema NÃO é necessário: o voice-handler.py usa faster-whisper/PyAV, que decodifica
+  // ogg/opus/m4a/mp3 direto (10/jul: removido o falso-positivo "ffmpeg ausente" que assustava à toa).
   return probs;
 }
 
