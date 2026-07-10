@@ -855,7 +855,13 @@ async function resolveInput(msg) {
 }
 
 // ---------- Loop ----------
-let offset = 0, busy = {}, queue = {};
+let offset = 0, busy = {}, queue = {}, pending = {};
+// DEBOUNCE (paridade com o terminal): o dono manda em RAJADA — vários textos seguidos, ou um LOTE de
+// arquivos/áudios de uma vez (encaminha 30 depoimentos, cola 20 mensagens). Em vez de virar 30 turnos
+// fragmentados que estouram a fila/OOM, espera um respiro por mais mensagens e JUNTA tudo num prompt só,
+// assimilando um por um mas SEM quebrar. É o que faz o Telegram alcançar o terminal.
+const DEBOUNCE_MS  = Number(process.env.DEBOUNCE_MS  || 2500);    // janela de espera por mais mensagens
+const DEBOUNCE_MAX = Number(process.env.DEBOUNCE_MAX || 15000);   // teto: dispara mesmo se ele não parar de mandar
 const QMAX = 8;   // teto da fila por tópico (anti-abuso)
 const MAX_CONCURRENT = Number(process.env.MAX_CONCURRENT || 3);   // teto GLOBAL de claudes simultâneos (anti-OOM na VPS pequena)
 const running = () => Object.values(busy).filter(Boolean).length;
@@ -1016,6 +1022,65 @@ function drainAll() {
       processOne(n.msg, n.chatId, n.threadId, k, n.cfg, n.mission);   // mission opcional (só a fila de missão carrega)
     }
   }
+}
+
+// ---------- DEBOUNCE: junta mensagens em sequência num prompt só (paridade com o terminal) ----------
+// Buffer por tópico: cada msg nova reinicia a janela; quando o dono PARA de mandar (DEBOUNCE_MS) OU
+// estoura o teto (DEBOUNCE_MAX), junta o texto de todas (mídia já salva no TMP por resolveInput) e despacha 1×.
+// É o que impede "encaminhei 30 áudios/arquivos → 30 turnos → quebrou": vira 1 prompt, assimilado de uma vez.
+const _isMedia = (m) => !!(m.voice || m.audio || m.photo || m.document || m.video || m.video_note);
+const _isCmd = (m) => /^\/[a-z]/i.test(String(m.text || "").trim());   // comando (barra no início) NUNCA é coalescido — senão fica soterrado no meio de um lote e não dispara
+// enfileira (respeitando QMAX/teto global) OU processa já. Compartilhado por flushPending e pelo bypass de comando.
+function dispatchResolved(dispatchMsg, chatId, threadId, key, cfg) {
+  if (busy[key] || running() >= MAX_CONCURRENT) {
+    const q = (queue[key] = queue[key] || []);
+    if (q.length < QMAX) { q.push({ msg: dispatchMsg, chatId, threadId, cfg }); console.log(`[ponte] fila: +1 em ${key} (${q.length} aguardando)`); }
+    else { console.log(`[ponte] fila CHEIA em ${key} (${QMAX}) — excedente descartado`);
+           // O AVISO VAI NO LUGAR CERTO (mesmo chat+tópico) e CITA o descartado — a mensagem fica recuperável.
+           const _perdida = String(dispatchMsg.text || dispatchMsg.caption || "").slice(0, 120);
+           send(chatId, `⚠️ Fila cheia nesse tópico — tive que descartar sua última${_perdida ? `: «${_perdida}${String(dispatchMsg.text || dispatchMsg.caption || "").length > 120 ? "…" : ""}»` : "."} Me manda de novo daqui a pouco.`, threadId)
+             .catch((e) => console.error("[ponte] aviso de fila cheia FALHOU:", e && e.message)); }
+  } else processOne(dispatchMsg, chatId, threadId, key, cfg);
+}
+// serializa a RESOLUÇÃO DE LOTES entre tópicos: a transcrição de um lote (whisper em série) roda FORA do
+// busy[key]/MAX_CONCURRENT, então 2 rajadas seguidas dispariam 2 whisper concorrentes = OOM na VPS pequena.
+// Este portão garante 1 lote resolvendo por vez em todo o processo (o caso alvo — encaminhar 30 áudios).
+let _batchGate = Promise.resolve();
+function bufferMsg(msg, chatId, threadId, key, cfg) {
+  // COMANDO fura o debounce: encadeia o dispatch DEPOIS do flush do lote pendente (preserva ordem, não perde o lote).
+  if (_isCmd(msg)) {
+    const flush = pending[key] ? flushPending(key).catch(e => console.error("[ponte] flush:", e && e.message)) : Promise.resolve();
+    flush.then(() => dispatchResolved(msg, chatId, threadId, key, cfg));
+    return;
+  }
+  const now = Date.now();
+  let p = pending[key];
+  if (!p) p = pending[key] = { msgs: [], chatId, threadId, cfg, firstAt: now, timer: null };
+  p.msgs.push(msg); p.cfg = cfg; p.chatId = chatId; p.threadId = threadId;
+  clearTimeout(p.timer);
+  const waited = now - p.firstAt;
+  const delay = waited >= DEBOUNCE_MAX ? 0 : Math.min(DEBOUNCE_MS, DEBOUNCE_MAX - waited);
+  p.timer = setTimeout(() => { flushPending(key).catch(e => console.error("[ponte] flush:", e && e.message)); }, delay);
+}
+async function flushPending(key) {
+  const p = pending[key]; if (!p) return;
+  clearTimeout(p.timer);   // mata o timer do próprio pending (evita órfão disparando cedo sobre uma leva seguinte)
+  delete pending[key];
+  const { msgs, chatId, threadId, cfg } = p;
+  if (msgs.length === 1) return dispatchResolved(msgs[0], chatId, threadId, key, cfg);   // 1 só: caminho normal (preserva a UX de voz/foto do processOne)
+  // VÁRIAS: resolve cada (salva mídia + extrai texto/transcrição) e junta num prompt só. Serializado pelo _batchGate
+  // pra nunca ter 2 lotes transcrevendo ao mesmo tempo (anti-OOM). O dispatch final sai FORA do portão (é rápido).
+  // VISIBILIDADE: lote de mídia leva minutos pra baixar+transcrever em série. Avisa o dono NA HORA que recebeu e
+  // está juntando — em vez de ficar mudo (a dor do "não tenho visão do que tá rolando").
+  const nMedia = msgs.filter(_isMedia).length;
+  if (nMedia >= 3) send(chatId, `🧩 Recebi ${msgs.length} itens (${nMedia} com mídia) — tô baixando e assimilando tudo de uma vez, um por um. Já te respondo com o consolidado; pode ir mandando o resto que eu junto.`, threadId).catch(() => {});
+  const dispatchMsg = await (_batchGate = _batchGate.catch(() => {}).then(async () => {
+    const parts = [];
+    for (const m of msgs) { try { const r = await resolveInput(m); if (r.text) parts.push(r.text); } catch (e) { console.error("[ponte] resolve(batch):", e && e.message); } }
+    console.log(`[ponte] 🧩 ${msgs.length} mensagens juntadas em 1 prompt (${key})`);
+    return { text: parts.join("\n\n").trim(), ...(threadId ? { message_thread_id: Number(threadId) } : {}) };
+  }));
+  dispatchResolved(dispatchMsg, chatId, threadId, key, cfg);
 }
 
 // ---------- AGENDADOR DURÁVEL (promessas) — sobrevive a restart E SEMPRE dá retorno ----------
@@ -1282,18 +1347,10 @@ async function poll() {
             continue;
           }
         }
-        if (busy[key] || running() >= MAX_CONCURRENT) {       // tópico ocupado OU teto global → ENFILEIRA (não descarta)
-          const q = (queue[key] = queue[key] || []);
-          if (q.length < QMAX) { q.push({ msg, chatId, threadId, cfg }); console.log(`[ponte] fila: +1 em ${key} (${q.length} aguardando)`); }
-          else { console.log(`[ponte] fila CHEIA em ${key} (${QMAX}) — excedente descartado`);
-                 // O AVISO VAI NO LUGAR CERTO (mesmo chat+tópico da mensagem perdida, não na DM com thread de grupo)
-                 // e CITA o que foi descartado — a mensagem fica recuperável. Falha do aviso é logada, nunca engolida.
-                 const _perdida = String(msg.text || msg.caption || "").slice(0, 120);
-                 send(chatId, `⚠️ Fila cheia nesse tópico — tive que descartar sua última${_perdida ? `: «${_perdida}${String(msg.text || msg.caption || "").length > 120 ? "…" : ""}»` : "."} Me manda de novo daqui a pouco.`, threadId)
-                   .catch((e) => console.error("[ponte] aviso de fila cheia FALHOU:", e && e.message)); }
-          continue;
-        }
-        processOne(msg, chatId, threadId, key, cfg);
+        // DEBOUNCE: em vez de despachar já, junta rajadas (vários textos / lote de arquivos) num prompt só.
+        // O flushPending decide fila/processa quando a janela fecha — e é ele que cita a mensagem descartada
+        // se a fila estiver cheia (aviso no lugar certo, nunca engolido).
+        bufferMsg(msg, chatId, threadId, key, cfg);
       } catch (e) { console.error("[ponte] erro processando update:", e && e.message); }
     }
   }
