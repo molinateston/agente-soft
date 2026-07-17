@@ -32,9 +32,13 @@ try {
   }
 } catch {}
 
-const TG_TOKEN    = process.env.TELEGRAM_BOT_TOKEN;
-const OWNER       = String(process.env.OWNER_CHAT_ID || "");   // DM do dono
-const GROUP       = String(process.env.GROUP_CHAT_ID || "");   // grupo com tópicos
+// TG_TOKEN/OWNER/GROUP são LET (não CONST) porque re-lemos o .env sem restart:
+// trocar chave do bot, chat do dono ou id do grupo passa a valer na hora que o .env muda.
+// Antes: cliente editava .env e precisava rodar systemctl restart (que trava no prompt de
+// permissão do Claude CLI e some no vazio). Agora: fs.watch abaixo puxa e AVISA o dono.
+let TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+let OWNER    = String(process.env.OWNER_CHAT_ID || "");   // DM do dono
+let GROUP    = String(process.env.GROUP_CHAT_ID || "");   // grupo com tópicos
 // allowlist de remetentes no GRUPO: só esses from.id podem comandar (OWNER sempre incluso).
 // vazio = grupo fecha (só OWNER fala). Anti-abuso: qualquer membro do grupo teria Bash livre na VPS.
 // DINÂMICA: re-lê o .env a cada mensagem → liberar/bloquear membro NÃO precisa reiniciar o serviço
@@ -82,6 +86,31 @@ function recordSender(from) {
     fs.writeFileSync(SENDERS_FILE, JSON.stringify(list.slice(0, 50), null, 1));
   } catch {}
 }
+// HOT-RELOAD do .env: quando o arquivo muda no disco, re-puxamos TELEGRAM_BOT_TOKEN,
+// OWNER_CHAT_ID e GROUP_CHAT_ID e reprogramamos sem reiniciar. Debounce curto porque editor
+// costuma disparar 2-3 eventos por save. Avisa o dono no Telegram só quando de fato mudou.
+let _envReloadTimer = null;
+function reloadHotEnv(reason) {
+  _envCache.mtimeMs = -1;                             // força envMap() a reler
+  const m = envMap();
+  const nextTok = m.TELEGRAM_BOT_TOKEN || TG_TOKEN;
+  const nextOwn = String(m.OWNER_CHAT_ID || OWNER);
+  const nextGrp = String(m.GROUP_CHAT_ID || GROUP);
+  const changed = [];
+  if (nextTok && nextTok !== TG_TOKEN)  { TG_TOKEN = nextTok; changed.push("token do bot"); }
+  if (nextOwn && nextOwn !== OWNER)     { OWNER    = nextOwn; changed.push("chat do dono"); }
+  if (nextGrp !== GROUP)                { GROUP    = nextGrp; changed.push("id do grupo"); }
+  if (changed.length && typeof send === "function" && OWNER) {
+    send(OWNER, `♻️ Config nova aplicada sem reiniciar: ${changed.join(", ")}. Já vale na próxima mensagem.`).catch(() => {});
+  }
+}
+try {
+  fs.watch(ENV_FILE, { persistent: false }, () => {
+    clearTimeout(_envReloadTimer);
+    _envReloadTimer = setTimeout(() => reloadHotEnv("watch"), 400);
+  });
+} catch {}
+
 const WORKDIR     = process.env.WORK_DIR || __dirname;
 const BRAIN       = process.env.BRAIN_DIR || `${WORKDIR}/brain`;
 const PERSONA_DIR = process.env.PERSONA_DIR || `${WORKDIR}/persona`;
