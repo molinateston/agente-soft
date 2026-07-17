@@ -1,15 +1,17 @@
 [Unit]
-Description=Checa atualização do Agente Soft 1x por semana (e no boot)
+Description=Checa atualização do Agente Soft de hora em hora (e no boot)
 
 [Timer]
-# 1x por semana + atraso aleatório de até 2h, pra muitos clientes não
+# DE HORA EM HORA + jitter aleatório de até 10min, pra muitos clientes não
 # baterem no GitHub ao mesmo tempo. OnBootSec garante uma checada logo
 # após ligar/reiniciar. Persistent: se a VPS estava off na hora marcada,
 # roda assim que voltar. (O git pull é barato e SÓ reinicia o agente se
 # houver mudança de verdade — então não vira churn nem spam de saudação.)
-OnBootSec=10min
-OnUnitActiveSec=1w
-RandomizedDelaySec=2h
+# Antes era 1x/semana; mudou porque o dono publica melhoria toda hora e
+# não faz sentido cliente esperar 7 dias pra ganhar fix.
+OnBootSec=2min
+OnUnitActiveSec=1h
+RandomizedDelaySec=10min
 Persistent=true
 
 [Install]
