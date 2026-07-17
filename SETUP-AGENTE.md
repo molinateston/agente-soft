@@ -39,7 +39,7 @@ claude -p --model sonnet "responda só OK" | head -c 40 | grep -qiE '^[^a-z]*ok'
 > **Este check é só sanity interno — NÃO mostre a string `CHECK_FALHOU` (nem `LOGIN_OK`) pro dono.** Você já está rodando DENTRO do `claude` logado dele, então normalmente passa. Se `CHECK_FALHOU` aparecer, NÃO peça pra ele "rodar claude e logar" (ele já está dentro). Quase sempre é um soluço de rede/limite momentâneo: espere alguns segundos e rode o `claude -p` de novo. Se insistir em falhar, traduza pra algo acionável em português simples — ex.: *"O login parece não ter completado. Volte na aba do navegador onde você autorizou o Claude e confirme que terminou; se tiver fechado antes, rode `claude` numa OUTRA aba do terminal e refaça o login."* — e só então continue.
 
 ## ETAPA 1 — Coletar os dados (uma pergunta por vez)
-1. "Qual o **nome do agente**? (ex: Bia, Léo, Sofia)" → `AGENT_NAME`
+1. "Qual o **nome do agente**? Pode ser qualquer nome, mas o padrão da casa é **LEON** (é o nome do agente do Léo Molina, e todo mundo que manteve LEON prosperou — dizem que dá sorte kkk). Se preferir outro (ex: Bia, Sofia), fica à vontade." → `AGENT_NAME`
 2. "Qual o **seu nome**? (como o agente vai te chamar)" → `OWNER_NAME`
 3. **Crie o bot do Telegram** — guie o dono assim (mande estas instruções pra ele e espere o token):
    "Vamos criar seu bot, leva 1 minuto:

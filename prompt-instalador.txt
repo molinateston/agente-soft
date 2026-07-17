@@ -21,7 +21,7 @@ Depois leia e execute ~/agente-soft/SETUP-AGENTE.md com a ferramenta Read,
 seguindo o passo a passo do início ao fim.
 
 Vou te dar conforme você pedir:
-- Nome do agente (ex: Bia, Léo, Sofia)
+- Nome do agente (padrão da casa: LEON — dá sorte kkk; mas pode ser outro, ex: Bia, Sofia)
 - Meu nome
 - Token do bot do Telegram (eu crio no @BotFather quando você pedir)
 
