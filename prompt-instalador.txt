@@ -1,5 +1,12 @@
 Quero instalar meu Agente Soft (Telegram + Claude) nesta VPS.
 
+ANTES DE COMEÇAR: entre em MODO AUTOMÁTICO (auto-accept) pra não me perguntar
+permissão a cada `bash`/`edit` durante a instalação — são dezenas de passos e
+travar em cada um mata o setup. Aperte **Shift+Tab** até aparecer no rodapé
+"auto-accept edits ON" (ou o modo equivalente do seu Claude Code). Você fica
+nesse modo do começo ao fim; quando terminar, eu volto pro modo normal.
+
+
 ANTES DE QUALQUER COISA: cheque se você está rodando como root.
   if [ "$(id -u)" = "0" ]; then echo "PARE_ROOT"; fi
 Se sair PARE_ROOT, NÃO instale nada. Diga pra mim, em português simples, que
