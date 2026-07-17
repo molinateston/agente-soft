@@ -11,6 +11,22 @@
 
 ---
 
+## ETAPA 0.PRE — Guard de root (PARE se for root)
+> **CRÍTICO:** o Claude Code recusa `--dangerously-skip-permissions` / `--permission-mode bypassPermissions` quando roda como root. Se você foi aberto como root, o bot vai instalar mas quebra na primeira mensagem do dono com *"Deu erro do meu lado"*. Cheque ANTES de qualquer coisa:
+```bash
+if [ "$(id -u)" = "0" ]; then
+  echo "PARE_ROOT"
+fi
+```
+Se sair `PARE_ROOT`, **NÃO siga**. Diga pro dono, em português simples, algo como:
+> *"Estou rodando como chefe da máquina (root), e isso não pode — o Claude não deixa executar em modo automático como chefe. Roda esse comando aí no terminal (uma vez só) que ele cria um usuário comum chamado `agente` e me abre já como ele:*
+> ```bash
+> sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/bootstrap.sh)"
+> ```
+> *Quando terminar, ele abre um novo Claude Code já certo. Chama o /squad de novo lá dentro que eu sigo daqui."*
+
+Aborte a instalação. NÃO tente continuar como root — vai quebrar depois.
+
 ## ETAPA 0 — Pré-checagem do ambiente
 Confirme (o `bootstrap.sh` já deixou pronto):
 ```bash

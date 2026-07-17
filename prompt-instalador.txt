@@ -1,5 +1,18 @@
 Quero instalar meu Agente Soft (Telegram + Claude) nesta VPS.
 
+ANTES DE QUALQUER COISA: cheque se você está rodando como root.
+  if [ "$(id -u)" = "0" ]; then echo "PARE_ROOT"; fi
+Se sair PARE_ROOT, NÃO instale nada. Diga pra mim, em português simples, que
+está como chefe da máquina (root) e que isso não funciona (o Claude recusa o
+modo automático como root, e o bot quebra na primeira mensagem). Peça pra eu
+rodar UMA vez:
+  sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/bootstrap.sh)"
+Isso cria um usuário comum chamado 'agente' e abre um novo Claude Code já
+como ele. Quando terminar, eu chamo /squad de novo lá dentro. Aborte por
+aqui, não siga.
+
+Se NÃO for root, siga normal.
+
 Primeiro baixe o repo e leia o manual (o clone vem ANTES de precisar do arquivo):
   cd ~ && git clone https://github.com/molinateston/agente-soft.git agente-soft
 Se a pasta já existir: cd ~/agente-soft && git pull -q
