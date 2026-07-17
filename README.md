@@ -14,7 +14,7 @@ Runtime **lean**: node puro, login nativo do Claude (na conta Pro/Max, não na A
 
 3. **Instale e abra o Claude** (1 comando — leva ~2-5 min; é normal a tela ficar parada, NÃO feche). Ele instala tudo e **abre o Claude sozinho** no fim — você não digita mais nada de comando:
    ```bash
-   sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/bootstrap.sh)"
+   sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/bootstrap.sh || echo 'echo "✗ Não consegui baixar o instalador. Confere sua internet e roda de novo. Se continuar, o GitHub pode estar fora do ar."; exit 1')"
    ```
 4. **Logue na sua conta Claude** (o Claude já abriu sozinho). Na **primeira vez**, antes do link, ele faz umas perguntas rápidas — responda assim:
    - **Tema** (cor da tela): escolha qualquer um com as **SETAS** ↑↓ e aperte **Enter**.

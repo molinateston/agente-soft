@@ -23,6 +23,13 @@ fi
 
 env_get(){ grep -E "^$1=" "$BRIDGE_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2- | sed 's/[[:space:]]*#.*$//; s/^"//; s/"$//'; }
 TG="$(env_get TELEGRAM_BOT_TOKEN)"; OWNER="$(env_get OWNER_CHAT_ID)"
+# Se .env corrompeu e OWNER sumiu, healthcheck vira mudo (sem canal pra avisar).
+# Grava sentinel bem visível pra próxima instância recuperada mandar aviso de volta,
+# e loga alto no health.log. Sem isso o dono achava que estava tudo bem.
+if [ -z "$OWNER" ] || [ -z "$TG" ]; then
+  echo "$(date +%s)" > "$BRIDGE_DIR/.owner-lost"
+  say "‼️ .env sem TELEGRAM_BOT_TOKEN ou OWNER_CHAT_ID. Healthcheck ficou mudo (sem canal pra avisar o dono). Restaura o .env pra voltar a alertar."
+fi
 alert(){ [ -n "$TG" ] && [ -n "$OWNER" ] && curl -s --max-time 15 \
   "https://api.telegram.org/bot${TG}/sendMessage" \
   --data-urlencode "chat_id=${OWNER}" --data-urlencode "text=$1" >/dev/null 2>&1 || true; }
@@ -89,7 +96,7 @@ if [ -n "$CB" ] && [ $((NOW - LAST)) -ge 10800 ]; then
       AL=$(cat "$ASTAMP" 2>/dev/null || echo 0)
       if [ $((NOW - AL)) -ge 86400 ]; then
         echo "$NOW" > "$ASTAMP"; say "AUTH falhou ${n}x — alertando (1x/dia)"
-        alert "🔑 O login do Claude do seu agente parece ter expirado mesmo (erro de autenticação confirmado 2x). Me avise aqui que a gente religa — você não precisa mexer na VPS."
+        alert "🔑 O login do Claude venceu (confirmado 2x). Vou ficar mudo até você entrar de novo: abre o terminal da VPS e roda 'claude' pra fazer login. Assim que voltar, mando um oi aqui."
       fi
     else
       say "AUTH falhou 1x — espero confirmar na proxima checagem antes de alarmar"

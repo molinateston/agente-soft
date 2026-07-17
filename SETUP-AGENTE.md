@@ -120,6 +120,14 @@ mkdir -p ~/.claude
 > Note: **NÃO existe token Claude no .env.** O runtime usa o login nativo que está
 > em `~/.claude/`. Isso é o coração do modelo lean.
 ```bash
+# GUARD: as 3 variáveis abaixo TÊM que estar preenchidas ANTES de gravar o .env.
+# Se qualquer uma vier vazia, o bridge aborta no boot (guard bridge.cjs:137) e o
+# dono só vê "não subiu". Aborta cedo e explica.
+[ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$AGENT_NAME" ] && [ -n "$OWNER_NAME" ] \
+  || { echo "✗ Falta token do bot, nome do agente ou seu nome. Refaz a ETAPA 1 antes de gravar."; exit 1; }
+# Nota pro Claude que escreve o arquivo: cola os VALORES literais das perguntas
+# da ETAPA 1 no lugar de $TELEGRAM_BOT_TOKEN/$AGENT_NAME/$OWNER_NAME. NÃO deixe
+# placeholders — o bridge não expande depois.
 # OWNER_CHAT_ID fica VAZIO aqui de propósito — é preenchido na ETAPA 3.5 (captura),
 # ANTES de subir o serviço. A ponte aborta se OWNER_CHAT_ID estiver vazio, então só
 # inicie o agente (ETAPA 4) depois que a 3.5 gravar o id.
@@ -194,6 +202,10 @@ cuja mensagem é `sou eu, $OWNER_NAME`.
 **f) Grave o id confirmado no `.env`:**
 ```bash
 OWNER_CHAT_ID="<o chat_id confirmado no passo e>"
+# GUARD: chat_id do Telegram é sempre inteiro (pode ser negativo em grupos).
+# Se veio outra coisa (username, texto), aborta antes do sed pra não corromper o .env.
+[[ "$OWNER_CHAT_ID" =~ ^-?[0-9]+$ ]] \
+  || { echo "✗ ID '$OWNER_CHAT_ID' não parece número. Peça pro dono mandar a msg no bot de novo e refaça a captura."; exit 1; }
 grep -q '^OWNER_CHAT_ID=' ~/lean-bridge/.env \
   && sed -i "s/^OWNER_CHAT_ID=.*/OWNER_CHAT_ID=$OWNER_CHAT_ID/" ~/lean-bridge/.env \
   || echo "OWNER_CHAT_ID=$OWNER_CHAT_ID" >> ~/lean-bridge/.env

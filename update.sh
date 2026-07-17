@@ -161,9 +161,16 @@ done
 echo "$BACKUP_DIR" > "$BRIDGE_DIR/.last-backup"
 
 # Aplica bridge novo (com checagem de sintaxe antes de trocar)
+BRIDGE_BROKEN=0
 if [ "$BRIDGE_CHANGED" -eq 1 ]; then
   if node --check "$REPO_DIR/bridge.cjs"; then cp -p "$REPO_DIR/bridge.cjs" "$BRIDGE_DIR/bridge.cjs"
-  else say "✗ bridge.cjs novo tem erro de sintaxe — mantido o antigo."; fi
+  else
+    say "✗ bridge.cjs novo tem erro de sintaxe — mantido o antigo."
+    BRIDGE_BROKEN=1
+    # skills já foram aplicadas antes desta linha (git pull). O aviso ao dono
+    # sai no fim do script, antes do restart — pra ele saber que atualizei mas
+    # o motor novo estava quebrado (segue no antigo, sem impacto imediato).
+  fi
 fi
 
 # ---- Sincroniza os UNITS GENÉRICOS do repo pra frota já instalada -----
@@ -241,6 +248,11 @@ if [ "$UNITS_CHANGED" -eq 1 ] || [ "$NEED_RELOAD" -eq 1 ]; then
 fi
 if [ "$FAIL" -eq 0 ]; then
   say "✅ UPDATE OK (skills em $NEW_SHA)."
+  # Se o bridge novo veio quebrado mas o resto (skills, units) foi aplicado ok,
+  # o agente segue no ar na versão antiga do bridge. Avisa o dono pra ele saber.
+  if [ "$BRIDGE_BROKEN" -eq 1 ]; then
+    tg "⚠️ A atualização veio com defeito no motor. Deixei o motor como estava e apliquei só o resto. Você segue no ar sem quebrar. Vou tentar de novo no próximo update."
+  fi
   exit 0
 fi
 
