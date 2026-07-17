@@ -484,7 +484,7 @@ async function send(chatId, text, threadId) {
 
 // ---------- ENTREGA DE ARQUIVO (imagem/doc que o AGENTE gera) — porta do LEON ----------
 const SENDABLE_IMG = /\.(png|jpe?g|gif|webp)$/i;
-const SENDABLE_DOC = /\.(pdf|mp4|mov|mp3|wav|ogg|m4a|zip|docx?|xlsx?|pptx?|csv)$/i;
+const SENDABLE_DOC = /\.(pdf|mp4|mov|mp3|wav|ogg|m4a|zip|docx?|xlsx?|pptx?|csv|md|markdown|txt|json|log|ya?ml|xml|html?|srt|vtt)$/i;
 function tgSendFile(method, field, chatId, filePath, base) {
   return new Promise((resolve) => {
     if (process.env.TEST_NO_TG) return resolve({ ok: true });
