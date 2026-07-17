@@ -289,6 +289,20 @@ XDG_RUNTIME_DIR=/run/user/$(id -u) DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/
 XDG_RUNTIME_DIR=/run/user/$(id -u) DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus systemctl --user list-timers --no-pager   # confirma que os dois estão agendados
 ```
 
+## ETAPA 4.7 — Ligar o áudio DE FÁBRICA (se a VPS aguenta)
+Áudio (transcrição local via faster-whisper) puxa ~1GB de RAM. Se a VPS tiver **≥ 1800MB de RAM**, ligue AGORA — o cliente é leigo e não vai lembrar de rodar `/audio` depois. Se tiver menos, PULE (VPS de 1GB estoura e o agente cai).
+```bash
+RAM_MB=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)
+if [ "$RAM_MB" -ge 1800 ]; then
+  echo "→ RAM=${RAM_MB}MB suficiente, ligando áudio em background..."
+  XDG_RUNTIME_DIR=/run/user/$(id -u) DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus \
+    systemd-run --user --collect --unit=voice-install-$(date +%s) bash ~/agente-soft/enable-voice.sh
+  echo "   áudio instalando em background (~2-5min pra baixar o modelo, o agente avisa quando pronto)."
+else
+  echo "→ RAM=${RAM_MB}MB — pulando áudio pra não estourar. Cliente pode ligar depois com /audio SE fizer upgrade da VPS."
+fi
+```
+
 ## ETAPA 5 — Validar ponta a ponta
 ```bash
 sleep 4
