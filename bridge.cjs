@@ -1376,6 +1376,82 @@ async function poll() {
           send(chatId, txt, threadId).catch(() => {});
           continue;
         }
+        // /vps → sensor Hostinger + processos locais. Precisa HOSTINGER_API_TOKEN + HOSTINGER_VM_ID no .env.
+        if (/^\/vps\b/i.test((msg.text || "").trim())) {
+          const argv = (msg.text || "").trim().split(/\s+/).slice(1);
+          const sub = (argv[0] || "").toLowerCase();
+          const hostToken = process.env.HOSTINGER_API_TOKEN;
+          const hostVmId  = process.env.HOSTINGER_VM_ID;
+          const hostReq = (method, p, body) => new Promise((resolve, reject) => {
+            const b = body ? JSON.stringify(body) : null;
+            const req = https.request({
+              host: "developers.hostinger.com", path: `/api/vps/v1${p}`, method,
+              headers: Object.assign({ Authorization: `Bearer ${hostToken}`, Accept: "application/json" },
+                b ? { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(b) } : {})
+            }, res => { let d = ""; res.on("data", c => d += c); res.on("end", () => {
+              if (res.statusCode >= 200 && res.statusCode < 300) { try { resolve(JSON.parse(d || "{}")); } catch { resolve({ raw: d }); } }
+              else reject(new Error(`HTTP ${res.statusCode}: ${d.slice(0,200)}`));
+            }); });
+            req.on("error", reject); req.setTimeout(15000, () => { req.destroy(new Error("timeout")); });
+            if (b) req.write(b); req.end();
+          });
+          (async () => {
+            try {
+              if (!hostToken || !hostVmId) {
+                await send(chatId, "⚠️ Falta configurar /vps.\n\nCola no teu .env (raiz do agente-soft):\n· `HOSTINGER_API_TOKEN=<teu token da Hostinger>`\n· `HOSTINGER_VM_ID=<id da tua VPS>`\n\nPega os dois no painel: hpanel.hostinger.com → Developer API + a URL do teu VPS.", threadId);
+                return;
+              }
+              if (!sub || sub === "status") {
+                const txt = spawnSync("node", [`${__dirname}/workers/hostinger-health.cjs`, "--markdown"],
+                  { encoding: "utf8", timeout: 20000 }).stdout || "sem retorno do sensor";
+                await send(chatId, txt.trim(), threadId); return;
+              }
+              if (sub === "backup" && (argv[1] || "").toLowerCase() === "list") {
+                const r = await hostReq("GET", `/virtual-machines/${hostVmId}/backups?per_page=5`);
+                const arr = r.data || [];
+                if (!arr.length) { await send(chatId, "Nenhum backup registrado ainda.", threadId); return; }
+                const now = Date.now();
+                const linhas = arr.map(b => {
+                  const idade = Math.floor((now - new Date(b.created_at).getTime()) / 86400000);
+                  const sizeMB = Math.round((b.size||0)/1024/1024);
+                  return `· ${b.created_at.slice(0,10)} · ${sizeMB}MB · ${idade}d atrás`;
+                }).join("\n");
+                await send(chatId, `📦 Últimos backups (semanais automáticos):\n${linhas}`, threadId); return;
+              }
+              if (sub === "snapshot") {
+                const motivo = argv.slice(1).join(" ").trim() || "manual via /vps";
+                await send(chatId, `📸 Criando snapshot on-demand (${motivo})…`, threadId);
+                try { await hostReq("POST", `/virtual-machines/${hostVmId}/snapshot`, {});
+                  await send(chatId, `✅ Snapshot disparado. Ver com \`/vps backup list\` daqui a alguns minutos.`, threadId);
+                } catch (e) { await send(chatId, `⚠️ Não deu pra criar snapshot: ${e.message}`, threadId); }
+                return;
+              }
+              if (sub === "restart") {
+                const arg = argv[1] || "";
+                const m = arg.match(/^CONFIRMA-VPS-RESTART-([a-f0-9]{6})$/i);
+                global._vpsRestartChallenge = global._vpsRestartChallenge || new Map();
+                if (m) {
+                  const rec = global._vpsRestartChallenge.get(chatId);
+                  if (!rec || rec.hash !== m[1].toLowerCase() || Date.now() > rec.exp) {
+                    await send(chatId, "⚠️ Hash inválido ou expirado. Roda `/vps restart` de novo.", threadId); return;
+                  }
+                  global._vpsRestartChallenge.delete(chatId);
+                  await send(chatId, "🔁 Reiniciando VPS na Hostinger. O agente cai ~30s e volta.", threadId);
+                  try { await hostReq("POST", `/virtual-machines/${hostVmId}/actions/restart`, {});
+                    await send(chatId, "✅ Restart disparado.", threadId);
+                  } catch (e) { await send(chatId, `⚠️ Falhou: ${e.message}`, threadId); }
+                  return;
+                }
+                const hash = require("crypto").createHash("sha256").update(`vps-restart-${chatId}-${Date.now()}`).digest("hex").slice(0,6);
+                global._vpsRestartChallenge.set(chatId, { hash, exp: Date.now() + 5*60*1000 });
+                await send(chatId, `⚠️ Restart da VPS derruba o agente por ~30s.\n\nConfirma com: \`CONFIRMA-VPS-RESTART-${hash}\`\n(válido por 5min)`, threadId);
+                return;
+              }
+              await send(chatId, "🖥️ /vps — sensor Hostinger.\n· /vps ou /vps status → estado agora\n· /vps backup list → últimos backups\n· /vps snapshot <motivo> → cria snapshot on-demand\n· /vps restart → reinicia (com confirmação)", threadId);
+            } catch (e) { await send(chatId, `⚠️ /vps deu erro: ${e.message}`, threadId); }
+          })().catch(() => {});
+          continue;
+        }
         // /missao <tarefa> → MODO MISSÃO: tarefa longa/volumosa (lote de fotos, transcrição longa) com budget alto,
         // reports de marco e RETOMADA automática se cair. Sem argumento, lista as que estão rodando. Fura a fila.
         {
