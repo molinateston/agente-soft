@@ -148,6 +148,7 @@ const FLOOR_CAP    = Number(process.env.FLOOR_CAP || 60000);    // TETO do piso:
 const SNAPSHOT_EVERY = Number(process.env.SNAPSHOT_EVERY || 8); // a cada N turnos guarda um tail-handoff (sobrevive a poda willow)
 const COMPACT_TIMEOUT_MS = Number(process.env.COMPACT_TIMEOUT_SEG || 120) * 1000;
 const MEMVIVA_FILE = process.env.MEMVIVA_FILE || `${BRAIN}/MEMORIA-VIVA.md`;   // memória de trabalho (decisões/projetos/pendências ATIVAS): SEMPRE no contexto (estilo NAIA)
+const ASSUNTOS_FILE = process.env.ASSUNTOS_FILE || `${BRAIN}/ASSUNTOS-VIVOS.md`;   // ASSUNTOS CRUZADOS — nomes/projetos/decisões novas que apareceram em QUALQUER tópico das últimas 48h; injetado em TODAS as personas pra você nunca ficar por fora do que rolou em OUTRO tópico. Linhas velhas (>48h) são filtradas na leitura.
 // janela de contexto por modelo (p/ escalar SOFT/HARD e limiar de órfão — não queimar cota no cliente sonnet)
 const winFor = (m) => ({ "opus": 200000, "opus[1m]": 1000000, "sonnet": 400000, "sonnet[1m]": 1000000, "haiku": 200000 }[m] || 200000);
 // dir de sessões do Claude Code = hash do cwd com que o claude roda (= WORKDIR, via spawn cwd). Não-alfanumérico -> '-'.
@@ -242,6 +243,23 @@ function missaoTravou(txt) { return /\b(SIGABRT|ENOSPC)\b|sem\s+shell|bash\s+(ca
 
 // lê as primeiras N linhas de um arquivo pequeno (MEMÓRIA VIVA). Arquivos pequenos: readFileSync ok.
 const readLines = (file, maxLines) => { try { return fs.readFileSync(file, "utf8").split("\n").slice(0, maxLines).join("\n").trim(); } catch { return ""; } };
+
+// ASSUNTOS-VIVOS: linhas com timestamp ISO/pt-BR (YYYY-MM-DD HHhMM ou HH:MM) — descarta as mais velhas que maxAgeH.
+function readAssuntosVivos(maxAgeH = 48) {
+  let raw = "";
+  try { raw = fs.readFileSync(ASSUNTOS_FILE, "utf8"); } catch { return ""; }
+  const cutoff = Date.now() - maxAgeH * 3600 * 1000;
+  const kept = [];
+  for (const line of raw.split("\n")) {
+    const m = line.match(/^\s*-\s+(\d{4})-(\d{2})-(\d{2})[\sT](\d{2})[h:](\d{2})/);
+    if (m) {
+      const t = new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:00-03:00`).getTime();
+      if (isFinite(t) && t < cutoff) continue;
+    }
+    kept.push(line);
+  }
+  return kept.join("\n").trim();
+}
 
 // HORÁRIO LOCAL (Brasília) — injetado no INPUT de TODO turno e TODO tópico. A VPS roda em UTC;
 // sem isto o agente acha que é 3h mais tarde ("já passou das 11h" às 9h). Intl converte mesmo
@@ -608,6 +626,8 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       // pendente. Estável entre turnos = cai no prompt cache, barato.
       const memviva = readLines(MEMVIVA_FILE, 120);
       if (memviva) sysPrompt += (sysPrompt ? "\n\n" : "") + `# MEMÓRIA VIVA — decisões/projetos/pendências ATIVAS (leia SEMPRE antes de responder; ESCREVA aqui na hora quando algo for decidido/combinado/ficar pendente):\n${memviva}`;
+      const assuntos = readAssuntosVivos(48);
+      if (assuntos) sysPrompt += (sysPrompt ? "\n\n" : "") + `# ASSUNTOS VIVOS — nomes/projetos/decisões NOVAS que apareceram em QUALQUER tópico das últimas 48h (contexto CRUZADO, pra você NUNCA ficar por fora do que rolou em outro tópico; regra: se aparecer aqui um NOME/PROJETO novo, você JÁ conhece; quando você mesmo detectar assunto novo, ESCREVA nesse arquivo em ${ASSUNTOS_FILE} no formato "- YYYY-MM-DD HHhMM [TÓPICO] resumo em 1 linha"):\n${assuntos}`;
       // PROTOCOLO DE MEMÓRIA — paridade c/ terminal: aponta o histórico COMPLETO no disco + manda grepar na dúvida
       sysPrompt += (sysPrompt ? "\n\n" : "") + convoBlock();
       // A CONVERSA CONTINUA — injeta o resumo do que já falamos TODO turno (não só no 1º depois da
