@@ -47,30 +47,43 @@ let GROUP    = String(process.env.GROUP_CHAT_ID || "");   // grupo com tópicos
 // ROOT GUARD — o CLI `claude` recusa --permission-mode bypassPermissions quando roda como
 // root/sudo. Se o bridge subiu como root (padrão Hostinger KVM sem criar usuário antes), o
 // subprocess `claude` sai com exit 1 na 1ª mensagem e o dono só vê "erro do meu lado".
-// Abortamos ANTES: mensagem clara no log + 1 aviso no Telegram do dono.
+// Abortamos ANTES: 1 aviso no Telegram do dono (com FLAG persistente pra não spamar em respawn
+// loop do systemd Restart=always), tentamos parar o próprio serviço, e dormimos antes de exit
+// pra limitar taxa de reinício.
 if (process.platform === "linux" && typeof process.getuid === "function" && process.getuid() === 0) {
+  const _flagFile = `${__dirname}/.root-blocked`;
   const _rootMsg = "⛔ Bridge iniciado como ROOT. O CLI claude recusa rodar assim (bypassPermissions). "
-    + "Solução automática: rode como root em UMA linha e o instalador cria o usuário certo e reinstala: "
+    + "Solução automática — rode NA VPS (como root) em UMA linha, o instalador para o serviço quebrado, cria o usuário 'leon' e reinstala certo: "
     + "curl -fsSL https://licenca.leonardomolina.com.br/install | bash";
   console.error("\n" + _rootMsg + "\n");
-  if (TG_TOKEN && OWNER) {
+  let _alreadyWarned = false;
+  try { _alreadyWarned = fs.existsSync(_flagFile); } catch {}
+  if (!_alreadyWarned) {
+    try { fs.writeFileSync(_flagFile, new Date().toISOString() + "\n"); } catch {}
+    if (TG_TOKEN && OWNER) {
+      try {
+        const _body = JSON.stringify({ chat_id: OWNER, text: _rootMsg });
+        const _req = https.request({
+          hostname: "api.telegram.org",
+          path: `/bot${TG_TOKEN}/sendMessage`,
+          method: "POST",
+          headers: { "content-type": "application/json", "content-length": Buffer.byteLength(_body) },
+        }, () => {});
+        _req.on("error", () => {});
+        _req.write(_body);
+        _req.end();
+      } catch {}
+    }
+    // Tenta parar o próprio serviço systemd (best-effort, ignora erros).
     try {
-      const _body = JSON.stringify({ chat_id: OWNER, text: _rootMsg });
-      const _req = https.request({
-        hostname: "api.telegram.org",
-        path: `/bot${TG_TOKEN}/sendMessage`,
-        method: "POST",
-        headers: { "content-type": "application/json", "content-length": Buffer.byteLength(_body) },
-      }, () => {});
-      _req.on("error", () => {});
-      _req.write(_body);
-      _req.end();
+      const { spawnSync: _sp } = require("child_process");
+      _sp("systemctl", ["--user", "disable", "--now", "leon-agente.service"], { stdio: "ignore", timeout: 5000 });
+      _sp("systemctl", ["disable", "--now", "leon-agente.service"], { stdio: "ignore", timeout: 5000 });
     } catch {}
-    setTimeout(() => process.exit(1), 2500);
-  } else {
-    process.exit(1);
   }
-  return; // impede o resto do boot (respawn loop sem consumir cota do claude)
+  // Dorme 60s antes de sair pra segurar o respawn (evita centenas de restarts/min mesmo se Restart=always).
+  setTimeout(() => process.exit(0), 60000);
+  return;
 }
 
 // allowlist de remetentes no GRUPO: só esses from.id podem comandar (OWNER sempre incluso).
