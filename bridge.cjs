@@ -43,6 +43,36 @@ try {
 let TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 let OWNER    = String(process.env.OWNER_CHAT_ID || "");   // DM do dono
 let GROUP    = String(process.env.GROUP_CHAT_ID || "");   // grupo com tópicos
+
+// ROOT GUARD — o CLI `claude` recusa --permission-mode bypassPermissions quando roda como
+// root/sudo. Se o bridge subiu como root (padrão Hostinger KVM sem criar usuário antes), o
+// subprocess `claude` sai com exit 1 na 1ª mensagem e o dono só vê "erro do meu lado".
+// Abortamos ANTES: mensagem clara no log + 1 aviso no Telegram do dono.
+if (process.platform === "linux" && typeof process.getuid === "function" && process.getuid() === 0) {
+  const _rootMsg = "⛔ Bridge iniciado como ROOT. O CLI claude recusa rodar assim (bypassPermissions). "
+    + "Solução automática: rode como root em UMA linha e o instalador cria o usuário certo e reinstala: "
+    + "curl -fsSL https://licenca.leonardomolina.com.br/install | bash";
+  console.error("\n" + _rootMsg + "\n");
+  if (TG_TOKEN && OWNER) {
+    try {
+      const _body = JSON.stringify({ chat_id: OWNER, text: _rootMsg });
+      const _req = https.request({
+        hostname: "api.telegram.org",
+        path: `/bot${TG_TOKEN}/sendMessage`,
+        method: "POST",
+        headers: { "content-type": "application/json", "content-length": Buffer.byteLength(_body) },
+      }, () => {});
+      _req.on("error", () => {});
+      _req.write(_body);
+      _req.end();
+    } catch {}
+    setTimeout(() => process.exit(1), 2500);
+  } else {
+    process.exit(1);
+  }
+  return; // impede o resto do boot (respawn loop sem consumir cota do claude)
+}
+
 // allowlist de remetentes no GRUPO: só esses from.id podem comandar (OWNER sempre incluso).
 // vazio = grupo fecha (só OWNER fala). Anti-abuso: qualquer membro do grupo teria Bash livre na VPS.
 // DINÂMICA: re-lê o .env a cada mensagem → liberar/bloquear membro NÃO precisa reiniciar o serviço
