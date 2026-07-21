@@ -20,6 +20,10 @@ const fs = require("fs");
 const https = require("https");
 const os = require("os");
 
+// Projeto LEON · verificacao de licenca (enforcement so nos primeiros 15 dias)
+let license = null;
+try { license = require("./lib/license.js"); } catch { license = null; }
+
 // carrega .env do diretório do script sem dotenv
 try {
   for (const line of fs.readFileSync(`${__dirname}/.env`, "utf8").split("\n")) {
@@ -749,10 +753,10 @@ function ask(key, text, cfg, chatId, threadId, mission) {
         }
       });
 
-      proc.on("close", async () => {
+      proc.on("close", async (code, signal) => {
         const dur = elapsed(), hadPanel = panelId != null;
         if (hadPanel) console.log(`[ponte] ✅ tarefa concluída em ${dur} (teve painel de progresso)`);
-        const _u = mainUsage || finalUsage;   // mainUsage = contexto da conversa principal; finalUsage (result) agrega o fan-out e infla
+        const _u = mainUsage || finalUsage;
         const ctx = _u ? ((_u.input_tokens||0) + (_u.cache_read_input_tokens||0) + (_u.cache_creation_input_tokens||0)) : 0;
         if (timedOut) {
           const capMin = Math.round(capMs/60000), stallMin = Math.round(stallMs/60000);
@@ -761,11 +765,16 @@ function ask(key, text, cfg, chatId, threadId, mission) {
             : (timedOut === "cap" ? `⚠️ A tarefa bateu o teto de segurança (${capMin}min) e eu parei — provavelmente travou. Me diz que eu retomo.` : `⚠️ A tarefa ficou ${stallMin}min sem dar nenhum sinal (travou) e eu cortei. Me fala que eu retomo.`);
           done({ result: msgTimeout, sid: finalSid, ctx, err, timedOut });
         }
-        else if (finalIsError && finalResult == null) done({ result: null, sid: finalSid, ctx, err: (finalErrors || err || buf) });   // result vazio + is_error → erro (tratado fora)
+        else if (finalIsError && finalResult == null) done({ result: null, sid: finalSid, ctx, err: (finalErrors || err || buf || `claude fechou com erro (exit=${code == null ? "?" : code} signal=${signal || "none"} após ${dur})`) });
         else if (finalResult != null) done({ result: finalResult || "(resposta vazia)", sid: finalSid, ctx, err });
-        else                     done({ result: null, sid: finalSid, ctx, err: (err || buf) });   // result=null → erro (tratado fora)
+        else {
+          // 21/jul FIX: subprocess morreu sem finalResult E sem stderr (OOM/SIGKILL/exit silencioso).
+          // Sintetiza diag (exit + signal + duração) pra o dono NÃO ver só "erro do meu lado".
+          const _diag = (err || buf) || `claude fechou sem resposta (exit=${code == null ? "?" : code} signal=${signal || "none"} após ${dur}). Provável OOM/kill do processo.`;
+          done({ result: null, sid: finalSid, ctx, err: _diag });
+        }
       });
-      proc.on("error", async () => { done({ result: null, sid: finalSid, ctx: 0, err: err || "não consegui rodar o claude" }); });
+      proc.on("error", async (e) => { done({ result: null, sid: finalSid, ctx: 0, err: err || (e && e.message) || "não consegui rodar o claude" }); });
 
       try { proc.stdin.write(userText); proc.stdin.end(); } catch {}
     });
@@ -822,7 +831,10 @@ function ask(key, text, cfg, chatId, threadId, mission) {
         const causa = String(out.err || "").split("\n").map(s => s.trim()).filter(Boolean).pop() || "";
         return { result: `🚨 Já falhei ${streak} vezes seguidas nesse tópico — isso NÃO parece passageiro.${causa ? `\nÚltimo erro: ${causa.slice(0, 200)}` : ""}\nManda /status que eu te mostro o quadro; se for login/chave/cota, manda /atualiza ou fala comigo que eu te digo o que precisa.`, sid: out.sid, ctx: out.ctx || 0, ok: false };
       }
-      return { result: "⚠️ Deu erro do meu lado processando essa — manda de novo daqui a pouco. (Quase sempre é sobrecarga passageira, já passa; reiniciar não resolve isso.)", sid: out.sid, ctx: out.ctx || 0, ok: false };
+      // 21/jul: em vez de genérico "erro do meu lado", mostra o rastro real do stderr quando existe.
+      const _errTail = String(out.err || "").split("\n").map(s => s.trim()).filter(Boolean).slice(-3).join(" | ").slice(0, 240);
+      if (_errTail) return { result: `⚠️ Erro processando essa (1ª falha, tento de novo se você repetir):\n${_errTail}`, sid: out.sid, ctx: out.ctx || 0, ok: false };
+      return { result: "⚠️ Meu subprocesso caiu sem deixar rastro (nem stderr, nem exit code útil) — geralmente é OOM/kill do sistema. Manda de novo daqui a pouco.", sid: out.sid, ctx: out.ctx || 0, ok: false };
     }
     _failStreak[key] = 0;   // sucesso zera a régua
     return { result: out.result, sid: out.sid, ctx: out.ctx || 0, ok: true, timedOut: out.timedOut };
@@ -1314,6 +1326,17 @@ async function poll() {
           console.log(`[ponte] grupo: remetente ${senderId} fora da allowlist — ignorado`);
           continue;
         }
+        // Projeto LEON · kill switch. Se a licenca esta bloqueada (reembolso, chargeback, cancelamento
+        // dentro dos 15 dias, ou 24h+ sem contato com o central), responde so a mensagem-padrao e nao processa.
+        // /atualiza e /status continuam passando pra suporte tecnico.
+        if (license && license.isBlocked()) {
+          const _txt = (msg.text || msg.caption || "").trim();
+          if (!/^\/atualiza|^\/status/i.test(_txt)) {
+            const motivo = license.blockedReason();
+            send(chatId, `Sua licenca do Projeto LEON foi encerrada (motivo: ${motivo}).\n\nPra reativar, fale com o suporte: https://wa.me/5511961562217`, threadId).catch(() => {});
+            continue;
+          }
+        }
         const hasInput = msg.text || msg.caption || msg.voice || msg.audio || msg.photo || msg.document;
         if (!hasInput) continue;                             // nada que eu saiba processar
         const key = `${chatId}:${threadId || "main"}`;       // 1 sessão por chat+tópico
@@ -1494,6 +1517,15 @@ function depsCheck() {
 if (require.main === module) {
   acquireLock();   // FIX H — garante instância única antes de abrir o long-poll (evita 409 + sessions.json corrompido)
   console.log(`[ponte-fina] no ar · ${Object.keys(topics).length} tópicos roteados · owner=${OWNER} grupo=${GROUP} · ctx redondo: SOFT=${SOFT_FRAC} HARD=${HARD_FRAC} floor=${STATIC_FLOOR}`);
+  // Projeto LEON · ativa licenca no boot (idempotente) e liga heartbeat de 15min.
+  // Fora da janela dos 15 dias, licenca vira permanente: heartbeat vira no-op.
+  if (license && license.KEY_PRESENT) {
+    license.activate().then(r => {
+      if (!r.ok && !r.already) console.error(`[license] ativacao falhou: ${r.reason}`, r.detail || "");
+      else console.log(`[license] ativa${r.already ? " (ja registrada localmente)" : ""}`);
+      license.startHeartbeat();
+    }).catch(e => console.error("[license] erro:", e && e.message));
+  }
   poll();
   guardTmp(); setInterval(guardTmp, 300000);   // blindagem /tmp (tmpfs pequeno enche com whisper/vídeo e trava): limpa regenerável + avisa cedo, a cada 5min (08/jul)
   checkPromises(); setInterval(checkPromises, 30000);   // agendador DURÁVEL: dispara promessas vencidas (inclusive as perdidas num restart) + checa a cada 30s
