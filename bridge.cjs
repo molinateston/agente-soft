@@ -20,9 +20,9 @@ const fs = require("fs");
 const https = require("https");
 const os = require("os");
 
-// Projeto LEON · verificacao de licenca (enforcement so nos primeiros 15 dias)
-let license = null;
-try { license = require("./lib/license.js"); } catch { license = null; }
+// === TEMPLATE GRATUITO agente-soft — ZERO CÓDIGO DE LICENÇA ===
+// Se você (LEON ou humano) precisa checar licença, está no arquivo ERRADO.
+// Vai pra socio-ia-template. Aqui é gratuito e roda pra todo mundo.
 
 // carrega .env do diretório do script sem dotenv
 try {
@@ -53,8 +53,8 @@ let GROUP    = String(process.env.GROUP_CHAT_ID || "");   // grupo com tópicos
 if (process.platform === "linux" && typeof process.getuid === "function" && process.getuid() === 0) {
   const _flagFile = `${__dirname}/.root-blocked`;
   const _rootMsg = "⛔ Bridge iniciado como ROOT. O CLI claude recusa rodar assim (bypassPermissions). "
-    + "Solução automática — rode NA VPS (como root) em UMA linha, o instalador para o serviço quebrado, cria o usuário 'leon' e reinstala certo: "
-    + "curl -fsSL https://licenca.leonardomolina.com.br/install | bash";
+    + "Solução — rode NA VPS (como root) em UMA linha, o instalador para o serviço quebrado, cria o usuário 'agente' e reinstala certo: "
+    + "sudo bash -c \"$(curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/bootstrap.sh)\"";
   console.error("\n" + _rootMsg + "\n");
   let _alreadyWarned = false;
   try { _alreadyWarned = fs.existsSync(_flagFile); } catch {}
@@ -1369,17 +1369,6 @@ async function poll() {
           console.log(`[ponte] grupo: remetente ${senderId} fora da allowlist — ignorado`);
           continue;
         }
-        // Projeto LEON · kill switch. Se a licenca esta bloqueada (reembolso, chargeback, cancelamento
-        // dentro dos 15 dias, ou 24h+ sem contato com o central), responde so a mensagem-padrao e nao processa.
-        // /atualiza e /status continuam passando pra suporte tecnico.
-        if (license && license.isBlocked()) {
-          const _txt = (msg.text || msg.caption || "").trim();
-          if (!/^\/atualiza|^\/status/i.test(_txt)) {
-            const motivo = license.blockedReason();
-            send(chatId, `Sua licenca do Projeto LEON foi encerrada (motivo: ${motivo}).\n\nPra reativar, fale com o suporte: https://wa.me/5511961562217`, threadId).catch(() => {});
-            continue;
-          }
-        }
         const hasInput = msg.text || msg.caption || msg.voice || msg.audio || msg.photo || msg.document;
         if (!hasInput) continue;                             // nada que eu saiba processar
         const key = `${chatId}:${threadId || "main"}`;       // 1 sessão por chat+tópico
@@ -1560,15 +1549,6 @@ function depsCheck() {
 if (require.main === module) {
   acquireLock();   // FIX H — garante instância única antes de abrir o long-poll (evita 409 + sessions.json corrompido)
   console.log(`[ponte-fina] no ar · ${Object.keys(topics).length} tópicos roteados · owner=${OWNER} grupo=${GROUP} · ctx redondo: SOFT=${SOFT_FRAC} HARD=${HARD_FRAC} floor=${STATIC_FLOOR}`);
-  // Projeto LEON · ativa licenca no boot (idempotente) e liga heartbeat de 15min.
-  // Fora da janela dos 15 dias, licenca vira permanente: heartbeat vira no-op.
-  if (license && license.KEY_PRESENT) {
-    license.activate().then(r => {
-      if (!r.ok && !r.already) console.error(`[license] ativacao falhou: ${r.reason}`, r.detail || "");
-      else console.log(`[license] ativa${r.already ? " (ja registrada localmente)" : ""}`);
-      license.startHeartbeat();
-    }).catch(e => console.error("[license] erro:", e && e.message));
-  }
   poll();
   guardTmp(); setInterval(guardTmp, 300000);   // blindagem /tmp (tmpfs pequeno enche com whisper/vídeo e trava): limpa regenerável + avisa cedo, a cada 5min (08/jul)
   checkPromises(); setInterval(checkPromises, 30000);   // agendador DURÁVEL: dispara promessas vencidas (inclusive as perdidas num restart) + checa a cada 30s
