@@ -86,6 +86,30 @@ if (process.platform === "linux" && typeof process.getuid === "function" && proc
   return;
 }
 
+// GENDER GUARD — se AGENT_GENDER faltar no .env (cliente ativo instalado antes do fix), pergunta
+// UMA vez pro dono e grava a resposta ao interceptar a próxima mensagem. Flag persistente
+// .gender-asked garante que a pergunta vai uma vez só (evita spam se o serviço reinicia).
+(function askGenderIfMissing(){
+  try {
+    if (process.env.AGENT_GENDER) return;
+    const _flag = `${__dirname}/.gender-asked`;
+    if (fs.existsSync(_flag)) return;
+    if (!TG_TOKEN || !OWNER) return;
+    fs.writeFileSync(_flag, new Date().toISOString() + "\n");
+    const _q = "🎙️ Preciso ajustar minha voz. Sou uma persona MASCULINA ou FEMININA? Responde *m* ou *f* (ou *masculino*/*feminino*). Isso define a voz que uso quando respondo em áudio (Alex se masculino, Dora se feminino).";
+    const _body = JSON.stringify({ chat_id: OWNER, text: _q, parse_mode: "Markdown" });
+    const _req = https.request({
+      hostname: "api.telegram.org",
+      path: `/bot${TG_TOKEN}/sendMessage`,
+      method: "POST",
+      headers: { "content-type": "application/json", "content-length": Buffer.byteLength(_body) },
+    }, () => {});
+    _req.on("error", () => {});
+    _req.write(_body);
+    _req.end();
+  } catch {}
+})();
+
 // allowlist de remetentes no GRUPO: só esses from.id podem comandar (OWNER sempre incluso).
 // vazio = grupo fecha (só OWNER fala). Anti-abuso: qualquer membro do grupo teria Bash livre na VPS.
 // DINÂMICA: re-lê o .env a cada mensagem → liberar/bloquear membro NÃO precisa reiniciar o serviço
@@ -1570,6 +1594,31 @@ async function poll() {
         if (isGroup && !isOwner && !_allow.has("*") && !_allow.has(senderId)) {
           console.log(`[ponte] grupo: remetente ${senderId} fora da allowlist — ignorado`);
           continue;
+        }
+        // GENDER GUARD — se a pergunta de gênero foi feita (flag existe) e AGENT_GENDER ainda
+        // não foi gravado, intercepta a resposta ANTES do Claude (barato, direto).
+        if (isOwner && !process.env.AGENT_GENDER) {
+          try {
+            if (fs.existsSync(`${__dirname}/.gender-asked`)) {
+              const _t = String(msg.text || "").trim().toLowerCase();
+              let _g = null;
+              if (/^(m|masc|masculino|male|homem)$/.test(_t)) _g = "male";
+              else if (/^(f|fem|feminino|female|mulher)$/.test(_t)) _g = "female";
+              if (_g) {
+                const _envPath = `${__dirname}/.env`;
+                let _env = "";
+                try { _env = fs.readFileSync(_envPath, "utf8"); } catch {}
+                if (/^AGENT_GENDER=/m.test(_env)) _env = _env.replace(/^AGENT_GENDER=.*$/m, `AGENT_GENDER=${_g}`);
+                else _env = _env.replace(/\n?$/, `\nAGENT_GENDER=${_g}\n`);
+                fs.writeFileSync(_envPath, _env);
+                process.env.AGENT_GENDER = _g;
+                try { fs.unlinkSync(`${__dirname}/.gender-asked`); } catch {}
+                const _voice = _g === "female" ? "Dora" : "Alex";
+                send(chatId, `✅ Voz configurada: ${_voice}. Da próxima vez que você mandar áudio, respondo com essa voz.`, threadId).catch(() => {});
+                continue;
+              }
+            }
+          } catch (e) { console.error("[gender] falhou:", e.message); }
         }
         const hasInput = msg.text || msg.caption || msg.voice || msg.audio || msg.photo || msg.document;
         if (!hasInput) continue;                             // nada que eu saiba processar
