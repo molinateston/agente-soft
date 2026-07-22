@@ -20,9 +20,9 @@ const fs = require("fs");
 const https = require("https");
 const os = require("os");
 
-// === TEMPLATE GRATUITO agente-soft — ZERO CÓDIGO DE LICENÇA ===
-// Se você (LEON ou humano) precisa checar licença, está no arquivo ERRADO.
-// Vai pra socio-ia-template. Aqui é gratuito e roda pra todo mundo.
+// Projeto LEON · verificacao de licenca (enforcement so nos primeiros 15 dias)
+let license = null;
+try { license = require("./lib/license.js"); } catch { license = null; }
 
 // carrega .env do diretório do script sem dotenv
 try {
@@ -43,49 +43,6 @@ try {
 let TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 let OWNER    = String(process.env.OWNER_CHAT_ID || "");   // DM do dono
 let GROUP    = String(process.env.GROUP_CHAT_ID || "");   // grupo com tópicos
-
-// ROOT GUARD — o CLI `claude` recusa --permission-mode bypassPermissions quando roda como
-// root/sudo. Se o bridge subiu como root (padrão Hostinger KVM sem criar usuário antes), o
-// subprocess `claude` sai com exit 1 na 1ª mensagem e o dono só vê "erro do meu lado".
-// Abortamos ANTES: 1 aviso no Telegram do dono (com FLAG persistente pra não spamar em respawn
-// loop do systemd Restart=always), tentamos parar o próprio serviço, e dormimos antes de exit
-// pra limitar taxa de reinício.
-if (process.platform === "linux" && typeof process.getuid === "function" && process.getuid() === 0) {
-  const _flagFile = `${__dirname}/.root-blocked`;
-  const _rootMsg = "⛔ Bridge iniciado como ROOT. O CLI claude recusa rodar assim (bypassPermissions). "
-    + "Solução — rode NA VPS (como root) em UMA linha, o instalador para o serviço quebrado, cria o usuário 'agente' e reinstala certo: "
-    + "sudo bash -c \"$(curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/bootstrap.sh)\"";
-  console.error("\n" + _rootMsg + "\n");
-  let _alreadyWarned = false;
-  try { _alreadyWarned = fs.existsSync(_flagFile); } catch {}
-  if (!_alreadyWarned) {
-    try { fs.writeFileSync(_flagFile, new Date().toISOString() + "\n"); } catch {}
-    if (TG_TOKEN && OWNER) {
-      try {
-        const _body = JSON.stringify({ chat_id: OWNER, text: _rootMsg });
-        const _req = https.request({
-          hostname: "api.telegram.org",
-          path: `/bot${TG_TOKEN}/sendMessage`,
-          method: "POST",
-          headers: { "content-type": "application/json", "content-length": Buffer.byteLength(_body) },
-        }, () => {});
-        _req.on("error", () => {});
-        _req.write(_body);
-        _req.end();
-      } catch {}
-    }
-    // Tenta parar o próprio serviço systemd (best-effort, ignora erros).
-    try {
-      const { spawnSync: _sp } = require("child_process");
-      _sp("systemctl", ["--user", "disable", "--now", "leon-agente.service"], { stdio: "ignore", timeout: 5000 });
-      _sp("systemctl", ["disable", "--now", "leon-agente.service"], { stdio: "ignore", timeout: 5000 });
-    } catch {}
-  }
-  // Dorme 60s antes de sair pra segurar o respawn (evita centenas de restarts/min mesmo se Restart=always).
-  setTimeout(() => process.exit(0), 60000);
-  return;
-}
-
 // allowlist de remetentes no GRUPO: só esses from.id podem comandar (OWNER sempre incluso).
 // vazio = grupo fecha (só OWNER fala). Anti-abuso: qualquer membro do grupo teria Bash livre na VPS.
 // DINÂMICA: re-lê o .env a cada mensagem → liberar/bloquear membro NÃO precisa reiniciar o serviço
@@ -198,20 +155,6 @@ const MEMVIVA_FILE = process.env.MEMVIVA_FILE || `${BRAIN}/MEMORIA-VIVA.md`;   /
 const ASSUNTOS_FILE = process.env.ASSUNTOS_FILE || `${BRAIN}/ASSUNTOS-VIVOS.md`;   // ASSUNTOS CRUZADOS — nomes/projetos/decisões novas que apareceram em QUALQUER tópico das últimas 48h; injetado em TODAS as personas pra você nunca ficar por fora do que rolou em OUTRO tópico. Linhas velhas (>48h) são filtradas na leitura.
 // janela de contexto por modelo (p/ escalar SOFT/HARD e limiar de órfão — não queimar cota no cliente sonnet)
 const winFor = (m) => ({ "opus": 200000, "opus[1m]": 1000000, "sonnet": 400000, "sonnet[1m]": 1000000, "haiku": 200000 }[m] || 200000);
-
-// TRADUTOR de erro tecnico -> linguagem amigavel (Leo 21/07: "todo erro tem que ser mais friendly").
-// Regra: NUNCA vomitar JSON cru / "API Error {...}" / stack trace pro dono. Detecta padrao comum e traduz.
-function friendlyError(errText) {
-  const s = String(errText || "");
-  if (!s) return null;
-  if (/Internal server error|"type":"api_error"|500 status/i.test(s)) return "A API da Anthropic teve uma instabilidade agora (erro 500 do lado deles). Manda de novo em ~30s — se persistir, confere status.anthropic.com.";
-  if (/overloaded|529/i.test(s)) return "A Anthropic esta sobrecarregada agora. Espera 1–2min e manda de novo.";
-  if (/429|rate.?limit|too many requests/i.test(s)) return "Bati o teto de ritmo da API (muitas requests seguidas). Espera 1min e manda de novo.";
-  if (/401|403|authentication|invalid.?api.?key|unauthorized/i.test(s)) return "Autenticacao com a Anthropic falhou (chave/login com problema). Roda /status ou avisa o dono.";
-  if (/SIGKILL|OOM|out of memory|killed|exit=137/i.test(s)) return "Meu subprocesso foi morto pelo sistema (provavel falta de memoria). Manda de novo — se acontecer 3× seguido, roda /status.";
-  if (/ETIMEDOUT|ECONNRESET|timeout|timed out/i.test(s)) return "A conexao com a Anthropic caiu no meio (timeout). Manda de novo — normalmente resolve.";
-  return null;
-}
 // dir de sessões do Claude Code = hash do cwd com que o claude roda (= WORKDIR, via spawn cwd). Não-alfanumérico -> '-'.
 const projDir = () => `${process.env.HOME || os.homedir()}/.claude/projects/${String(WORKDIR).replace(/[^A-Za-z0-9]/g, "-")}`;
 const sidExists = (sid) => { try { return fs.existsSync(`${projDir()}/${sid}.jsonl`); } catch { return false; } };
@@ -810,10 +753,10 @@ function ask(key, text, cfg, chatId, threadId, mission) {
         }
       });
 
-      proc.on("close", async (code, signal) => {
+      proc.on("close", async () => {
         const dur = elapsed(), hadPanel = panelId != null;
         if (hadPanel) console.log(`[ponte] ✅ tarefa concluída em ${dur} (teve painel de progresso)`);
-        const _u = mainUsage || finalUsage;
+        const _u = mainUsage || finalUsage;   // mainUsage = contexto da conversa principal; finalUsage (result) agrega o fan-out e infla
         const ctx = _u ? ((_u.input_tokens||0) + (_u.cache_read_input_tokens||0) + (_u.cache_creation_input_tokens||0)) : 0;
         if (timedOut) {
           const capMin = Math.round(capMs/60000), stallMin = Math.round(stallMs/60000);
@@ -822,16 +765,11 @@ function ask(key, text, cfg, chatId, threadId, mission) {
             : (timedOut === "cap" ? `⚠️ A tarefa bateu o teto de segurança (${capMin}min) e eu parei — provavelmente travou. Me diz que eu retomo.` : `⚠️ A tarefa ficou ${stallMin}min sem dar nenhum sinal (travou) e eu cortei. Me fala que eu retomo.`);
           done({ result: msgTimeout, sid: finalSid, ctx, err, timedOut });
         }
-        else if (finalIsError && finalResult == null) done({ result: null, sid: finalSid, ctx, err: (finalErrors || err || buf || `claude fechou com erro (exit=${code == null ? "?" : code} signal=${signal || "none"} após ${dur})`) });
+        else if (finalIsError && finalResult == null) done({ result: null, sid: finalSid, ctx, err: (finalErrors || err || buf) });   // result vazio + is_error → erro (tratado fora)
         else if (finalResult != null) done({ result: finalResult || "(resposta vazia)", sid: finalSid, ctx, err });
-        else {
-          // 21/jul FIX: subprocess morreu sem finalResult E sem stderr (OOM/SIGKILL/exit silencioso).
-          // Sintetiza diag (exit + signal + duração) pra o dono NÃO ver só "erro do meu lado".
-          const _diag = (err || buf) || `claude fechou sem resposta (exit=${code == null ? "?" : code} signal=${signal || "none"} após ${dur}). Provável OOM/kill do processo.`;
-          done({ result: null, sid: finalSid, ctx, err: _diag });
-        }
+        else                     done({ result: null, sid: finalSid, ctx, err: (err || buf) });   // result=null → erro (tratado fora)
       });
-      proc.on("error", async (e) => { done({ result: null, sid: finalSid, ctx: 0, err: err || (e && e.message) || "não consegui rodar o claude" }); });
+      proc.on("error", async () => { done({ result: null, sid: finalSid, ctx: 0, err: err || "não consegui rodar o claude" }); });
 
       try { proc.stdin.write(userText); proc.stdin.end(); } catch {}
     });
@@ -888,12 +826,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
         const causa = String(out.err || "").split("\n").map(s => s.trim()).filter(Boolean).pop() || "";
         return { result: `🚨 Já falhei ${streak} vezes seguidas nesse tópico — isso NÃO parece passageiro.${causa ? `\nÚltimo erro: ${causa.slice(0, 200)}` : ""}\nManda /status que eu te mostro o quadro; se for login/chave/cota, manda /atualiza ou fala comigo que eu te digo o que precisa.`, sid: out.sid, ctx: out.ctx || 0, ok: false };
       }
-      // 21/jul: em vez de genérico "erro do meu lado", mostra o rastro real do stderr quando existe.
-      const _errTail = String(out.err || "").split("\n").map(s => s.trim()).filter(Boolean).slice(-3).join(" | ").slice(0, 240);
-      const _friendly = friendlyError(out.err);
-      if (_friendly) return { result: `⚠️ ${_friendly}`, sid: out.sid, ctx: out.ctx || 0, ok: false };
-      if (_errTail) return { result: `⚠️ Erro processando essa (1ª falha, tento de novo se você repetir):\n${_errTail}`, sid: out.sid, ctx: out.ctx || 0, ok: false };
-      return { result: "⚠️ Meu subprocesso caiu sem deixar rastro (nem stderr, nem exit code útil) — geralmente é OOM/kill do sistema. Manda de novo daqui a pouco.", sid: out.sid, ctx: out.ctx || 0, ok: false };
+      return { result: "⚠️ Deu erro do meu lado processando essa — manda de novo daqui a pouco. (Quase sempre é sobrecarga passageira, já passa; reiniciar não resolve isso.)", sid: out.sid, ctx: out.ctx || 0, ok: false };
     }
     _failStreak[key] = 0;   // sucesso zera a régua
     return { result: out.result, sid: out.sid, ctx: out.ctx || 0, ok: true, timedOut: out.timedOut };
@@ -1385,6 +1318,17 @@ async function poll() {
           console.log(`[ponte] grupo: remetente ${senderId} fora da allowlist — ignorado`);
           continue;
         }
+        // Projeto LEON · kill switch. Se a licenca esta bloqueada (reembolso, chargeback, cancelamento
+        // dentro dos 15 dias, ou 24h+ sem contato com o central), responde so a mensagem-padrao e nao processa.
+        // /atualiza e /status continuam passando pra suporte tecnico.
+        if (license && license.isBlocked()) {
+          const _txt = (msg.text || msg.caption || "").trim();
+          if (!/^\/atualiza|^\/status/i.test(_txt)) {
+            const motivo = license.blockedReason();
+            send(chatId, `Sua licenca do Projeto LEON foi encerrada (motivo: ${motivo}).\n\nPra reativar, fale com o suporte: https://wa.me/5511961562217`, threadId).catch(() => {});
+            continue;
+          }
+        }
         const hasInput = msg.text || msg.caption || msg.voice || msg.audio || msg.photo || msg.document;
         if (!hasInput) continue;                             // nada que eu saiba processar
         const key = `${chatId}:${threadId || "main"}`;       // 1 sessão por chat+tópico
@@ -1433,39 +1377,6 @@ async function poll() {
             }
             if (linhas.length) missoesTxt = `missões rodando:\n${linhas.join("\n")}`;
           } catch {}
-          // ROBUSTEZ: último backup local, disco, RAM, heartbeat (bridge.log mtime).
-          let backupTxt = "último backup: nenhum";
-          try {
-            const bdir = `${process.env.HOME || require("os").homedir()}/backups`;
-            if (fs.existsSync(bdir)) {
-              const files = fs.readdirSync(bdir).filter(f => /^lean-bridge-state-.*\.tar\.gz$/.test(f))
-                .map(f => ({ f, m: fs.statSync(`${bdir}/${f}`).mtimeMs })).sort((a, b) => b.m - a.m);
-              if (files.length) {
-                const ageH = Math.round((Date.now() - files[0].m) / 3600000);
-                backupTxt = `último backup: ${new Date(files[0].m).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (há ${ageH}h)`;
-              }
-            }
-          } catch {}
-          let diskTxt = "espaço disco: n/d";
-          try {
-            const o = spawnSync("df", ["-h", process.env.HOME || __dirname], { encoding: "utf8", timeout: 3000 }).stdout || "";
-            const linha = (o.split("\n")[1] || "").trim().split(/\s+/);
-            if (linha.length >= 5) diskTxt = `espaço disco: ${linha[3]} livres de ${linha[1]} (${linha[4]} usado)`;
-          } catch {}
-          let ramTxt = "RAM livre: n/d";
-          try {
-            const o = spawnSync("free", ["-h"], { encoding: "utf8", timeout: 3000 }).stdout || "";
-            const linha = (o.split("\n").find(l => /^Mem:/.test(l)) || "").trim().split(/\s+/);
-            if (linha.length >= 4) ramTxt = `RAM livre: ${linha[3]} de ${linha[1]} total`;
-          } catch {}
-          let healthTxt = "heartbeat: n/d";
-          try {
-            const lp = `${WORKDIR}/bridge.log`;
-            if (fs.existsSync(lp)) {
-              const ageS = Math.round((Date.now() - fs.statSync(lp).mtimeMs) / 1000);
-              healthTxt = ageS < 60 ? `heartbeat: ✅ (log ativo há ${ageS}s)` : ageS < 600 ? `heartbeat: ok (log ativo há ${Math.round(ageS/60)}min)` : `heartbeat: ⚠️ log sem escrita há ${Math.round(ageS/60)}min`;
-            }
-          } catch {}
           const txt = [
             `🩺 status`,
             `no ar há: ${up}`,
@@ -1475,10 +1386,6 @@ async function poll() {
             `promessas pendentes: ${promCount}${promNext ? ` (próxima: ${new Date(promNext).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })})` : ""}`,
             `transcrição de áudio: ${VOICE_ENABLED ? "✅" : "desligada"}`,
             (d => d.length ? `dependências: ⚠️ ${d.join(" · ")}` : `dependências: ✅`)(depsCheck()),
-            healthTxt,
-            backupTxt,
-            diskTxt,
-            ramTxt,
             falhas.length ? `últimas falhas no log:\n${falhas.join("\n")}` : `últimas falhas no log: nenhuma recente ✅`,
           ].join("\n");
           send(chatId, txt, threadId).catch(() => {});
@@ -1602,6 +1509,15 @@ function depsCheck() {
 if (require.main === module) {
   acquireLock();   // FIX H — garante instância única antes de abrir o long-poll (evita 409 + sessions.json corrompido)
   console.log(`[ponte-fina] no ar · ${Object.keys(topics).length} tópicos roteados · owner=${OWNER} grupo=${GROUP} · ctx redondo: SOFT=${SOFT_FRAC} HARD=${HARD_FRAC} floor=${STATIC_FLOOR}`);
+  // Projeto LEON · ativa licenca no boot (idempotente) e liga heartbeat de 15min.
+  // Fora da janela dos 15 dias, licenca vira permanente: heartbeat vira no-op.
+  if (license && license.KEY_PRESENT) {
+    license.activate().then(r => {
+      if (!r.ok && !r.already) console.error(`[license] ativacao falhou: ${r.reason}`, r.detail || "");
+      else console.log(`[license] ativa${r.already ? " (ja registrada localmente)" : ""}`);
+      license.startHeartbeat();
+    }).catch(e => console.error("[license] erro:", e && e.message));
+  }
   poll();
   guardTmp(); setInterval(guardTmp, 300000);   // blindagem /tmp (tmpfs pequeno enche com whisper/vídeo e trava): limpa regenerável + avisa cedo, a cada 5min (08/jul)
   checkPromises(); setInterval(checkPromises, 30000);   // agendador DURÁVEL: dispara promessas vencidas (inclusive as perdidas num restart) + checa a cada 30s
@@ -1609,24 +1525,6 @@ if (require.main === module) {
   setTimeout(sweepMissions, 15000); setInterval(sweepMissions, 21600000);   // FAXINA: apaga missão fechada (done/failed) há +MISSAO_RETAIN_DAYS dias — no boot (após o dreno assentar) + a cada 6h. running fica intacta
   // SELF-CHECK do boot: fala SÓ se algo estiver quebrado (o "no ar" cego anunciava saúde sem checar nada)
   setTimeout(() => { const probs = depsCheck(); if (probs.length) send(OWNER, `⚠️ Subi com pendência(s):\n· ${probs.join("\n· ")}\nManda /status pra acompanhar.`).catch(() => {}); }, 3000);
-  // ROBUSTEZ: instala crons de backup diário (3h AM) + health check (a cada 5min). Idempotente: só adiciona linha que ainda não existe.
-  setTimeout(() => {
-    try {
-      const bkp = `${__dirname}/scripts/backup-diario.sh`;
-      const hc  = `${__dirname}/scripts/health-check.sh`;
-      if (!fs.existsSync(bkp) || !fs.existsSync(hc)) return;
-      const cur = (spawnSync("crontab", ["-l"], { encoding: "utf8", timeout: 3000 }).stdout || "");
-      const linhas = cur.split("\n").filter(Boolean);
-      let mudou = false;
-      if (!linhas.some(l => l.includes(bkp)))  { linhas.push(`0 3 * * * ${bkp} >/dev/null 2>&1`); mudou = true; }
-      if (!linhas.some(l => l.includes(hc)))   { linhas.push(`*/5 * * * * ${hc} >/dev/null 2>&1`); mudou = true; }
-      if (mudou) {
-        const r = spawnSync("crontab", ["-"], { input: linhas.join("\n") + "\n", encoding: "utf8", timeout: 3000 });
-        if (r.status === 0) console.log("[ponte] crons de robustez instalados (backup 3h · health 5min)");
-        else console.error("[ponte] falha ao instalar crons:", (r.stderr || "").slice(0, 200));
-      }
-    } catch (e) { console.error("[ponte] cron install:", e && e.message || e); }
-  }, 5000);
 } else module.exports = { readLines, readTail, tailBytes, timeBlock, convoBlock, winFor, projDir, sidExists, persistSession, gate,
   ask, compactSession, withCompactSlot, chunk,
   _state: () => sessions, _setSessions: (s) => { sessions = s; }, SOFT_FRAC, HARD_FRAC, STATIC_FLOOR };
