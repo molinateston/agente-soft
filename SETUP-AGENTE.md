@@ -304,20 +304,39 @@ fi
 ```
 
 ## ETAPA 4.8 — (Opcional) LEON RESPONDER EM VOZ
-Se o cliente quer que o LEON responda em ÁUDIO (quando ele mandar áudio, ou sempre), é opt-in — precisa de conta no ElevenLabs (chave dele). Padrão da instalação é DESLIGADO pra não gastar crédito sem pedir. Ligar depois:
+Se o cliente quer que o LEON responda em ÁUDIO (quando ele mandar áudio, ou sempre), é opt-in. Padrão da instalação é DESLIGADO. Ligar depois:
 
-1. Cliente cria conta em **elevenlabs.io** e pega a chave em "API Keys" (`sk_...`).
-2. Edita `~/agente-soft/.env` e adiciona:
+**Rota GRÁTIS (default recomendado) — Piper local, roda na própria VPS:**
+1. O bootstrap já instalou o Piper e a voz pt_BR (Faber). Se por algum motivo não instalou, roda uma vez como o usuário do agente:
    ```
-   ELEVENLABS_API_KEY=sk_...
+   python3 -m venv ~/.openclaw/piper-venv && ~/.openclaw/piper-venv/bin/pip install piper-tts
+   mkdir -p ~/.openclaw/voices/piper && cd ~/.openclaw/voices/piper
+   curl -sfL -O https://huggingface.co/rhasspy/piper-voices/resolve/main/pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx
+   curl -sfL -O https://huggingface.co/rhasspy/piper-voices/resolve/main/pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx.json
+   ```
+2. Edita `~/agente-soft/.env` e liga:
+   ```
    VOICE_REPLY=mirror
+   TTS_PROVIDER=piper
    ```
    - `mirror` = responde em áudio só quando o cliente mandar áudio (imita o canal).
-   - `always` = responde em áudio SEMPRE (todo turno). Custa mais.
+   - `always` = responde em áudio SEMPRE (todo turno).
    - `off` = desligado (padrão).
-3. Manda `/atualiza` pro LEON no Telegram — a nova config vale sem reiniciar (o `.env` recarrega sozinho).
+3. Manda `/atualiza` pro LEON no Telegram — o `.env` recarrega sozinho, sem reiniciar.
 
-Custo aproximado: R$0,10 por minuto de fala falada. Voz padrão = **Marcelo Costa** (macho BR grave). Pra trocar, pega o ID em elevenlabs.io/voice-library e põe `ELEVENLABS_VOICE_ID=<id>` no `.env`.
+Custo: **zero**. Roda offline. Voz pt_BR masculina (Faber).
+
+**Rota PREMIUM (opt-in) — ElevenLabs, voz clonada estilo Marcelo Costa:**
+Reserva pra anúncio/VSL ou quem quer voz premium no dia-a-dia. ~R$0,10/min.
+```
+VOICE_REPLY=mirror
+TTS_PROVIDER=elevenlabs
+ELEVENLABS_API_KEY=sk_...
+ELEVENLABS_VOICE_ID=bJrNspxJVFovUxNBQ0wh
+```
+Chave em elevenlabs.io → "API Keys". Voz padrão = Marcelo Costa (macho BR grave); pra trocar, ID em elevenlabs.io/voice-library.
+
+**Rota nuvem barata (fallback automático) — OpenAI TTS:** se `OPENAI_API_KEY` estiver no `.env` e Piper falhar (não instalou), o LEON usa OpenAI TTS como plano B sem você mexer.
 
 ## ETAPA 5 — Validar ponta a ponta
 ```bash
