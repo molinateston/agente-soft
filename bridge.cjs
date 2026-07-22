@@ -173,12 +173,16 @@ const VOICE_ENABLED = (() => { try { return fs.existsSync(VOICE_HANDLER); } catc
 const VOICE_REPLY = (process.env.VOICE_REPLY || "off").toLowerCase();
 const TTS_VOICE   = process.env.TTS_VOICE || "echo";              // OpenAI fallback: echo/onyx/nova/shimmer/alloy/fable/ash/sage/verse
 const TTS_MODEL   = process.env.TTS_MODEL || "gpt-4o-mini-tts";
-const TTS_PROVIDER = (process.env.TTS_PROVIDER || "elevenlabs").toLowerCase(); // "elevenlabs" (Marcelo Costa BR) | "openai" (fallback)
+const TTS_PROVIDER = (process.env.TTS_PROVIDER || "piper").toLowerCase(); // "piper" (default, local, grátis) | "elevenlabs" (premium, opt-in) | "openai" (fallback nuvem)
 const ELEVEN_VOICE_ID  = process.env.ELEVENLABS_VOICE_ID  || "bJrNspxJVFovUxNBQ0wh"; // Marcelo Costa BR (troque via .env pra outra voz)
 const ELEVEN_MODEL_ID  = process.env.ELEVENLABS_MODEL_ID  || "eleven_multilingual_v2";
 const ELEVEN_STABILITY = Number(process.env.ELEVENLABS_STABILITY  || 0.45);
 const ELEVEN_SIMILARITY = Number(process.env.ELEVENLABS_SIMILARITY || 0.75);
 const ELEVEN_STYLE      = Number(process.env.ELEVENLABS_STYLE      || 0.20);
+const PIPER_BIN     = process.env.PIPER_BIN    || `${os.homedir()}/.openclaw/piper-venv/bin/piper`;
+const PIPER_MODEL   = process.env.PIPER_MODEL  || `${os.homedir()}/.openclaw/voices/piper/pt_BR-faber-medium.onnx`;
+const PIPER_WORKER  = process.env.PIPER_WORKER || `${__dirname}/workers/piper.js`;
+const PIPER_ENABLED = (() => { try { return fs.existsSync(PIPER_BIN) && fs.existsSync(PIPER_MODEL); } catch { return false; } })();
 const openaiKey     = () => envVal("OPENAI_API_KEY");    // LIVE: chave nova no .env vale sem restart
 const elevenlabsKey = () => envVal("ELEVENLABS_API_KEY"); // LIVE idem
 try { fs.mkdirSync(TMP_DIR, { recursive: true }); } catch {}
@@ -690,8 +694,35 @@ function synthVoiceEleven(input) {
     req.write(body); req.end();
   });
 }
+function synthVoicePiper(input) {
+  return new Promise((resolve) => {
+    if (!PIPER_ENABLED) return resolve(null);
+    const outMp3 = `${TMP_DIR}/voz-piper-${Date.now()}-${process.pid}.mp3`;
+    const p = spawn("node", [PIPER_WORKER, "--action", "tts", "--text", input, "--out", outMp3], { stdio: ["ignore", "pipe", "pipe"] });
+    let err = "";
+    p.stderr.on("data", (c) => { err += c.toString(); });
+    p.on("error", (e) => { console.error("[ponte] TTS Piper spawn:", e.message); resolve(null); });
+    p.on("close", (code) => {
+      try {
+        if (code === 0 && fs.existsSync(outMp3)) {
+          const buf = fs.readFileSync(outMp3);
+          try { fs.unlinkSync(outMp3); } catch {}
+          if (buf.length > 500) return resolve(buf);
+        }
+        console.error("[ponte] TTS Piper falhou:", code, err.slice(0, 200));
+        resolve(null);
+      } catch (e) { console.error("[ponte] TTS Piper read:", e.message); resolve(null); }
+    });
+    setTimeout(() => { try { p.kill("SIGKILL"); } catch {} }, 60000).unref?.();
+  });
+}
 async function synthVoice(text) {
   const input = ttsStrip(text).slice(0, 3800); if (!input) return null;
+  if (TTS_PROVIDER === "piper") {
+    const buf = await synthVoicePiper(input);
+    if (buf) return buf;
+    return (await synthVoiceOpenAI(input)) || (await synthVoiceEleven(input));
+  }
   if (TTS_PROVIDER === "elevenlabs") {
     const buf = await synthVoiceEleven(input);
     if (buf) return buf;
@@ -706,7 +737,7 @@ async function speakReply(chatId, text, threadId) {
     // VOZ FALHOU ≠ SILÊNCIO: texto já foi entregue, mas dono esperava áudio — avisa 1x/h (sem spam)
     if (!speakReply._warned || Date.now() - speakReply._warned > 3600000) {
       speakReply._warned = Date.now();
-      send(chatId, "_(a voz falhou agora — fica o texto. Confere ELEVENLABS_API_KEY no .env.)_", threadId).catch(() => {});
+      send(chatId, "_(a voz falhou agora — fica o texto. Piper local não instalado? Sem OPENAI_API_KEY e ELEVENLABS_API_KEY no .env?)_", threadId).catch(() => {});
     }
     return;
   }
