@@ -197,7 +197,11 @@ const VOICE_ENABLED = (() => { try { return fs.existsSync(VOICE_HANDLER); } catc
 const VOICE_REPLY = (process.env.VOICE_REPLY || "off").toLowerCase();
 const TTS_VOICE   = process.env.TTS_VOICE || "echo";              // OpenAI fallback: echo/onyx/nova/shimmer/alloy/fable/ash/sage/verse
 const TTS_MODEL   = process.env.TTS_MODEL || "gpt-4o-mini-tts";
-const TTS_PROVIDER = (process.env.TTS_PROVIDER || "piper").toLowerCase(); // "piper" (default local grátis) | "kokoro" (Alex open-source, se instalado) | "elevenlabs" (premium) | "openai" (nuvem)
+const TTS_PROVIDER = (process.env.TTS_PROVIDER || "edgetts").toLowerCase(); // "edgetts" (default 22/07 15h36, Antonio/Francisca pt-BR, grátis, rápido) | "piper" (fallback local, grátis) | "kokoro" (opcional) | "elevenlabs" (premium) | "openai" (nuvem)
+const EDGE_TTS_VOICE = process.env.EDGE_TTS_VOICE || ((process.env.AGENT_GENDER || "male").toLowerCase() === "female" ? "pt-BR-FranciscaNeural" : "pt-BR-AntonioNeural");
+const EDGE_TTS_WORKER = process.env.EDGE_TTS_WORKER || `${__dirname}/workers/edge-tts.js`;
+const EDGE_TTS_PY = process.env.EDGE_TTS_PY || `${os.homedir()}/.openclaw/edgetts-venv/bin/python3`;
+const EDGE_TTS_ENABLED = (() => { try { return fs.existsSync(EDGE_TTS_WORKER) && fs.existsSync(EDGE_TTS_PY); } catch { return false; } })();
 const KOKORO_WORKER = process.env.KOKORO_WORKER || `${os.homedir()}/.openclaw/workers/kokoro-tts.cjs`;
 const KOKORO_MODEL_PATH = process.env.KOKORO_MODEL || `${os.homedir()}/.openclaw/voices/kokoro/kokoro-v1.0.onnx`;
 const KOKORO_ENABLED = (() => { try { return fs.existsSync(KOKORO_WORKER) && fs.existsSync(KOKORO_MODEL_PATH); } catch { return false; } })();
@@ -721,6 +725,28 @@ function synthVoiceEleven(input) {
     req.write(body); req.end();
   });
 }
+function synthVoiceEdge(input) {
+  return new Promise((resolve) => {
+    if (!EDGE_TTS_ENABLED) return resolve(null);
+    const outMp3 = `${TMP_DIR}/voz-edge-${Date.now()}-${process.pid}.mp3`;
+    const p = spawn("node", [EDGE_TTS_WORKER, "--action", "tts", "--text", input, "--out", outMp3, "--voice", EDGE_TTS_VOICE], { stdio: ["ignore", "pipe", "pipe"] });
+    let err = "";
+    p.stderr.on("data", (c) => { err += c.toString(); });
+    p.on("error", (e) => { console.error("[ponte] TTS Edge spawn:", e.message); resolve(null); });
+    p.on("close", (code) => {
+      try {
+        if (code === 0 && fs.existsSync(outMp3)) {
+          const buf = fs.readFileSync(outMp3);
+          try { fs.unlinkSync(outMp3); } catch {}
+          if (buf.length > 500) return resolve(buf);
+        }
+        console.error("[ponte] TTS Edge falhou:", code, err.slice(0, 200));
+        resolve(null);
+      } catch (e) { console.error("[ponte] TTS Edge read:", e.message); resolve(null); }
+    });
+    setTimeout(() => { try { p.kill("SIGKILL"); } catch {} }, 60000).unref?.();
+  });
+}
 function synthVoicePiper(input) {
   return new Promise((resolve) => {
     if (!PIPER_ENABLED) return resolve(null);
@@ -767,15 +793,21 @@ function synthVoiceKokoro(input) {
 }
 async function synthVoice(text) {
   const input = ttsStrip(text).slice(0, 3800); if (!input) return null;
+  if (TTS_PROVIDER === "edgetts") {
+    const buf = await synthVoiceEdge(input);
+    if (buf) return buf;
+    // fallback: Piper (local, grátis) → OpenAI → ElevenLabs
+    return (await synthVoicePiper(input)) || (await synthVoiceOpenAI(input)) || (await synthVoiceEleven(input));
+  }
   if (TTS_PROVIDER === "kokoro") {
     const buf = await synthVoiceKokoro(input);
     if (buf) return buf;
-    return (await synthVoicePiper(input)) || (await synthVoiceOpenAI(input)) || (await synthVoiceEleven(input));
+    return (await synthVoiceEdge(input)) || (await synthVoicePiper(input)) || (await synthVoiceOpenAI(input)) || (await synthVoiceEleven(input));
   }
   if (TTS_PROVIDER === "piper") {
     const buf = await synthVoicePiper(input);
     if (buf) return buf;
-    return (await synthVoiceOpenAI(input)) || (await synthVoiceEleven(input));
+    return (await synthVoiceEdge(input)) || (await synthVoiceOpenAI(input)) || (await synthVoiceEleven(input));
   }
   if (TTS_PROVIDER === "elevenlabs") {
     const buf = await synthVoiceEleven(input);
