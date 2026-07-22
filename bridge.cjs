@@ -1417,6 +1417,39 @@ async function poll() {
             }
             if (linhas.length) missoesTxt = `missões rodando:\n${linhas.join("\n")}`;
           } catch {}
+          // ROBUSTEZ: último backup local, disco, RAM, heartbeat (bridge.log mtime).
+          let backupTxt = "último backup: nenhum";
+          try {
+            const bdir = `${process.env.HOME || require("os").homedir()}/backups`;
+            if (fs.existsSync(bdir)) {
+              const files = fs.readdirSync(bdir).filter(f => /^lean-bridge-state-.*\.tar\.gz$/.test(f))
+                .map(f => ({ f, m: fs.statSync(`${bdir}/${f}`).mtimeMs })).sort((a, b) => b.m - a.m);
+              if (files.length) {
+                const ageH = Math.round((Date.now() - files[0].m) / 3600000);
+                backupTxt = `último backup: ${new Date(files[0].m).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (há ${ageH}h)`;
+              }
+            }
+          } catch {}
+          let diskTxt = "espaço disco: n/d";
+          try {
+            const o = spawnSync("df", ["-h", process.env.HOME || __dirname], { encoding: "utf8", timeout: 3000 }).stdout || "";
+            const linha = (o.split("\n")[1] || "").trim().split(/\s+/);
+            if (linha.length >= 5) diskTxt = `espaço disco: ${linha[3]} livres de ${linha[1]} (${linha[4]} usado)`;
+          } catch {}
+          let ramTxt = "RAM livre: n/d";
+          try {
+            const o = spawnSync("free", ["-h"], { encoding: "utf8", timeout: 3000 }).stdout || "";
+            const linha = (o.split("\n").find(l => /^Mem:/.test(l)) || "").trim().split(/\s+/);
+            if (linha.length >= 4) ramTxt = `RAM livre: ${linha[3]} de ${linha[1]} total`;
+          } catch {}
+          let healthTxt = "heartbeat: n/d";
+          try {
+            const lp = `${WORKDIR}/bridge.log`;
+            if (fs.existsSync(lp)) {
+              const ageS = Math.round((Date.now() - fs.statSync(lp).mtimeMs) / 1000);
+              healthTxt = ageS < 60 ? `heartbeat: ✅ (log ativo há ${ageS}s)` : ageS < 600 ? `heartbeat: ok (log ativo há ${Math.round(ageS/60)}min)` : `heartbeat: ⚠️ log sem escrita há ${Math.round(ageS/60)}min`;
+            }
+          } catch {}
           const txt = [
             `🩺 status`,
             `no ar há: ${up}`,
@@ -1426,6 +1459,10 @@ async function poll() {
             `promessas pendentes: ${promCount}${promNext ? ` (próxima: ${new Date(promNext).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })})` : ""}`,
             `transcrição de áudio: ${VOICE_ENABLED ? "✅" : "desligada"}`,
             (d => d.length ? `dependências: ⚠️ ${d.join(" · ")}` : `dependências: ✅`)(depsCheck()),
+            healthTxt,
+            backupTxt,
+            diskTxt,
+            ramTxt,
             falhas.length ? `últimas falhas no log:\n${falhas.join("\n")}` : `últimas falhas no log: nenhuma recente ✅`,
           ].join("\n");
           send(chatId, txt, threadId).catch(() => {});
@@ -1556,6 +1593,24 @@ if (require.main === module) {
   setTimeout(sweepMissions, 15000); setInterval(sweepMissions, 21600000);   // FAXINA: apaga missão fechada (done/failed) há +MISSAO_RETAIN_DAYS dias — no boot (após o dreno assentar) + a cada 6h. running fica intacta
   // SELF-CHECK do boot: fala SÓ se algo estiver quebrado (o "no ar" cego anunciava saúde sem checar nada)
   setTimeout(() => { const probs = depsCheck(); if (probs.length) send(OWNER, `⚠️ Subi com pendência(s):\n· ${probs.join("\n· ")}\nManda /status pra acompanhar.`).catch(() => {}); }, 3000);
+  // ROBUSTEZ: instala crons de backup diário (3h AM) + health check (a cada 5min). Idempotente: só adiciona linha que ainda não existe.
+  setTimeout(() => {
+    try {
+      const bkp = `${__dirname}/scripts/backup-diario.sh`;
+      const hc  = `${__dirname}/scripts/health-check.sh`;
+      if (!fs.existsSync(bkp) || !fs.existsSync(hc)) return;
+      const cur = (spawnSync("crontab", ["-l"], { encoding: "utf8", timeout: 3000 }).stdout || "");
+      const linhas = cur.split("\n").filter(Boolean);
+      let mudou = false;
+      if (!linhas.some(l => l.includes(bkp)))  { linhas.push(`0 3 * * * ${bkp} >/dev/null 2>&1`); mudou = true; }
+      if (!linhas.some(l => l.includes(hc)))   { linhas.push(`*/5 * * * * ${hc} >/dev/null 2>&1`); mudou = true; }
+      if (mudou) {
+        const r = spawnSync("crontab", ["-"], { input: linhas.join("\n") + "\n", encoding: "utf8", timeout: 3000 });
+        if (r.status === 0) console.log("[ponte] crons de robustez instalados (backup 3h · health 5min)");
+        else console.error("[ponte] falha ao instalar crons:", (r.stderr || "").slice(0, 200));
+      }
+    } catch (e) { console.error("[ponte] cron install:", e && e.message || e); }
+  }, 5000);
 } else module.exports = { readLines, readTail, tailBytes, timeBlock, convoBlock, winFor, projDir, sidExists, persistSession, gate,
   ask, compactSession, withCompactSlot, chunk,
   _state: () => sessions, _setSessions: (s) => { sessions = s; }, SOFT_FRAC, HARD_FRAC, STATIC_FLOOR };
