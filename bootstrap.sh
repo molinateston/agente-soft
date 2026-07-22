@@ -86,6 +86,26 @@ fi
 # garante o bus do usuário e que o serviço sobreviva a logout/reboot.
 loginctl enable-linger agente >/dev/null 2>&1 || true
 
+# ffmpeg — pré-req do TTS local (Piper gera wav; conversão pra mp3).
+apt-get install -y -qq ffmpeg >/dev/null 2>&1 || true
+
+# --- Piper TTS local (voz grátis pt_BR — default do LEON) ---
+# Instala como user 'agente' num venv próprio (usuário sem sudo).
+echo "→ Voz local grátis (Piper TTS · pt_BR)..."
+sudo -u agente bash -s <<'PIPER_SETUP' || echo "   (aviso) Piper opcional falhou — LEON cai em nuvem se você ativar voz." >&2
+set -e
+mkdir -p ~/.openclaw/piper-venv ~/.openclaw/voices/piper
+if [ ! -x ~/.openclaw/piper-venv/bin/piper ]; then
+  python3 -m venv ~/.openclaw/piper-venv
+  ~/.openclaw/piper-venv/bin/pip install --quiet piper-tts >/dev/null
+fi
+if [ ! -s ~/.openclaw/voices/piper/pt_BR-faber-medium.onnx ]; then
+  curl -sfL -o ~/.openclaw/voices/piper/pt_BR-faber-medium.onnx      https://huggingface.co/rhasspy/piper-voices/resolve/main/pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx
+  curl -sfL -o ~/.openclaw/voices/piper/pt_BR-faber-medium.onnx.json https://huggingface.co/rhasspy/piper-voices/resolve/main/pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx.json
+fi
+PIPER_SETUP
+echo "   Piper pronto (roda offline, custa 0)."
+
 cat <<'NEXT'
 
 ============================================
