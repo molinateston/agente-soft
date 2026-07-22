@@ -167,6 +167,20 @@ const TMP_DIR       = process.env.TMP_DIR || "/tmp/lean-bridge";
 const VOICE_PY      = process.env.VOICE_PY || "/usr/bin/python3";
 const VOICE_HANDLER = process.env.VOICE_HANDLER || `${WORKDIR}/workers/voice-handler.py`;
 const VOICE_ENABLED = (() => { try { return fs.existsSync(VOICE_HANDLER); } catch { return false; } })();
+// VOZ DE SAÍDA (TTS): opt-in. "mirror" = responde em áudio quando o dono manda áudio; "always" = toda resposta; "off" = nunca.
+// Default OFF pra não gastar créditos ElevenLabs sem o dono pedir. Cliente que quiser áudio de volta:
+// põe ELEVENLABS_API_KEY (chave dele) + VOICE_REPLY=mirror no .env. Sem chave, mesmo com VOICE_REPLY ligado, cai silencioso.
+const VOICE_REPLY = (process.env.VOICE_REPLY || "off").toLowerCase();
+const TTS_VOICE   = process.env.TTS_VOICE || "echo";              // OpenAI fallback: echo/onyx/nova/shimmer/alloy/fable/ash/sage/verse
+const TTS_MODEL   = process.env.TTS_MODEL || "gpt-4o-mini-tts";
+const TTS_PROVIDER = (process.env.TTS_PROVIDER || "elevenlabs").toLowerCase(); // "elevenlabs" (Marcelo Costa BR) | "openai" (fallback)
+const ELEVEN_VOICE_ID  = process.env.ELEVENLABS_VOICE_ID  || "bJrNspxJVFovUxNBQ0wh"; // Marcelo Costa BR (troque via .env pra outra voz)
+const ELEVEN_MODEL_ID  = process.env.ELEVENLABS_MODEL_ID  || "eleven_multilingual_v2";
+const ELEVEN_STABILITY = Number(process.env.ELEVENLABS_STABILITY  || 0.45);
+const ELEVEN_SIMILARITY = Number(process.env.ELEVENLABS_SIMILARITY || 0.75);
+const ELEVEN_STYLE      = Number(process.env.ELEVENLABS_STYLE      || 0.20);
+const openaiKey     = () => envVal("OPENAI_API_KEY");    // LIVE: chave nova no .env vale sem restart
+const elevenlabsKey = () => envVal("ELEVENLABS_API_KEY"); // LIVE idem
 try { fs.mkdirSync(TMP_DIR, { recursive: true }); } catch {}
 for (const d of [BRAIN, PERSONA_DIR]) { try { fs.mkdirSync(d, { recursive: true }); } catch {} }
 // limpeza de mídia órfã no boot + periódica — TMP enche disco em VPS pequena.
@@ -619,6 +633,91 @@ async function deliverFiles(chatId, text, threadId) {
       send(chatId, `⚠️ Gerei o arquivo mas não consegui te entregar (${p.split("/").pop()}): ${String(e.message).slice(0, 80)}. Ele está salvo em ${p}.`, threadId).catch(() => {});
     }
   }
+}
+
+// ---------- VOZ DE SAÍDA (TTS opt-in): responde em áudio quando VOICE_REPLY != "off" ----------
+// Default OFF. Cliente ativa colocando ELEVENLABS_API_KEY (chave dele) + VOICE_REPLY=mirror no .env.
+// Custo: ElevenLabs cobra por caractere, ~R$0,10/min de fala. Sem chave, sai silencioso mesmo se ligado.
+function ttsStrip(t) {
+  return String(t || "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/```[\s\S]*?```/g, "").replace(/`[^`]+`/g, "")
+    .replace(/[*_~]{1,3}([^*_~]+)[*_~]{1,3}/g, "$1").replace(/^#+\s+/gm, "").replace(/^\s*[-•]\s+/gm, "")
+    .replace(/https?:\/\/\S+/g, "").replace(/\n{2,}/g, ". ").trim();
+}
+function synthVoiceOpenAI(input) {
+  return new Promise((resolve) => {
+    const OPENAI_KEY = openaiKey();
+    if (!OPENAI_KEY) return resolve(null);
+    const body = JSON.stringify({ model: TTS_MODEL, voice: TTS_VOICE, input, response_format: "opus" });
+    const req = https.request({
+      hostname: "api.openai.com", path: "/v1/audio/speech", method: "POST",
+      headers: { "Authorization": "Bearer " + OPENAI_KEY, "Content-Type": "application/json", "Content-Length": Buffer.byteLength(body) }
+    }, (res) => {
+      const cks = []; res.on("data", (c) => cks.push(c));
+      res.on("end", () => {
+        const buf = Buffer.concat(cks);
+        if (res.statusCode === 200 && buf.length > 800) resolve(buf);
+        else { console.error("[ponte] TTS OpenAI:", res.statusCode, buf.toString("utf8").slice(0, 120)); resolve(null); }
+      });
+    });
+    req.on("error", (e) => { console.error("[ponte] TTS OpenAI req:", e.message); resolve(null); });
+    req.setTimeout(60000, () => { req.destroy(); resolve(null); });
+    req.write(body); req.end();
+  });
+}
+function synthVoiceEleven(input) {
+  return new Promise((resolve) => {
+    const EL_KEY = elevenlabsKey();
+    if (!EL_KEY) return resolve(null);
+    const body = JSON.stringify({
+      text: input,
+      model_id: ELEVEN_MODEL_ID,
+      voice_settings: { stability: ELEVEN_STABILITY, similarity_boost: ELEVEN_SIMILARITY, style: ELEVEN_STYLE, use_speaker_boost: true }
+    });
+    const req = https.request({
+      hostname: "api.elevenlabs.io", path: `/v1/text-to-speech/${ELEVEN_VOICE_ID}?output_format=mp3_44100_128`, method: "POST",
+      headers: { "xi-api-key": EL_KEY, "Content-Type": "application/json", "Accept": "audio/mpeg", "Content-Length": Buffer.byteLength(body) }
+    }, (res) => {
+      const cks = []; res.on("data", (c) => cks.push(c));
+      res.on("end", () => {
+        const buf = Buffer.concat(cks);
+        if (res.statusCode === 200 && buf.length > 800) resolve(buf);
+        else { console.error("[ponte] TTS ElevenLabs:", res.statusCode, buf.toString("utf8").slice(0, 120)); resolve(null); }
+      });
+    });
+    req.on("error", (e) => { console.error("[ponte] TTS EL req:", e.message); resolve(null); });
+    req.setTimeout(60000, () => { req.destroy(); resolve(null); });
+    req.write(body); req.end();
+  });
+}
+async function synthVoice(text) {
+  const input = ttsStrip(text).slice(0, 3800); if (!input) return null;
+  if (TTS_PROVIDER === "elevenlabs") {
+    const buf = await synthVoiceEleven(input);
+    if (buf) return buf;
+    return await synthVoiceOpenAI(input); // fallback pra OpenAI se EL falhar (chave, cota, rede)
+  }
+  return await synthVoiceOpenAI(input);
+}
+async function speakReply(chatId, text, threadId) {
+  if (VOICE_REPLY === "off") return;
+  const buf = await synthVoice(text);
+  if (!buf) {
+    // VOZ FALHOU ≠ SILÊNCIO: texto já foi entregue, mas dono esperava áudio — avisa 1x/h (sem spam)
+    if (!speakReply._warned || Date.now() - speakReply._warned > 3600000) {
+      speakReply._warned = Date.now();
+      send(chatId, "_(a voz falhou agora — fica o texto. Confere ELEVENLABS_API_KEY no .env.)_", threadId).catch(() => {});
+    }
+    return;
+  }
+  const base = threadId ? { message_thread_id: Number(threadId) } : {};
+  const f = `${TMP_DIR}/voz-${Date.now()}.ogg`;
+  try {
+    fs.writeFileSync(f, buf);
+    const r = await tgSendFile("sendVoice", "voice", chatId, f, base);
+    if (!r || !r.ok) await tgSendFile("sendAudio", "audio", chatId, f, base);
+  } catch (e) { console.error("[ponte] speakReply:", e.message); }
+  finally { try { fs.unlinkSync(f); } catch {} }
 }
 
 // ---------- Claude Code (o cérebro) · stream-json + painel de progresso ao vivo ----------
@@ -1118,6 +1217,9 @@ function processOne(msg, chatId, threadId, key, cfg, mission) {
         await send(chatId, result, threadId);
       }
       try { await deliverFiles(chatId, result, threadId); } catch (e) { console.error("[ponte] deliverFiles:", e.message); }
+      if (VOICE_REPLY === "always" || (VOICE_REPLY === "mirror" && _voiceMsg)) {
+        try { await speakReply(chatId, result, threadId); } catch (e) { console.error("[ponte] voz-out:", e.message); }
+      }
     });   // NÃO apaga img/doc aqui (era o bug: 1ª foto sumia antes da 2ª msg): ficam no TMP_DIR pra referência cross-mensagem; sweepTmp() limpa por idade.
   }).catch((e) => console.error("[ponte] erro:", e.message))
     .finally(() => { clearInterval(_typing); if (_missHb) clearInterval(_missHb); busy[key] = false; drainAll(); });
