@@ -79,25 +79,57 @@ if [ -f /root/.claude.json ] && [ ! -f "$LEON_HOME/.claude.json" ]; then
   chown "$LEON_USER:$LEON_USER" "$LEON_HOME/.claude.json"
 fi
 
-echo "PIVOT_OK $LEON_USER $LEON_HOME"
+# 6. INSTALA CLAUDE CODE TAMBÉM NO USER leon (binário e PATH próprios)
+# Sem isso, quando o cliente rodar `sudo -iu leon` e `claude`, dá "command not found"
+# (o install.sh só coloca binário em ~/.local/bin do user que rodou = root).
+if [ ! -x "$LEON_HOME/.local/bin/claude" ]; then
+  su - "$LEON_USER" -c 'curl -fsSL https://claude.ai/install.sh | bash' >/dev/null 2>&1 || true
+fi
+
+# 7. PATH persistente no bashrc do leon (senão precisa exportar toda vez)
+if ! grep -q '.local/bin' "$LEON_HOME/.bashrc" 2>/dev/null; then
+  echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$LEON_HOME/.bashrc"
+  chown "$LEON_USER:$LEON_USER" "$LEON_HOME/.bashrc"
+fi
+
+# 8. Valida que claude está disponível pro leon
+LEON_HAS_CLAUDE="NAO"
+if sudo -iu "$LEON_USER" bash -c 'command -v claude' >/dev/null 2>&1; then
+  LEON_HAS_CLAUDE="SIM"
+fi
+
+echo "PIVOT_OK user=$LEON_USER home=$LEON_HOME leon_has_claude=$LEON_HAS_CLAUDE"
 ```
 
 Depois disso, avise o dono, em português simples:
 
 > "Instalei os pré-requisitos como chefe da máquina e criei o usuário `leon`
 > (é onde o LEON vai morar por segurança). Copiei o meu login Claude pra ele
-> também. Agora eu preciso abrir um novo Claude Code JÁ como esse usuário
-> `leon` pra continuar — do jeito root eu não termino. Segue esses 2 comandos
-> nessa mesma tela:
+> e instalei o Claude Code no `leon` também. Agora eu preciso abrir um novo
+> Claude Code JÁ como esse usuário `leon` pra continuar — do jeito root eu
+> não termino.
+>
+> Faz assim, nessa mesma tela:
+>
+> 1. Digita `/exit` e Enter (isso me fecha aqui, vou parar de responder).
+> 2. Cola os 2 comandos abaixo:
 >
 > ```
 > sudo -iu leon
 > claude
 > ```
 >
-> Quando abrir o novo Claude Code (já como leon), cole este mesmo prompt de
+> O primeiro te leva pro usuário `leon`. O segundo abre um novo Claude Code
+> (a primeira tela pergunta o tema — escolhe qualquer um, aperta Enter).
+>
+> 3. Quando abrir o prompt `>` do Claude do leon, cola este mesmo prompt de
 > instalação de novo. Eu detecto que os pré-requisitos já estão prontos e
 > continuo do ponto certo."
+
+Se `LEON_HAS_CLAUDE=NAO` no PIVOT_OK acima: avise honestamente — *"Não
+consegui instalar o Claude Code pro usuário `leon` (rede falhou). Como
+`leon`, roda uma vez este comando antes do `claude`:
+`curl -fsSL https://claude.ai/install.sh | bash && export PATH=$HOME/.local/bin:$PATH`"*.
 
 Aborte por aqui. NÃO tente continuar como root — vai quebrar.
 
@@ -119,8 +151,11 @@ claude -p --model sonnet "responda so OK" 2>/dev/null | head -c 40 | grep -qiE '
 ```
 
 Se der `LOGIN_FALHOU`: espere 5s e tente de novo (soluço momentâneo). Se
-insistir, avise o dono: *"O login do Claude não completou. Rode `claude auth
-login` numa outra aba do terminal e refaça o login."* — pare e espere.
+insistir, o auth copiado do root não pegou — o dono precisa refazer login
+como leon: *"Sai do Claude Code (digita `/exit`), roda só `claude` sem nada,
+escolhe o tema, ele vai te mostrar uma URL de login — abre no navegador,
+autoriza e cola o código de 6 dígitos de volta. Depois abre este prompt
+de instalação de novo."*
 
 Não mostre a string `LOGIN_OK`/`LOGIN_FALHOU` pro dono. É check interno.
 
