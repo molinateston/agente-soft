@@ -835,7 +835,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       const t0 = Date.now();
       let buf = "", err = "", finalResult = null, finalSid = null, finalUsage = null, mainUsage = null, settled = false, timedOut = false, lastActivity = Date.now();
       let finalIsError = false, finalErrors = "";
-      let lastAction = "começando…", panelId = null, _lastMarco = "";
+      let lastAction = "começando…", panelId = null, _lastMarco = "", _marcos = [], _lastPanelEditAt = 0;
       const elapsed = () => { const s = Math.round((Date.now() - t0) / 1000);
         return s < 60 ? `${s}s` : `${Math.floor(s / 60)}min${s % 60 ? (s % 60) + "s" : ""}`; };
 
@@ -845,16 +845,29 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       }, 4000);
 
       // (B) UM painel editável — nasce só depois do limiar; depois reescreve no lugar (sem notificar).
-      // Na MISSÃO o painel é um CRONÔMETRO VIVO (nasce logo, edita a cada 12s): o dono VÊ o tempo subindo e o
-      // último marco, com certeza de que tá trabalhando. Turno normal = painel discreto (só depois do limiar).
-      const panelTick = async () => {
-        const txt = isMissao
-          ? `🎯 Missão em andamento · ⏱️ ${elapsed()}${_lastMarco ? `\n📍 ${_lastMarco}` : ""}\n⚙️ agora: ${lastAction}`
-          : `⏳ Tô na sua tarefa. Última coisa: ${lastAction} · ${elapsed()}`;
+      // MISSÃO: nasce logo, é FIXADO no topo do chat (auto-pin silencioso), acumula marcos ✅ na MESMA mensagem
+      // (sem spamar msg por marco). Ao terminar, desafixa e vira o RESUMO do que rolou.
+      const panelTick = async ({ finished = false } = {}) => {
+        const _marcosBlock = isMissao && _marcos.length ? "\n" + _marcos.map(l => `✅ ${l}`).join("\n") : "";
+        let txt;
+        if (isMissao && finished) {
+          txt = `✅ Missão pronta em ${elapsed()}${_marcosBlock}`;
+        } else {
+          txt = isMissao
+            ? `⏳ Trabalhando faz ${elapsed()}${_marcosBlock}\n… ${lastAction}`
+            : `⏳ Trabalhando faz ${elapsed()}\n… ${lastAction}`;
+        }
+        _lastPanelEditAt = Date.now();
         try {
           if (panelId == null) {
             const r = await tg("sendMessage", { chat_id: chatId, text: txt, ...base });
-            if (r && r.ok && r.result) { panelId = r.result.message_id; console.log(`[ponte] ${isMissao ? "🎯 cronômetro de missão" : "⏳ painel de progresso"} ON · chat=${chatId} thread=${threadId || "-"}`); }
+            if (r && r.ok && r.result) {
+              panelId = r.result.message_id;
+              console.log(`[ponte] ${isMissao ? "🎯 cronômetro de missão" : "⏳ painel de progresso"} ON · chat=${chatId} thread=${threadId || "-"}`);
+              if (isMissao) {
+                try { await tg("pinChatMessage", { chat_id: chatId, message_id: panelId, disable_notification: true }); } catch {}
+              }
+            }
           } else {
             await tg("editMessageText", { chat_id: chatId, message_id: panelId, text: txt, ...base });
           }
@@ -877,7 +890,9 @@ function ask(key, text, cfg, chatId, threadId, mission) {
             const txt = b.toString("utf8"); const cut = txt.lastIndexOf("\n");
             if (cut >= 0) {   // só processa linhas COMPLETAS (até o último \n); resto fica pro próximo ciclo (não posta echo pela metade)
               _progressPos += Buffer.byteLength(txt.slice(0, cut + 1), "utf8");
-              for (const linha of txt.slice(0, cut).split("\n").map(s => s.trim()).filter(Boolean)) { _lastMarco = linha; send(chatId, `📍 ${linha}`, threadId).catch(() => {}); }
+              let _novos = 0;
+              for (const linha of txt.slice(0, cut).split("\n").map(s => s.trim()).filter(Boolean)) { _lastMarco = linha; _marcos.push(linha); _novos++; }
+              if (_novos > 0 && (Date.now() - _lastPanelEditAt) >= 3000) panelTick().catch(() => {});
             }
           }
         } catch {}
@@ -887,7 +902,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
         setTimeout(_pumpProgress, 1000);
         progressTimer = setInterval(_pumpProgress, 15000);
         progressBootTimer = setTimeout(() => {
-          try { const st = fs.statSync(mission.progressFile); if (st.size === 0 && !_progressBootMsg) { _progressBootMsg = true; send(chatId, `🚧 Missão em bootstrap — ainda sem marco no disco. Se demorar >5min sem 📍, algo travou.`, threadId).catch(() => {}); } } catch {}
+          try { const st = fs.statSync(mission.progressFile); if (st.size === 0 && !_progressBootMsg) { _progressBootMsg = true; lastAction = "preparando"; panelTick().catch(() => {}); } } catch {}
         }, 90000);
       }
 
@@ -908,7 +923,15 @@ function ask(key, text, cfg, chatId, threadId, mission) {
 
       const cleanup = async () => {
         clearInterval(typingTimer); clearInterval(panelTimer); clearInterval(watchdog); if (progressTimer) clearInterval(progressTimer); if (progressBootTimer) clearTimeout(progressBootTimer);
-        if (panelId != null) { try { await tg("deleteMessage", { chat_id: chatId, message_id: panelId }); } catch {} }
+        if (panelId != null) {
+          if (isMissao) {
+            try { _pumpProgress(); } catch {}
+            try { await panelTick({ finished: true }); } catch {}
+            try { await tg("unpinChatMessage", { chat_id: chatId, message_id: panelId }); } catch {}
+          } else {
+            try { await tg("deleteMessage", { chat_id: chatId, message_id: panelId }); } catch {}
+          }
+        }
       };
       const done = async (payload) => { if (settled) return; settled = true; await cleanup(); resolve(payload); };
 
