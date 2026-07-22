@@ -173,7 +173,10 @@ const VOICE_ENABLED = (() => { try { return fs.existsSync(VOICE_HANDLER); } catc
 const VOICE_REPLY = (process.env.VOICE_REPLY || "off").toLowerCase();
 const TTS_VOICE   = process.env.TTS_VOICE || "echo";              // OpenAI fallback: echo/onyx/nova/shimmer/alloy/fable/ash/sage/verse
 const TTS_MODEL   = process.env.TTS_MODEL || "gpt-4o-mini-tts";
-const TTS_PROVIDER = (process.env.TTS_PROVIDER || "piper").toLowerCase(); // "piper" (default, local, grátis) | "elevenlabs" (premium, opt-in) | "openai" (fallback nuvem)
+const TTS_PROVIDER = (process.env.TTS_PROVIDER || "piper").toLowerCase(); // "piper" (default local grátis) | "kokoro" (Alex open-source, se instalado) | "elevenlabs" (premium) | "openai" (nuvem)
+const KOKORO_WORKER = process.env.KOKORO_WORKER || `${os.homedir()}/.openclaw/workers/kokoro-tts.cjs`;
+const KOKORO_MODEL_PATH = process.env.KOKORO_MODEL || `${os.homedir()}/.openclaw/voices/kokoro/kokoro-v1.0.onnx`;
+const KOKORO_ENABLED = (() => { try { return fs.existsSync(KOKORO_WORKER) && fs.existsSync(KOKORO_MODEL_PATH); } catch { return false; } })();
 const ELEVEN_VOICE_ID  = process.env.ELEVENLABS_VOICE_ID  || "bJrNspxJVFovUxNBQ0wh"; // Marcelo Costa BR (troque via .env pra outra voz)
 const ELEVEN_MODEL_ID  = process.env.ELEVENLABS_MODEL_ID  || "eleven_multilingual_v2";
 const ELEVEN_STABILITY = Number(process.env.ELEVENLABS_STABILITY  || 0.45);
@@ -716,8 +719,35 @@ function synthVoicePiper(input) {
     setTimeout(() => { try { p.kill("SIGKILL"); } catch {} }, 60000).unref?.();
   });
 }
+function synthVoiceKokoro(input) {
+  return new Promise((resolve) => {
+    if (!KOKORO_ENABLED) return resolve(null);
+    const outMp3 = `${TMP_DIR}/voz-kokoro-${Date.now()}-${process.pid}.mp3`;
+    const p = spawn("node", [KOKORO_WORKER, "--action", "tts", "--text", input, "--out", outMp3], { stdio: ["ignore", "pipe", "pipe"] });
+    let err = "";
+    p.stderr.on("data", (c) => { err += c.toString(); });
+    p.on("error", (e) => { console.error("[ponte] TTS Kokoro spawn:", e.message); resolve(null); });
+    p.on("close", (code) => {
+      try {
+        if (code === 0 && fs.existsSync(outMp3)) {
+          const buf = fs.readFileSync(outMp3);
+          try { fs.unlinkSync(outMp3); } catch {}
+          if (buf.length > 500) return resolve(buf);
+        }
+        console.error("[ponte] TTS Kokoro falhou:", code, err.slice(0, 200));
+        resolve(null);
+      } catch (e) { console.error("[ponte] TTS Kokoro read:", e.message); resolve(null); }
+    });
+    setTimeout(() => { try { p.kill("SIGKILL"); } catch {} }, 120000).unref?.();
+  });
+}
 async function synthVoice(text) {
   const input = ttsStrip(text).slice(0, 3800); if (!input) return null;
+  if (TTS_PROVIDER === "kokoro") {
+    const buf = await synthVoiceKokoro(input);
+    if (buf) return buf;
+    return (await synthVoicePiper(input)) || (await synthVoiceOpenAI(input)) || (await synthVoiceEleven(input));
+  }
   if (TTS_PROVIDER === "piper") {
     const buf = await synthVoicePiper(input);
     if (buf) return buf;
