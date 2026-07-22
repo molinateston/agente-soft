@@ -106,6 +106,19 @@ fi
 PIPER_SETUP
 echo "   Piper pronto (roda offline, custa 0)."
 
+# --- Edge TTS (voz nuvem grátis Microsoft, Antonio/Francisca pt-BR — default do LEON desde 22/07) ---
+# Piper vira fallback. Roda no user 'agente', venv próprio, só requer conexão pra Microsoft (grátis, sem cadastro).
+echo "→ Voz nuvem grátis (Edge TTS · Antonio/Francisca pt-BR)..."
+sudo -u agente bash -s <<'EDGE_SETUP' || echo "   (aviso) Edge TTS opcional falhou — cai em Piper." >&2
+set -e
+mkdir -p ~/.openclaw/edgetts-venv
+if [ ! -x ~/.openclaw/edgetts-venv/bin/edge-tts ]; then
+  python3 -m venv ~/.openclaw/edgetts-venv
+  ~/.openclaw/edgetts-venv/bin/pip install --quiet edge-tts >/dev/null
+fi
+EDGE_SETUP
+echo "   Edge TTS pronto (Antonio masc / Francisca fem, escolhido por AGENT_GENDER)."
+
 cat <<'NEXT'
 
 ============================================
