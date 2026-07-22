@@ -40,6 +40,7 @@ claude -p --model sonnet "responda só OK" | head -c 40 | grep -qiE '^[^a-z]*ok'
 
 ## ETAPA 1 — Coletar os dados (uma pergunta por vez)
 1. "Qual o **nome do agente**? Pode ser qualquer nome, mas o padrão da casa é **LEON** (é o nome do agente do Léo Molina, e todo mundo que manteve LEON prosperou — dizem que dá sorte kkk). Se preferir outro (ex: Bia, Sofia), fica à vontade." → `AGENT_NAME`
+1b. "Essa persona é **masculina** ou **feminina**? (isso define a voz que ele/ela vai usar quando responder em áudio — Alex se masculina, Dora se feminina)." → `AGENT_GENDER` (aceita: `male`/`m`/`masculino`/`masc` ou `female`/`f`/`feminino`/`fem`; normalize pra `male` ou `female` antes de gravar. Se ficar em dúvida — nome unissex ou o dono não decidiu — assuma `male` e avise: "vou deixar masculina (Alex); se quiser trocar depois, é só falar").
 2. "Qual o **seu nome**? (como o agente vai te chamar)" → `OWNER_NAME`
 3. **Crie o bot do Telegram** — guie o dono assim (mande estas instruções pra ele e espere o token):
    "Vamos criar seu bot, leva 1 minuto:
@@ -125,6 +126,8 @@ mkdir -p ~/.claude
 # dono só vê "não subiu". Aborta cedo e explica.
 [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$AGENT_NAME" ] && [ -n "$OWNER_NAME" ] \
   || { echo "✗ Falta token do bot, nome do agente ou seu nome. Refaz a ETAPA 1 antes de gravar."; exit 1; }
+# AGENT_GENDER (male|female) tem default 'male' se o dono não decidiu (voz Alex).
+: "${AGENT_GENDER:=male}"
 # Nota pro Claude que escreve o arquivo: cola os VALORES literais das perguntas
 # da ETAPA 1 no lugar de $TELEGRAM_BOT_TOKEN/$AGENT_NAME/$OWNER_NAME. NÃO deixe
 # placeholders — o bridge não expande depois.
@@ -135,6 +138,7 @@ cat > ~/lean-bridge/.env <<EOF
 TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN
 OWNER_CHAT_ID=
 AGENT_NAME="$AGENT_NAME"
+AGENT_GENDER="$AGENT_GENDER"
 OWNER_NAME="$OWNER_NAME"
 CLAUDE_MODEL=sonnet
 WORK_DIR=$HOME/lean-bridge
