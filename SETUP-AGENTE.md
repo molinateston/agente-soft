@@ -303,6 +303,22 @@ else
 fi
 ```
 
+## ETAPA 4.8 — (Opcional) LEON RESPONDER EM VOZ
+Se o cliente quer que o LEON responda em ÁUDIO (quando ele mandar áudio, ou sempre), é opt-in — precisa de conta no ElevenLabs (chave dele). Padrão da instalação é DESLIGADO pra não gastar crédito sem pedir. Ligar depois:
+
+1. Cliente cria conta em **elevenlabs.io** e pega a chave em "API Keys" (`sk_...`).
+2. Edita `~/agente-soft/.env` e adiciona:
+   ```
+   ELEVENLABS_API_KEY=sk_...
+   VOICE_REPLY=mirror
+   ```
+   - `mirror` = responde em áudio só quando o cliente mandar áudio (imita o canal).
+   - `always` = responde em áudio SEMPRE (todo turno). Custa mais.
+   - `off` = desligado (padrão).
+3. Manda `/atualiza` pro LEON no Telegram — a nova config vale sem reiniciar (o `.env` recarrega sozinho).
+
+Custo aproximado: R$0,10 por minuto de fala falada. Voz padrão = **Marcelo Costa** (macho BR grave). Pra trocar, pega o ID em elevenlabs.io/voice-library e põe `ELEVENLABS_VOICE_ID=<id>` no `.env`.
+
 ## ETAPA 5 — Validar ponta a ponta
 ```bash
 sleep 4
