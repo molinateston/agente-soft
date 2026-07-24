@@ -183,6 +183,25 @@ try {
 } catch {}
 
 const WORKDIR     = process.env.WORK_DIR || __dirname;
+
+// Rede de seguranca do /atualiza. O update roda num servico separado e a saudacao
+// "No ar!" vem do ExecStartPost. Se qualquer elo dessa corrente falhar, o dono
+// ficava esperando pra sempre uma mensagem que nunca vinha. Estes dois despertadores
+// rodam DESTACADOS (sobrevivem ao restart) e garantem um veredito: um aos 25s (nem
+// arrancou) e outro aos 4min (nao fechou). Se o update deu certo, ambos ficam mudos.
+function armarWatchdogUpdate(chatId, threadId) {
+  const script = `${process.env.HOME}/agente-soft/update-watchdog.sh`;
+  for (const [fase, seg] of [["curto", 25], ["longo", 240]]) {
+    try {
+      spawn("systemd-run", [
+        "--user", "--collect", `--on-active=${seg}`,
+        `--unit=updwd-${fase}-${Date.now()}`,
+        "/usr/bin/env", "bash", script, fase, String(chatId), threadId ? String(threadId) : ""
+      ], { detached: true, stdio: "ignore" }).unref();
+    } catch (e) { console.error("[atualiza] watchdog:", e && e.message); }
+  }
+}
+
 const BRAIN       = process.env.BRAIN_DIR || `${WORKDIR}/brain`;
 const PERSONA_DIR = process.env.PERSONA_DIR || `${WORKDIR}/persona`;
 const SESS_FILE   = `${WORKDIR}/sessions.json`;
@@ -1297,7 +1316,8 @@ function processOne(msg, chatId, threadId, key, cfg, mission) {
     if (/^\/atualiza/i.test(text.trim())) {
       try { fs.writeFileSync(`${WORKDIR}/.greet`, ""); } catch {}   // VOCÊ pediu → saúda "No ar!" quando voltar. Update agendado NÃO cria este flag = silencioso.
       try { spawn("systemctl", ["--user", "start", "agente-update.service"], { detached: true, stdio: "ignore" }).unref(); } catch {}
-      return send(chatId, `🔄 Atualizando pra última versão do método... o update roda separado e me reinicia sozinho. Já volto com o "✅ No ar!".`, threadId);
+      armarWatchdogUpdate(chatId, threadId);
+      return send(chatId, `🔄 Atualizando pra última versão do método... o update roda separado e me reinicia sozinho. Já volto com o "✅ No ar!" em até uns minutos. Se der qualquer problema no caminho, eu te aviso aqui mesmo — você não vai ficar no escuro.`, threadId);
     }
     // comando /audio — liga a transcrição de áudio (instala faster-whisper local, SEM root, num cgroup separado)
     if (/^\/(audio|áudio|voz)\b/i.test(text.trim())) {
@@ -1708,7 +1728,8 @@ async function poll() {
         if (/^\/atualiza/i.test((msg.text || msg.caption || "").trim())) {
           try { fs.writeFileSync(`${WORKDIR}/.greet`, ""); } catch {}
           try { spawn("systemctl", ["--user", "start", "agente-update.service"], { detached: true, stdio: "ignore" }).unref(); } catch {}
-          send(chatId, `🔄 Atualizando pra última versão... o update roda separado e me reinicio sozinho (mato qualquer trava). Já volto com o "✅ No ar!".`, threadId).catch(() => {});
+          armarWatchdogUpdate(chatId, threadId);
+          send(chatId, `🔄 Atualizando pra última versão... o update roda separado e me reinicio sozinho (mato qualquer trava). Já volto com o "✅ No ar!" em até uns minutos. Se der qualquer problema no caminho, eu te aviso aqui mesmo — você não vai ficar no escuro.`, threadId).catch(() => {});
           continue;
         }
         // /status → saúde do agente SEM sair do Telegram: uptime, ocupado/fila, promessas, últimas
