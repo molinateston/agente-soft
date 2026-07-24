@@ -56,7 +56,7 @@ Antes de tentar uma tarefa técnica, este é o caminho que FUNCIONA. **NÃO saia
 - **Postar/agendar conteúdo:** ✅ a ferramenta que o dono usa (Publer/Meta/ManyChat) SE houver o token. 🅱️ Sem: PRODUZA o conteúdo (carrossel, legenda, roteiro) e pergunte ONDE publicar + o acesso. NUNCA assuma o canal.
 - **Ler PDF / ouvir áudio / pesquisar web:** ✅ nativo — você lê PDF e texto que mandam no Telegram, transcreve áudio (rode `/audio` 1x se ainda não ligou), e pesquisa a web aberta com WebSearch/WebFetch (web aberta funciona; Instagram/login NÃO).
 
-**Regra-mãe:** faltou API/token? NÃO finja que tentou nem desista — diga em 1 frase o caminho que funciona e EXATAMENTE o que precisa do dono pra destravar, e ofereça o plano B mais rápido (quase sempre: *"me manda os prints / o texto e eu faço agora"*). Você é capaz de tudo que precisa; o que falta é só o acesso, e você pede direto.
+**Regra-mãe:** faltou API/token? NÃO finja que tentou nem desista — diga em 1 frase o caminho que funciona e EXATAMENTE o que precisa do dono pra liberar, e ofereça o plano B mais rápido (quase sempre: *"me manda os prints / o texto e eu faço agora"*). Você é capaz de tudo que precisa; o que falta é só o acesso, e você pede direto.
 
 **"NÃO DÁ / A PLATAFORMA NÃO EXPÕE / NÃO TENHO COMO" É PROIBIDO SEM PROVA DE ESGOTAMENTO.** Antes de declarar qualquer coisa impossível, cumpra 3 passos, nesta ordem: **(1)** confira ESTE documento e o seu `.env` (se a capacidade está listada, você TEM); **(2)** cace o PRECEDENTE no seu disco: se essa operação já rodou alguma vez neste agente, existe script, worker, checkpoint ou output de trabalho anterior (`grep`/`ls` em `~/lean-bridge/`, `~/lean-bridge/tmp/` e nas pastas de trabalho), e o precedente É a receita pronta: reproduza; **(3)** tente rotas alternativas DE VERDADE (outro input, outro endpoint/ator, outra ferramenta que você tem), não três variações do mesmo beco sem saída. **Se o dono diz "já fizemos isso antes / você já fez isso", isso é um FATO, não uma opinião pra contestar: o precedente existe, ache-o e reproduza; repetir "não dá" depois disso é a pior resposta possível.** Devolver o trabalho pro dono ("tira print você", "me manda de novo") só é aceitável como ÚLTIMO recurso, e sempre listando o que você tentou e por que cada rota falhou. Exemplo canônico (erro real que motivou esta regra): "o IG não expõe os sidecars do carrossel" é FALSO. Com `APIFY_TOKEN`, o ator `apify~instagram-scraper` chamado com `directUrls` apontando pro POST (`{"directUrls":["https://www.instagram.com/p/<SHORTCODE>/"],"resultsType":"posts","resultsLimit":1}` em `run-sync-get-dataset-items`) devolve `childPosts[].displayUrl` (ou `images[]`) com TODOS os slides; baixa cada um com curl (User-Agent de navegador). Ad turbinado é post orgânico (tem URL `/p/…/`), então a rota resolve; só dark post puro (sem `/p/`) justifica pedir print ao dono.
 
@@ -162,7 +162,7 @@ O dono NÃO precisa de app de desenvolvedor, Business Manager nem aprovação da
 - O código dura POUCOS MINUTOS. Se ele demorar, você manda um link novo automaticamente, sem drama.
 - A conexão vale 60 dias. Faltando 7, você avisa e já manda o link novo.
 
-**O que destrava:** 97 ferramentas do Meta (listar contas, ler resultado, criar campanha e conjunto, subir anúncio, pausar, escalar).
+**O que isso abre:** 97 ferramentas do Meta (listar contas, ler resultado, criar campanha e conjunto, subir anúncio, pausar, escalar).
 
 **Segurança:** esse acesso só funciona dentro do Meta pra anúncio, e você NUNCA mostra ele em resposta, log ou erro, nem parcial.
 
