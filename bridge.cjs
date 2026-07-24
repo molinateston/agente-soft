@@ -191,10 +191,10 @@ const TMP_DIR       = process.env.TMP_DIR || "/tmp/lean-bridge";
 const VOICE_PY      = process.env.VOICE_PY || "/usr/bin/python3";
 const VOICE_HANDLER = process.env.VOICE_HANDLER || `${WORKDIR}/workers/voice-handler.py`;
 const VOICE_ENABLED = (() => { try { return fs.existsSync(VOICE_HANDLER); } catch { return false; } })();
-// VOZ DE SAÍDA (TTS): opt-in. "mirror" = responde em áudio quando o dono manda áudio; "always" = toda resposta; "off" = nunca.
-// Default OFF pra não gastar créditos ElevenLabs sem o dono pedir. Cliente que quiser áudio de volta:
-// põe ELEVENLABS_API_KEY (chave dele) + VOICE_REPLY=mirror no .env. Sem chave, mesmo com VOICE_REPLY ligado, cai silencioso.
-const VOICE_REPLY = (process.env.VOICE_REPLY || "off").toLowerCase();
+// VOZ DE SAÍDA (TTS): "mirror" = responde em áudio quando o dono manda áudio; "always" = toda resposta; "off" = nunca.
+// Default MIRROR desde 23/07: áudio-in vira áudio-out por padrão (paridade com o LEON do Léo, feedback do dono).
+// Provider default é edgetts (Antonio/Francisca pt-BR, grátis), então áudio de volta funciona sem chave paga.
+const VOICE_REPLY = (process.env.VOICE_REPLY || "mirror").toLowerCase();
 const TTS_VOICE   = process.env.TTS_VOICE || "echo";              // OpenAI fallback: echo/onyx/nova/shimmer/alloy/fable/ash/sage/verse
 const TTS_MODEL   = process.env.TTS_MODEL || "gpt-4o-mini-tts";
 const TTS_PROVIDER = (process.env.TTS_PROVIDER || "edgetts").toLowerCase(); // "edgetts" (default 22/07 15h36, Antonio/Francisca pt-BR, grátis, rápido) | "piper" (fallback local, grátis) | "kokoro" (opcional) | "elevenlabs" (premium) | "openai" (nuvem)
@@ -281,7 +281,7 @@ if (!OWNER) { console.error("falta OWNER_CHAT_ID — sem dono o agente não aten
 let topics = {};
 try { topics = JSON.parse(fs.readFileSync(TOPICS_FILE, "utf8")); }
 catch (e) { console.error("[ponte] topics.json ilegível, usando fallback:", e.message); }
-const DEFAULT = topics.general || { model: process.env.CLAUDE_MODEL || "sonnet", effort: process.env.CLAUDE_EFFORT || "medium", persona: "main.md", label: "Geral" };
+const DEFAULT = topics.general || { model: process.env.CLAUDE_MODEL || "claude-opus-5", effort: process.env.CLAUDE_EFFORT || "medium", persona: "main.md", label: "Geral" };
 // route re-lê o topics.json AO VIVO (cache por mtime): adicionar/mudar tópico vale na PRÓXIMA mensagem, SEM restart.
 let _topicsMtime = -1, _topicsLive = topics;
 const route = (chatId, threadId) => {
@@ -1626,6 +1626,35 @@ async function poll() {
         if (isGroup && !isOwner && !_allow.has("*") && !_allow.has(senderId)) {
           console.log(`[ponte] grupo: remetente ${senderId} fora da allowlist — ignorado`);
           continue;
+        }
+        // ONBOARDING de fábrica — primeira msg do dono (na DM) dispara sequência guiada:
+        // 1 pergunta sobre o negócio, sugestão de tópicos, orientação de criar grupo + adicionar
+        // como admin, /prontos NO GRUPO cria as salas via API, aceita ajustes em linguagem natural.
+        // Estado em .onboarding-state.json; ao fim grava .onboarding-done e para de disparar.
+        if (isOwner) {
+          const _txt = (msg.text || msg.caption || "").trim();
+          try {
+            const _onb = require("./lib/onboarding.js");
+            // /reonboarding reseta a jornada (do próprio dono, em qualquer chat)
+            if (/^\/reonboarding\b/i.test(_txt)) {
+              _onb.reset(__dirname);
+              send(chatId, `Onboarding zerado. Manda qualquer mensagem aqui na DM que a gente começa de novo.`, threadId).catch(() => {});
+              continue;
+            }
+            if (!_onb.isDone(__dirname) && !/^\//.test(_txt)) {
+              const _handled = await _onb.handle({
+                workdir: __dirname, chatId, threadId, isGroup, text: _txt, send
+              });
+              if (_handled) continue;
+            }
+            // /prontos e ajustes em grupo enquanto onboarding roda
+            if (!_onb.isDone(__dirname) && isGroup) {
+              const _handled = await _onb.handle({
+                workdir: __dirname, chatId, threadId, isGroup, text: _txt, send
+              });
+              if (_handled) continue;
+            }
+          } catch (e) { console.error("[onboarding] falhou:", e.message); }
         }
         // GENDER GUARD — se a pergunta de gênero foi feita (flag existe) e AGENT_GENDER ainda
         // não foi gravado, intercepta a resposta ANTES do Claude (barato, direto).

@@ -119,6 +119,23 @@ fi
 EDGE_SETUP
 echo "   Edge TTS pronto (Antonio masc / Francisca fem, escolhido por AGENT_GENDER)."
 
+# --- faster-whisper (transcrição local grátis, pt-BR) ---
+# Usado pra transcrever mensagens de áudio que o dono manda. Roda em venv próprio
+# do user 'agente', modelo puxado sob demanda no 1º áudio. Sem isso, áudio-in cai
+# em fallback ou falha silenciosa.
+echo "→ Transcrição local grátis (faster-whisper · pt-BR)..."
+sudo -u agente bash -s <<'WHISPER_SETUP' || echo "   (aviso) faster-whisper opcional falhou — áudio-in pode não funcionar." >&2
+set -e
+mkdir -p ~/.openclaw/whisper-venv
+if [ ! -x ~/.openclaw/whisper-venv/bin/python3 ]; then
+  python3 -m venv ~/.openclaw/whisper-venv
+fi
+if ! ~/.openclaw/whisper-venv/bin/python3 -c "import faster_whisper" 2>/dev/null; then
+  ~/.openclaw/whisper-venv/bin/pip install --quiet faster-whisper >/dev/null
+fi
+WHISPER_SETUP
+echo "   faster-whisper pronto (roda offline, custa 0)."
+
 cat <<'NEXT'
 
 ============================================
