@@ -40,6 +40,7 @@ claude -p --model sonnet "responda só OK" | head -c 40 | grep -qiE '^[^a-z]*ok'
 
 ## ETAPA 1 — Coletar os dados (uma pergunta por vez)
 1. "Qual o **nome do agente**? Pode ser qualquer nome, mas o padrão da casa é **LEON** (é o nome do agente do Léo Molina, e todo mundo que manteve LEON prosperou — dizem que dá sorte kkk). Se preferir outro (ex: Bia, Sofia), fica à vontade." → `AGENT_NAME`
+1b. "Essa persona é **masculina** ou **feminina**? (isso define a voz que ele/ela vai usar quando responder em áudio — Alex se masculina, Dora se feminina)." → `AGENT_GENDER` (aceita: `male`/`m`/`masculino`/`masc` ou `female`/`f`/`feminino`/`fem`; normalize pra `male` ou `female` antes de gravar. Se ficar em dúvida — nome unissex ou o dono não decidiu — assuma `male` e avise: "vou deixar masculina (Alex); se quiser trocar depois, é só falar").
 2. "Qual o **seu nome**? (como o agente vai te chamar)" → `OWNER_NAME`
 3. **Crie o bot do Telegram** — guie o dono assim (mande estas instruções pra ele e espere o token):
    "Vamos criar seu bot, leva 1 minuto:
@@ -125,6 +126,8 @@ mkdir -p ~/.claude
 # dono só vê "não subiu". Aborta cedo e explica.
 [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$AGENT_NAME" ] && [ -n "$OWNER_NAME" ] \
   || { echo "✗ Falta token do bot, nome do agente ou seu nome. Refaz a ETAPA 1 antes de gravar."; exit 1; }
+# AGENT_GENDER (male|female) tem default 'male' se o dono não decidiu (voz Alex).
+: "${AGENT_GENDER:=male}"
 # Nota pro Claude que escreve o arquivo: cola os VALORES literais das perguntas
 # da ETAPA 1 no lugar de $TELEGRAM_BOT_TOKEN/$AGENT_NAME/$OWNER_NAME. NÃO deixe
 # placeholders — o bridge não expande depois.
@@ -135,8 +138,9 @@ cat > ~/lean-bridge/.env <<EOF
 TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN
 OWNER_CHAT_ID=
 AGENT_NAME="$AGENT_NAME"
+AGENT_GENDER="$AGENT_GENDER"
 OWNER_NAME="$OWNER_NAME"
-CLAUDE_MODEL=sonnet
+CLAUDE_MODEL=claude-opus-5
 WORK_DIR=$HOME/lean-bridge
 PERSONA_DIR=$HOME/lean-bridge/persona
 BRAIN_DIR=$HOME/lean-bridge/brain
@@ -304,20 +308,39 @@ fi
 ```
 
 ## ETAPA 4.8 — (Opcional) LEON RESPONDER EM VOZ
-Se o cliente quer que o LEON responda em ÁUDIO (quando ele mandar áudio, ou sempre), é opt-in — precisa de conta no ElevenLabs (chave dele). Padrão da instalação é DESLIGADO pra não gastar crédito sem pedir. Ligar depois:
+Se o cliente quer que o LEON responda em ÁUDIO (quando ele mandar áudio, ou sempre), é opt-in. Padrão da instalação é DESLIGADO. Ligar depois:
 
-1. Cliente cria conta em **elevenlabs.io** e pega a chave em "API Keys" (`sk_...`).
-2. Edita `~/agente-soft/.env` e adiciona:
+**Rota GRÁTIS (default recomendado) — Piper local, roda na própria VPS:**
+1. O bootstrap já instalou o Piper e a voz pt_BR (Faber). Se por algum motivo não instalou, roda uma vez como o usuário do agente:
    ```
-   ELEVENLABS_API_KEY=sk_...
+   python3 -m venv ~/.openclaw/piper-venv && ~/.openclaw/piper-venv/bin/pip install piper-tts
+   mkdir -p ~/.openclaw/voices/piper && cd ~/.openclaw/voices/piper
+   curl -sfL -O https://huggingface.co/rhasspy/piper-voices/resolve/main/pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx
+   curl -sfL -O https://huggingface.co/rhasspy/piper-voices/resolve/main/pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx.json
+   ```
+2. Edita `~/agente-soft/.env` e liga:
+   ```
    VOICE_REPLY=mirror
+   TTS_PROVIDER=piper
    ```
    - `mirror` = responde em áudio só quando o cliente mandar áudio (imita o canal).
-   - `always` = responde em áudio SEMPRE (todo turno). Custa mais.
+   - `always` = responde em áudio SEMPRE (todo turno).
    - `off` = desligado (padrão).
-3. Manda `/atualiza` pro LEON no Telegram — a nova config vale sem reiniciar (o `.env` recarrega sozinho).
+3. Manda `/atualiza` pro LEON no Telegram — o `.env` recarrega sozinho, sem reiniciar.
 
-Custo aproximado: R$0,10 por minuto de fala falada. Voz padrão = **Marcelo Costa** (macho BR grave). Pra trocar, pega o ID em elevenlabs.io/voice-library e põe `ELEVENLABS_VOICE_ID=<id>` no `.env`.
+Custo: **zero**. Roda offline. Voz pt_BR masculina (Faber).
+
+**Rota PREMIUM (opt-in) — ElevenLabs, voz clonada estilo Marcelo Costa:**
+Reserva pra anúncio/VSL ou quem quer voz premium no dia-a-dia. ~R$0,10/min.
+```
+VOICE_REPLY=mirror
+TTS_PROVIDER=elevenlabs
+ELEVENLABS_API_KEY=sk_...
+ELEVENLABS_VOICE_ID=bJrNspxJVFovUxNBQ0wh
+```
+Chave em elevenlabs.io → "API Keys". Voz padrão = Marcelo Costa (macho BR grave); pra trocar, ID em elevenlabs.io/voice-library.
+
+**Rota nuvem barata (fallback automático) — OpenAI TTS:** se `OPENAI_API_KEY` estiver no `.env` e Piper falhar (não instalou), o LEON usa OpenAI TTS como plano B sem você mexer.
 
 ## ETAPA 5 — Validar ponta a ponta
 ```bash

@@ -86,6 +86,30 @@ if (process.platform === "linux" && typeof process.getuid === "function" && proc
   return;
 }
 
+// GENDER GUARD — se AGENT_GENDER faltar no .env (cliente ativo instalado antes do fix), pergunta
+// UMA vez pro dono e grava a resposta ao interceptar a próxima mensagem. Flag persistente
+// .gender-asked garante que a pergunta vai uma vez só (evita spam se o serviço reinicia).
+(function askGenderIfMissing(){
+  try {
+    if (process.env.AGENT_GENDER) return;
+    const _flag = `${__dirname}/.gender-asked`;
+    if (fs.existsSync(_flag)) return;
+    if (!TG_TOKEN || !OWNER) return;
+    fs.writeFileSync(_flag, new Date().toISOString() + "\n");
+    const _q = "🎙️ Preciso ajustar minha voz. Sou uma persona MASCULINA ou FEMININA? Responde *m* ou *f* (ou *masculino*/*feminino*). Isso define a voz que uso quando respondo em áudio (Alex se masculino, Dora se feminino).";
+    const _body = JSON.stringify({ chat_id: OWNER, text: _q, parse_mode: "Markdown" });
+    const _req = https.request({
+      hostname: "api.telegram.org",
+      path: `/bot${TG_TOKEN}/sendMessage`,
+      method: "POST",
+      headers: { "content-type": "application/json", "content-length": Buffer.byteLength(_body) },
+    }, () => {});
+    _req.on("error", () => {});
+    _req.write(_body);
+    _req.end();
+  } catch {}
+})();
+
 // allowlist de remetentes no GRUPO: só esses from.id podem comandar (OWNER sempre incluso).
 // vazio = grupo fecha (só OWNER fala). Anti-abuso: qualquer membro do grupo teria Bash livre na VPS.
 // DINÂMICA: re-lê o .env a cada mensagem → liberar/bloquear membro NÃO precisa reiniciar o serviço
@@ -167,18 +191,29 @@ const TMP_DIR       = process.env.TMP_DIR || "/tmp/lean-bridge";
 const VOICE_PY      = process.env.VOICE_PY || "/usr/bin/python3";
 const VOICE_HANDLER = process.env.VOICE_HANDLER || `${WORKDIR}/workers/voice-handler.py`;
 const VOICE_ENABLED = (() => { try { return fs.existsSync(VOICE_HANDLER); } catch { return false; } })();
-// VOZ DE SAÍDA (TTS): opt-in. "mirror" = responde em áudio quando o dono manda áudio; "always" = toda resposta; "off" = nunca.
-// Default OFF pra não gastar créditos ElevenLabs sem o dono pedir. Cliente que quiser áudio de volta:
-// põe ELEVENLABS_API_KEY (chave dele) + VOICE_REPLY=mirror no .env. Sem chave, mesmo com VOICE_REPLY ligado, cai silencioso.
-const VOICE_REPLY = (process.env.VOICE_REPLY || "off").toLowerCase();
+// VOZ DE SAÍDA (TTS): "mirror" = responde em áudio quando o dono manda áudio; "always" = toda resposta; "off" = nunca.
+// Default MIRROR desde 23/07: áudio-in vira áudio-out por padrão (paridade com o LEON do Léo, feedback do dono).
+// Provider default é edgetts (Antonio/Francisca pt-BR, grátis), então áudio de volta funciona sem chave paga.
+const VOICE_REPLY = (process.env.VOICE_REPLY || "mirror").toLowerCase();
 const TTS_VOICE   = process.env.TTS_VOICE || "echo";              // OpenAI fallback: echo/onyx/nova/shimmer/alloy/fable/ash/sage/verse
 const TTS_MODEL   = process.env.TTS_MODEL || "gpt-4o-mini-tts";
-const TTS_PROVIDER = (process.env.TTS_PROVIDER || "elevenlabs").toLowerCase(); // "elevenlabs" (Marcelo Costa BR) | "openai" (fallback)
+const TTS_PROVIDER = (process.env.TTS_PROVIDER || "edgetts").toLowerCase(); // "edgetts" (default 22/07 15h36, Antonio/Francisca pt-BR, grátis, rápido) | "piper" (fallback local, grátis) | "kokoro" (opcional) | "elevenlabs" (premium) | "openai" (nuvem)
+const EDGE_TTS_VOICE = process.env.EDGE_TTS_VOICE || ((process.env.AGENT_GENDER || "male").toLowerCase() === "female" ? "pt-BR-FranciscaNeural" : "pt-BR-AntonioNeural");
+const EDGE_TTS_WORKER = process.env.EDGE_TTS_WORKER || `${__dirname}/workers/edge-tts.js`;
+const EDGE_TTS_PY = process.env.EDGE_TTS_PY || `${os.homedir()}/.openclaw/edgetts-venv/bin/python3`;
+const EDGE_TTS_ENABLED = (() => { try { return fs.existsSync(EDGE_TTS_WORKER) && fs.existsSync(EDGE_TTS_PY); } catch { return false; } })();
+const KOKORO_WORKER = process.env.KOKORO_WORKER || `${os.homedir()}/.openclaw/workers/kokoro-tts.cjs`;
+const KOKORO_MODEL_PATH = process.env.KOKORO_MODEL || `${os.homedir()}/.openclaw/voices/kokoro/kokoro-v1.0.onnx`;
+const KOKORO_ENABLED = (() => { try { return fs.existsSync(KOKORO_WORKER) && fs.existsSync(KOKORO_MODEL_PATH); } catch { return false; } })();
 const ELEVEN_VOICE_ID  = process.env.ELEVENLABS_VOICE_ID  || "bJrNspxJVFovUxNBQ0wh"; // Marcelo Costa BR (troque via .env pra outra voz)
 const ELEVEN_MODEL_ID  = process.env.ELEVENLABS_MODEL_ID  || "eleven_multilingual_v2";
 const ELEVEN_STABILITY = Number(process.env.ELEVENLABS_STABILITY  || 0.45);
 const ELEVEN_SIMILARITY = Number(process.env.ELEVENLABS_SIMILARITY || 0.75);
 const ELEVEN_STYLE      = Number(process.env.ELEVENLABS_STYLE      || 0.20);
+const PIPER_BIN     = process.env.PIPER_BIN    || `${os.homedir()}/.openclaw/piper-venv/bin/piper`;
+const PIPER_MODEL   = process.env.PIPER_MODEL  || `${os.homedir()}/.openclaw/voices/piper/pt_BR-faber-medium.onnx`;
+const PIPER_WORKER  = process.env.PIPER_WORKER || `${__dirname}/workers/piper.js`;
+const PIPER_ENABLED = (() => { try { return fs.existsSync(PIPER_BIN) && fs.existsSync(PIPER_MODEL); } catch { return false; } })();
 const openaiKey     = () => envVal("OPENAI_API_KEY");    // LIVE: chave nova no .env vale sem restart
 const elevenlabsKey = () => envVal("ELEVENLABS_API_KEY"); // LIVE idem
 try { fs.mkdirSync(TMP_DIR, { recursive: true }); } catch {}
@@ -246,7 +281,7 @@ if (!OWNER) { console.error("falta OWNER_CHAT_ID — sem dono o agente não aten
 let topics = {};
 try { topics = JSON.parse(fs.readFileSync(TOPICS_FILE, "utf8")); }
 catch (e) { console.error("[ponte] topics.json ilegível, usando fallback:", e.message); }
-const DEFAULT = topics.general || { model: process.env.CLAUDE_MODEL || "sonnet", effort: process.env.CLAUDE_EFFORT || "medium", persona: "main.md", label: "Geral" };
+const DEFAULT = topics.general || { model: process.env.CLAUDE_MODEL || "claude-opus-5", effort: process.env.CLAUDE_EFFORT || "medium", persona: "main.md", label: "Geral" };
 // route re-lê o topics.json AO VIVO (cache por mtime): adicionar/mudar tópico vale na PRÓXIMA mensagem, SEM restart.
 let _topicsMtime = -1, _topicsLive = topics;
 const route = (chatId, threadId) => {
@@ -690,8 +725,90 @@ function synthVoiceEleven(input) {
     req.write(body); req.end();
   });
 }
+function synthVoiceEdge(input) {
+  return new Promise((resolve) => {
+    if (!EDGE_TTS_ENABLED) return resolve(null);
+    const outMp3 = `${TMP_DIR}/voz-edge-${Date.now()}-${process.pid}.mp3`;
+    const p = spawn("node", [EDGE_TTS_WORKER, "--action", "tts", "--text", input, "--out", outMp3, "--voice", EDGE_TTS_VOICE], { stdio: ["ignore", "pipe", "pipe"] });
+    let err = "";
+    p.stderr.on("data", (c) => { err += c.toString(); });
+    p.on("error", (e) => { console.error("[ponte] TTS Edge spawn:", e.message); resolve(null); });
+    p.on("close", (code) => {
+      try {
+        if (code === 0 && fs.existsSync(outMp3)) {
+          const buf = fs.readFileSync(outMp3);
+          try { fs.unlinkSync(outMp3); } catch {}
+          if (buf.length > 500) return resolve(buf);
+        }
+        console.error("[ponte] TTS Edge falhou:", code, err.slice(0, 200));
+        resolve(null);
+      } catch (e) { console.error("[ponte] TTS Edge read:", e.message); resolve(null); }
+    });
+    setTimeout(() => { try { p.kill("SIGKILL"); } catch {} }, 60000).unref?.();
+  });
+}
+function synthVoicePiper(input) {
+  return new Promise((resolve) => {
+    if (!PIPER_ENABLED) return resolve(null);
+    const outMp3 = `${TMP_DIR}/voz-piper-${Date.now()}-${process.pid}.mp3`;
+    const p = spawn("node", [PIPER_WORKER, "--action", "tts", "--text", input, "--out", outMp3], { stdio: ["ignore", "pipe", "pipe"] });
+    let err = "";
+    p.stderr.on("data", (c) => { err += c.toString(); });
+    p.on("error", (e) => { console.error("[ponte] TTS Piper spawn:", e.message); resolve(null); });
+    p.on("close", (code) => {
+      try {
+        if (code === 0 && fs.existsSync(outMp3)) {
+          const buf = fs.readFileSync(outMp3);
+          try { fs.unlinkSync(outMp3); } catch {}
+          if (buf.length > 500) return resolve(buf);
+        }
+        console.error("[ponte] TTS Piper falhou:", code, err.slice(0, 200));
+        resolve(null);
+      } catch (e) { console.error("[ponte] TTS Piper read:", e.message); resolve(null); }
+    });
+    setTimeout(() => { try { p.kill("SIGKILL"); } catch {} }, 60000).unref?.();
+  });
+}
+function synthVoiceKokoro(input) {
+  return new Promise((resolve) => {
+    if (!KOKORO_ENABLED) return resolve(null);
+    const outMp3 = `${TMP_DIR}/voz-kokoro-${Date.now()}-${process.pid}.mp3`;
+    const p = spawn("node", [KOKORO_WORKER, "--action", "tts", "--text", input, "--out", outMp3], { stdio: ["ignore", "pipe", "pipe"] });
+    let err = "";
+    p.stderr.on("data", (c) => { err += c.toString(); });
+    p.on("error", (e) => { console.error("[ponte] TTS Kokoro spawn:", e.message); resolve(null); });
+    p.on("close", (code) => {
+      try {
+        if (code === 0 && fs.existsSync(outMp3)) {
+          const buf = fs.readFileSync(outMp3);
+          try { fs.unlinkSync(outMp3); } catch {}
+          if (buf.length > 500) return resolve(buf);
+        }
+        console.error("[ponte] TTS Kokoro falhou:", code, err.slice(0, 200));
+        resolve(null);
+      } catch (e) { console.error("[ponte] TTS Kokoro read:", e.message); resolve(null); }
+    });
+    setTimeout(() => { try { p.kill("SIGKILL"); } catch {} }, 120000).unref?.();
+  });
+}
 async function synthVoice(text) {
   const input = ttsStrip(text).slice(0, 3800); if (!input) return null;
+  if (TTS_PROVIDER === "edgetts") {
+    const buf = await synthVoiceEdge(input);
+    if (buf) return buf;
+    // fallback: Piper (local, grátis) → OpenAI → ElevenLabs
+    return (await synthVoicePiper(input)) || (await synthVoiceOpenAI(input)) || (await synthVoiceEleven(input));
+  }
+  if (TTS_PROVIDER === "kokoro") {
+    const buf = await synthVoiceKokoro(input);
+    if (buf) return buf;
+    return (await synthVoiceEdge(input)) || (await synthVoicePiper(input)) || (await synthVoiceOpenAI(input)) || (await synthVoiceEleven(input));
+  }
+  if (TTS_PROVIDER === "piper") {
+    const buf = await synthVoicePiper(input);
+    if (buf) return buf;
+    return (await synthVoiceEdge(input)) || (await synthVoiceOpenAI(input)) || (await synthVoiceEleven(input));
+  }
   if (TTS_PROVIDER === "elevenlabs") {
     const buf = await synthVoiceEleven(input);
     if (buf) return buf;
@@ -706,7 +823,7 @@ async function speakReply(chatId, text, threadId) {
     // VOZ FALHOU ≠ SILÊNCIO: texto já foi entregue, mas dono esperava áudio — avisa 1x/h (sem spam)
     if (!speakReply._warned || Date.now() - speakReply._warned > 3600000) {
       speakReply._warned = Date.now();
-      send(chatId, "_(a voz falhou agora — fica o texto. Confere ELEVENLABS_API_KEY no .env.)_", threadId).catch(() => {});
+      send(chatId, "_(a voz falhou agora — fica o texto. Piper local não instalado? Sem OPENAI_API_KEY e ELEVENLABS_API_KEY no .env?)_", threadId).catch(() => {});
     }
     return;
   }
@@ -804,7 +921,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       const t0 = Date.now();
       let buf = "", err = "", finalResult = null, finalSid = null, finalUsage = null, mainUsage = null, settled = false, timedOut = false, lastActivity = Date.now();
       let finalIsError = false, finalErrors = "";
-      let lastAction = "começando…", panelId = null, _lastMarco = "";
+      let lastAction = "começando…", panelId = null, _lastMarco = "", _marcos = [], _lastPanelEditAt = 0;
       const elapsed = () => { const s = Math.round((Date.now() - t0) / 1000);
         return s < 60 ? `${s}s` : `${Math.floor(s / 60)}min${s % 60 ? (s % 60) + "s" : ""}`; };
 
@@ -814,16 +931,29 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       }, 4000);
 
       // (B) UM painel editável — nasce só depois do limiar; depois reescreve no lugar (sem notificar).
-      // Na MISSÃO o painel é um CRONÔMETRO VIVO (nasce logo, edita a cada 12s): o dono VÊ o tempo subindo e o
-      // último marco, com certeza de que tá trabalhando. Turno normal = painel discreto (só depois do limiar).
-      const panelTick = async () => {
-        const txt = isMissao
-          ? `🎯 Missão em andamento · ⏱️ ${elapsed()}${_lastMarco ? `\n📍 ${_lastMarco}` : ""}\n⚙️ agora: ${lastAction}`
-          : `⏳ Tô na sua tarefa. Última coisa: ${lastAction} · ${elapsed()}`;
+      // MISSÃO: nasce logo, é FIXADO no topo do chat (auto-pin silencioso), acumula marcos ✅ na MESMA mensagem
+      // (sem spamar msg por marco). Ao terminar, desafixa e vira o RESUMO do que rolou.
+      const panelTick = async ({ finished = false } = {}) => {
+        const _marcosBlock = isMissao && _marcos.length ? "\n" + _marcos.map(l => `✅ ${l}`).join("\n") : "";
+        let txt;
+        if (isMissao && finished) {
+          txt = `✅ Missão pronta em ${elapsed()}${_marcosBlock}`;
+        } else {
+          txt = isMissao
+            ? `⏳ Trabalhando faz ${elapsed()}${_marcosBlock}\n… ${lastAction}`
+            : `⏳ Trabalhando faz ${elapsed()}\n… ${lastAction}`;
+        }
+        _lastPanelEditAt = Date.now();
         try {
           if (panelId == null) {
             const r = await tg("sendMessage", { chat_id: chatId, text: txt, ...base });
-            if (r && r.ok && r.result) { panelId = r.result.message_id; console.log(`[ponte] ${isMissao ? "🎯 cronômetro de missão" : "⏳ painel de progresso"} ON · chat=${chatId} thread=${threadId || "-"}`); }
+            if (r && r.ok && r.result) {
+              panelId = r.result.message_id;
+              console.log(`[ponte] ${isMissao ? "🎯 cronômetro de missão" : "⏳ painel de progresso"} ON · chat=${chatId} thread=${threadId || "-"}`);
+              if (isMissao) {
+                try { await tg("pinChatMessage", { chat_id: chatId, message_id: panelId, disable_notification: true }); } catch {}
+              }
+            }
           } else {
             await tg("editMessageText", { chat_id: chatId, message_id: panelId, text: txt, ...base });
           }
@@ -846,7 +976,9 @@ function ask(key, text, cfg, chatId, threadId, mission) {
             const txt = b.toString("utf8"); const cut = txt.lastIndexOf("\n");
             if (cut >= 0) {   // só processa linhas COMPLETAS (até o último \n); resto fica pro próximo ciclo (não posta echo pela metade)
               _progressPos += Buffer.byteLength(txt.slice(0, cut + 1), "utf8");
-              for (const linha of txt.slice(0, cut).split("\n").map(s => s.trim()).filter(Boolean)) { _lastMarco = linha; send(chatId, `📍 ${linha}`, threadId).catch(() => {}); }
+              let _novos = 0;
+              for (const linha of txt.slice(0, cut).split("\n").map(s => s.trim()).filter(Boolean)) { _lastMarco = linha; _marcos.push(linha); _novos++; }
+              if (_novos > 0 && (Date.now() - _lastPanelEditAt) >= 3000) panelTick().catch(() => {});
             }
           }
         } catch {}
@@ -856,7 +988,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
         setTimeout(_pumpProgress, 1000);
         progressTimer = setInterval(_pumpProgress, 15000);
         progressBootTimer = setTimeout(() => {
-          try { const st = fs.statSync(mission.progressFile); if (st.size === 0 && !_progressBootMsg) { _progressBootMsg = true; send(chatId, `🚧 Missão em bootstrap — ainda sem marco no disco. Se demorar >5min sem 📍, algo travou.`, threadId).catch(() => {}); } } catch {}
+          try { const st = fs.statSync(mission.progressFile); if (st.size === 0 && !_progressBootMsg) { _progressBootMsg = true; lastAction = "preparando"; panelTick().catch(() => {}); } } catch {}
         }, 90000);
       }
 
@@ -877,7 +1009,15 @@ function ask(key, text, cfg, chatId, threadId, mission) {
 
       const cleanup = async () => {
         clearInterval(typingTimer); clearInterval(panelTimer); clearInterval(watchdog); if (progressTimer) clearInterval(progressTimer); if (progressBootTimer) clearTimeout(progressBootTimer);
-        if (panelId != null) { try { await tg("deleteMessage", { chat_id: chatId, message_id: panelId }); } catch {} }
+        if (panelId != null) {
+          if (isMissao) {
+            try { _pumpProgress(); } catch {}
+            try { await panelTick({ finished: true }); } catch {}
+            try { await tg("unpinChatMessage", { chat_id: chatId, message_id: panelId }); } catch {}
+          } else {
+            try { await tg("deleteMessage", { chat_id: chatId, message_id: panelId }); } catch {}
+          }
+        }
       };
       const done = async (payload) => { if (settled) return; settled = true; await cleanup(); resolve(payload); };
 
@@ -1486,6 +1626,60 @@ async function poll() {
         if (isGroup && !isOwner && !_allow.has("*") && !_allow.has(senderId)) {
           console.log(`[ponte] grupo: remetente ${senderId} fora da allowlist — ignorado`);
           continue;
+        }
+        // ONBOARDING de fábrica — primeira msg do dono (na DM) dispara sequência guiada:
+        // 1 pergunta sobre o negócio, sugestão de tópicos, orientação de criar grupo + adicionar
+        // como admin, /prontos NO GRUPO cria as salas via API, aceita ajustes em linguagem natural.
+        // Estado em .onboarding-state.json; ao fim grava .onboarding-done e para de disparar.
+        if (isOwner) {
+          const _txt = (msg.text || msg.caption || "").trim();
+          try {
+            const _onb = require("./lib/onboarding.js");
+            // /reonboarding reseta a jornada (do próprio dono, em qualquer chat)
+            if (/^\/reonboarding\b/i.test(_txt)) {
+              _onb.reset(__dirname);
+              send(chatId, `Onboarding zerado. Manda qualquer mensagem aqui na DM que a gente começa de novo.`, threadId).catch(() => {});
+              continue;
+            }
+            if (!_onb.isDone(__dirname) && !/^\//.test(_txt)) {
+              const _handled = await _onb.handle({
+                workdir: __dirname, chatId, threadId, isGroup, text: _txt, send
+              });
+              if (_handled) continue;
+            }
+            // /prontos e ajustes em grupo enquanto onboarding roda
+            if (!_onb.isDone(__dirname) && isGroup) {
+              const _handled = await _onb.handle({
+                workdir: __dirname, chatId, threadId, isGroup, text: _txt, send
+              });
+              if (_handled) continue;
+            }
+          } catch (e) { console.error("[onboarding] falhou:", e.message); }
+        }
+        // GENDER GUARD — se a pergunta de gênero foi feita (flag existe) e AGENT_GENDER ainda
+        // não foi gravado, intercepta a resposta ANTES do Claude (barato, direto).
+        if (isOwner && !process.env.AGENT_GENDER) {
+          try {
+            if (fs.existsSync(`${__dirname}/.gender-asked`)) {
+              const _t = String(msg.text || "").trim().toLowerCase();
+              let _g = null;
+              if (/^(m|masc|masculino|male|homem)$/.test(_t)) _g = "male";
+              else if (/^(f|fem|feminino|female|mulher)$/.test(_t)) _g = "female";
+              if (_g) {
+                const _envPath = `${__dirname}/.env`;
+                let _env = "";
+                try { _env = fs.readFileSync(_envPath, "utf8"); } catch {}
+                if (/^AGENT_GENDER=/m.test(_env)) _env = _env.replace(/^AGENT_GENDER=.*$/m, `AGENT_GENDER=${_g}`);
+                else _env = _env.replace(/\n?$/, `\nAGENT_GENDER=${_g}\n`);
+                fs.writeFileSync(_envPath, _env);
+                process.env.AGENT_GENDER = _g;
+                try { fs.unlinkSync(`${__dirname}/.gender-asked`); } catch {}
+                const _voice = _g === "female" ? "Dora" : "Alex";
+                send(chatId, `✅ Voz configurada: ${_voice}. Da próxima vez que você mandar áudio, respondo com essa voz.`, threadId).catch(() => {});
+                continue;
+              }
+            }
+          } catch (e) { console.error("[gender] falhou:", e.message); }
         }
         const hasInput = msg.text || msg.caption || msg.voice || msg.audio || msg.photo || msg.document;
         if (!hasInput) continue;                             // nada que eu saiba processar
