@@ -24,7 +24,15 @@ FASE="${1:-longo}"
 CHAT="${2:-}"
 THREAD="${3:-}"
 
-BRIDGE_DIR="$HOME/lean-bridge"
+# Duas instalações, dois lugares. Na gratuita o motor mora em ~/lean-bridge e este
+# script vem da cópia do repositório (~/agente-soft). Na paga tudo mora no mesmo
+# diretório (~/socio-ia). Descobre em vez de cravar, senão vira código morto.
+SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if   [ -n "${LEON_BRIDGE_DIR:-}" ];   then BRIDGE_DIR="$LEON_BRIDGE_DIR"
+elif [ -f "$HOME/lean-bridge/.env" ]; then BRIDGE_DIR="$HOME/lean-bridge"
+elif [ -f "$SELF_DIR/.env" ];         then BRIDGE_DIR="$SELF_DIR"
+elif [ -f "$HOME/socio-ia/.env" ];    then BRIDGE_DIR="$HOME/socio-ia"
+else BRIDGE_DIR="$HOME/lean-bridge"; fi
 GREET="$BRIDGE_DIR/.greet"
 LOG="$BRIDGE_DIR/upgrade.log"
 
@@ -36,7 +44,12 @@ T="$(env_get TELEGRAM_BOT_TOKEN)"
 [ -n "$CHAT" ] || CHAT="$(env_get OWNER_CHAT_ID)"
 [ -n "$T" ] && [ -n "$CHAT" ] || exit 0
 
+# Quem está fazendo o trabalho depende da instalação: na gratuita é um serviço
+# separado; na paga é o update-pago.sh rodando como processo comum.
 EST="$(systemctl --user is-active agente-update.service 2>/dev/null || true)"
+if [ -z "$EST" ] || [ "$EST" = "inactive" ]; then
+  if pgrep -f "update-pago.sh" >/dev/null 2>&1; then EST="active"; fi
+fi
 [ -n "$EST" ] || EST="desconhecido"
 
 # Na fase curta só interessa o caso "nem arrancou". Se está rodando, deixa rodar.
