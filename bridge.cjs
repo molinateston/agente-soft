@@ -1612,6 +1612,21 @@ async function poll() {
     for (const u of r.result) {
       try {
         offset = u.update_id + 1;
+        // ONBOARDING sem comando: o Telegram avisa aqui quando o bot é adicionado ou
+        // promovido num grupo. É o gatilho pra criar as salas sozinho — antes disso o
+        // dono precisava digitar /prontos, o que virou fricção real com cliente novo.
+        const mcm = u.my_chat_member;
+        if (mcm && mcm.chat && /group|supergroup/.test(mcm.chat.type || "")) {
+          const st = mcm.new_chat_member && mcm.new_chat_member.status;
+          const quem = String(mcm.from && mcm.from.id || "");
+          if (st === "administrator" && quem === OWNER) {
+            try {
+              const _onb = require("./lib/onboarding.js");
+              await _onb.onGroupReady({ workdir: __dirname, chatId: String(mcm.chat.id), send });
+            } catch (e) { console.error("[onboarding] my_chat_member:", e.message); }
+          }
+          continue;
+        }
         const msg = u.message; if (!msg) continue;
         const chatId   = String(msg.chat.id);
         const threadId = msg.message_thread_id ? String(msg.message_thread_id) : null;
@@ -1627,10 +1642,10 @@ async function poll() {
           console.log(`[ponte] grupo: remetente ${senderId} fora da allowlist — ignorado`);
           continue;
         }
-        // ONBOARDING de fábrica — primeira msg do dono (na DM) dispara sequência guiada:
-        // 1 pergunta sobre o negócio, sugestão de tópicos, orientação de criar grupo + adicionar
-        // como admin, /prontos NO GRUPO cria as salas via API, aceita ajustes em linguagem natural.
-        // Estado em .onboarding-state.json; ao fim grava .onboarding-done e para de disparar.
+        // ONBOARDING de fábrica — primeira msg do dono na conversa privada abre uma pergunta
+        // sobre o negócio, devolve a sugestão de salas e apresenta as 2 formas de trabalhar
+        // (seguir na privada ou montar um grupo). O grupo é OPCIONAL e nunca exige comando:
+        // as salas nascem quando o bot vira administrador. Estado em .onboarding-state.json.
         if (isOwner) {
           const _txt = (msg.text || msg.caption || "").trim();
           try {
@@ -1641,16 +1656,19 @@ async function poll() {
               send(chatId, `Onboarding zerado. Manda qualquer mensagem aqui na DM que a gente começa de novo.`, threadId).catch(() => {});
               continue;
             }
-            if (!_onb.isDone(__dirname) && !/^\//.test(_txt)) {
-              const _handled = await _onb.handle({
-                workdir: __dirname, chatId, threadId, isGroup, text: _txt, send
+            // O grupo recém-criado ainda não está no .env, então isGroup (que compara com
+            // GROUP_CHAT_ID) é falso pra ele. Aqui vale o tipo real do chat.
+            const _emGrupo = /group|supergroup/.test((msg.chat && msg.chat.type) || "") || isGroup;
+            if (_emGrupo) {
+              // vale mesmo com a conversa de boas-vindas fechada: o dono pode montar o
+              // grupo semanas depois, e aí as salas nascem na primeira mensagem dele.
+              const _handled = await _onb.handleGroup({
+                workdir: __dirname, chatId, threadId, text: _txt, send
               });
               if (_handled) continue;
-            }
-            // /prontos e ajustes em grupo enquanto onboarding roda
-            if (!_onb.isDone(__dirname) && isGroup) {
+            } else if (!_onb.isDone(__dirname) && !/^\//.test(_txt)) {
               const _handled = await _onb.handle({
-                workdir: __dirname, chatId, threadId, isGroup, text: _txt, send
+                workdir: __dirname, chatId, threadId, isGroup: false, text: _txt, send
               });
               if (_handled) continue;
             }
