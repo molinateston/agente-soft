@@ -300,15 +300,45 @@ if (!OWNER) { console.error("falta OWNER_CHAT_ID — sem dono o agente não aten
 let topics = {};
 try { topics = JSON.parse(fs.readFileSync(TOPICS_FILE, "utf8")); }
 catch (e) { console.error("[ponte] topics.json ilegível, usando fallback:", e.message); }
-const DEFAULT = topics.general || { model: process.env.CLAUDE_MODEL || "claude-opus-5", effort: process.env.CLAUDE_EFFORT || "medium", persona: "main.md", label: "Geral" };
+const BASE_CFG = { model: process.env.CLAUDE_MODEL || "claude-opus-5", effort: process.env.CLAUDE_EFFORT || "medium", persona: "main.md", label: "Geral" };
+const DEFAULT = { ...BASE_CFG, ...(topics.general || {}) };
 // route re-lê o topics.json AO VIVO (cache por mtime): adicionar/mudar tópico vale na PRÓXIMA mensagem, SEM restart.
 let _topicsMtime = -1, _topicsLive = topics;
 const route = (chatId, threadId) => {
   try { const m = fs.statSync(TOPICS_FILE).mtimeMs; if (m !== _topicsMtime) { _topicsLive = JSON.parse(fs.readFileSync(TOPICS_FILE, "utf8")); _topicsMtime = m; } } catch {}
   const t = _topicsLive;
   // chave COMPOSTA chatId:threadId — o Telegram numera thread POR grupo, então sem o chatId grupos diferentes COLIDEM. Fallback: thread solto (legado) -> geral.
-  return (threadId && t[`${chatId}:${threadId}`]) || (threadId && t[threadId]) || t.general || DEFAULT;
+  // MESCLA sobre a base: entrada de tópico gravada pelo onboarding só tem { label } — sem o merge
+  // o modelo/persona sairiam undefined e o claude morreria com "selected model (undefined)".
+  const hit = (threadId && t[`${chatId}:${threadId}`]) || (threadId && t[threadId]) || t.general;
+  return hit ? { ...BASE_CFG, ...hit } : DEFAULT;
 };
+
+
+// ---- COPY RODA EM SONNET 5 ----
+// Escrita de linha pública (headline, carrossel, carta, landing, script, legenda, anúncio,
+// e-mail) sai melhor no sonnet. Vale em QUALQUER sala: o turno que escreve copy troca de
+// modelo sozinho, sem o dono precisar configurar nada.
+const COPY_MODEL = process.env.COPY_MODEL || "claude-sonnet-5";
+const COPY_KEYWORDS = [
+  "copy", "headline", "headlines", "gancho", "legenda", "bio", "anuncio", "anuncios",
+  "carrossel", "carrosseis", "reel", "reels", "stories", "carta de vendas", "vsl",
+  "landing", "pagina de vendas", "pagina de captura", "roteiro", "script", "criativo",
+  "e-mail", "email", "chamada", "titulo", "texto do post", "escreve o post", "post",
+];
+function _deaccentCopy(s) {
+  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+function isCopyTask(text) {
+  if (!text) return false;
+  const norm = _deaccentCopy(text);
+  for (const kw of COPY_KEYWORDS) {
+    const nkw = _deaccentCopy(kw);
+    const re = new RegExp(`(^|[^\\p{L}\\p{N}])${nkw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^\\p{L}\\p{N}]|$)`, "u");
+    if (re.test(norm)) return true;
+  }
+  return false;
+}
 
 let sessions = {};
 try { sessions = JSON.parse(fs.readFileSync(SESS_FILE, "utf8")); }
@@ -900,7 +930,9 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       const isMissao = !!mission;   // MODO MISSÃO: tarefa longa deliberada (budget/tempo soltos + reports de marco + retomada durável)
       // HORÁRIO de Brasília vai no INPUT (não no system-prompt: evita cache-bust). Prepende ao texto do usuário.
       const userText = [timeBlock(), text].filter(Boolean).join("\n\n");
-      const args = ["-p", "--model", cfg.model, "--output-format", "stream-json", "--verbose",
+      // COPY sempre em sonnet 5, mesmo que a sala rode outro modelo.
+      const _model = isCopyTask(text) ? COPY_MODEL : cfg.model;
+      const args = ["-p", "--model", _model, "--output-format", "stream-json", "--verbose",
                     "--permission-mode", "bypassPermissions",   // agência total: escreve/edita arquivo + roda Bash (acesso já é só OWNER/allowlist)
                     "--add-dir", WORKDIR, "--add-dir", BRAIN, "--add-dir", TMP_DIR, "--add-dir", projDir()];
       if (cfg.effort) args.push("--effort", cfg.effort);                 // quanto ele PENSA: high=estratégico, medium=operacional, low=casual
@@ -1721,6 +1753,45 @@ async function poll() {
         }
         const hasInput = msg.text || msg.caption || msg.voice || msg.audio || msg.photo || msg.document;
         if (!hasInput) continue;                             // nada que eu saiba processar
+
+        // ---- CONECTAR O META (MCP oficial da Meta) — roda ANTES do turno normal ----
+        // O dono só faz login no Facebook dele: nada de app de desenvolvedor, Business Manager
+        // ou aprovação. Dois gatilhos: pedir pra conectar (linguagem natural ou /conectarmeta),
+        // e colar de volta o endereço que o navegador mostrou.
+        {
+          const _mtxt = (msg.text || msg.caption || "").trim();
+          if (_mtxt) {
+            try {
+              const _meta = require("./lib/meta-connect.js");
+              if (_meta.isMetaCallback(_mtxt)) {
+                send(chatId, "Recebi. Fechando a conexão com o Meta…", threadId).catch(() => {});
+                const _r = await _meta.finishMetaConnect(WORKDIR, _mtxt);
+                if (_r.ok) {
+                  const _lista = _r.accounts.slice(0, 8).map((a) => `· ${a.name}`).join("\n");
+                  const _resto = _r.accounts.length > 8 ? `\n…e mais ${_r.accounts.length - 8}.` : "";
+                  send(chatId, `✅ Meta conectado.\n\nAchei ${_r.accounts.length} conta(s) de anúncio:\n${_lista}${_resto}\n\nJá consigo ler resultado, criar campanha e subir anúncio direto por aqui. A conexão vale ${_r.days} dias, e eu te aviso antes de vencer.`, threadId).catch(() => {});
+                } else if (_r.reason === "codigo_expirado" || _r.reason === "estado_divergente" || _r.reason === "sem_pedido") {
+                  const _s = await _meta.startMetaConnect(WORKDIR);
+                  send(chatId, `${_r.msg}\n\n${_meta.instructions(_s.url)}`, threadId).catch(() => {});
+                } else {
+                  send(chatId, _r.msg, threadId).catch(() => {});
+                }
+                continue;
+              }
+              if (_meta.detectMetaConnectIntent(_mtxt)) {
+                const _s = await _meta.startMetaConnect(WORKDIR);
+                send(chatId, _meta.instructions(_s.url), threadId).catch(() => {});
+                continue;
+              }
+              // aviso espontâneo de vencimento: no máximo 1× por dia, e já com o link novo.
+              if (isOwner && _meta.shouldWarnExpiry(WORKDIR)) {
+                _meta.startMetaConnect(WORKDIR)
+                  .then((_s) => send(chatId, `⚠️ Tua conexão com o Meta está perto de vencer.\n\n${_meta.instructions(_s.url)}`, threadId))
+                  .catch(() => {});
+              }
+            } catch (e) { console.error("[meta-connect]", e && e.message); }
+          }
+        }
         const key = `${chatId}:${threadId || "main"}`;       // 1 sessão por chat+tópico
         const cfg = route(chatId, threadId);
         // /atualiza FURA A FILA — funciona MESMO travado: dispara o update separado (que reinicia e mata a trava).

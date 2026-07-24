@@ -1,5 +1,8 @@
 # segredos e estado de runtime — NUNCA versionar
 .env
+.meta-token.json
+.meta-connect.json
+.meta-token-warned
 sessions.json
 sessions.json.bak
 sessions.json.tmp
