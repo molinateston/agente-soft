@@ -35,23 +35,33 @@ chmod 700 "$BRIDGE_DIR/backups" 2>/dev/null || true   # estrutura de backup não
 # --- Aviso ao dono (best-effort) lendo token+owner do .env ---------------
 GREET="$BRIDGE_DIR/.greet"
 env_get(){ grep -E "^$1=" "$BRIDGE_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2- | sed 's/[[:space:]]*#.*$//; s/^"//; s/"$//'; }
-tg(){ local T O; T="$(env_get TELEGRAM_BOT_TOKEN)"; O="$(env_get OWNER_CHAT_ID)"; [ -n "$T" ] && [ -n "$O" ] && \
+RECIBO="$BRIDGE_DIR/.update-pending.json"
+# O recibo guarda em qual conversa (e tópico) o pedido foi feito, pra resposta voltar
+# no mesmo lugar da pergunta em vez de cair sempre na conversa principal.
+recibo_campo(){ sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\{0,1\}\([^,\"}]*\)\"\{0,1\}.*/\1/p" "$RECIBO" 2>/dev/null | head -1; }
+tg(){ local T O TH; T="$(env_get TELEGRAM_BOT_TOKEN)"
+  O="$(recibo_campo chatId)"; [ -n "$O" ] || O="$(env_get OWNER_CHAT_ID)"
+  TH="$(recibo_campo threadId)"; [ "$TH" = "null" ] && TH=""
+  [ -n "$T" ] && [ -n "$O" ] && \
   curl -s --max-time 15 "https://api.telegram.org/bot${T}/sendMessage" \
-  --data-urlencode "chat_id=${O}" --data-urlencode "text=$1" >/dev/null 2>&1 || true; }
+  --data-urlencode "chat_id=${O}" ${TH:+--data-urlencode "message_thread_id=${TH}"} \
+  --data-urlencode "text=$1" >/dev/null 2>&1 || true; }
 
-# Se este update foi disparado por /atualiza, o bridge cria o .greet ANTES. Mas há 5
+# Se este update foi disparado por /atualiza, o bridge grava o RECIBO ANTES. Mas há 5
 # saídas-precoces aqui ANTES do restart (HALT, claude ausente, "já na última", disco,
-# snapshot) — nelas o .greet ficaria órfão (saudação fantasma no próximo boot) E o dono
-# nunca ouviria de volta. O trap fecha os dois furos: avisa o dono (só se foi /atualiza)
-# e limpa o flag. Desarmado logo antes do restart, pra aí o .greet ser consumido pelo
-# ExecStartPost (= saúda "✅ No ar!"). Update AGENDADO não tem .greet → trap fica mudo.
+# snapshot) — nelas o dono nunca ouviria de volta. O trap responde na hora (só se foi
+# /atualiza) e rasga o recibo DEPOIS de falar, pra o vigia não repetir a mesma notícia
+# minutos depois. Se a mensagem não sair, o recibo fica e o vigia cobre. Desarmado logo
+# antes do restart: daí quem saúda é o motor novo ao subir. Update AGENDADO não tem
+# recibo → trap fica mudo.
 on_exit(){
   local rc=$?
-  if [ -f "$GREET" ]; then
-    if [ "$rc" -eq 0 ]; then tg "✅ Já tava na última versão, tudo certo. Segui no ar."
-    else tg "⚠️ Tentei atualizar e não consegui agora — segui no ar na versão atual. Tento de novo no automático."; fi
-    rm -f "$GREET" 2>/dev/null || true
+  if [ -f "$RECIBO" ]; then
+    if [ "$rc" -eq 0 ]; then tg "✅ Conferi: você já estava na última versão, não precisou trocar nada. Segui no ar o tempo todo."
+    else tg "⚠️ Tentei atualizar e não consegui agora — continuo no ar na versão de antes e nada da nossa conversa se perdeu. Tento de novo no automático."; fi
+    rm -f "$RECIBO" 2>/dev/null || true
   fi
+  rm -f "$GREET" 2>/dev/null || true
 }
 trap on_exit EXIT
 
@@ -222,9 +232,10 @@ if [ -f "$SVC" ] && grep -q 'No ar' "$SVC" && ! grep -q '\.greet' "$SVC"; then
 fi
 
 # ---- 4/5 Reinício -----------------------------------------------------
-# NÃO cria .greet aqui de propósito: update AGENDADO = silencioso. (instalação e
-# /atualiza criam o .greet antes; só esses saúdam.) Desarma o trap: daqui o .greet
-# (se houver, foi um /atualiza) deve ser consumido pelo ExecStartPost = saúda "✅ No ar!".
+# NÃO cria recibo aqui de propósito: update AGENDADO = silencioso. (só o /atualiza
+# grava recibo, e só ele é saudado.) Desarma o trap: daqui em diante quem responde é o
+# motor novo ao subir (consome o recibo e saúda), e se ele não subir, o vigia entrega
+# o veredito honesto de fora.
 trap - EXIT
 systemctl --user restart agente
 sleep 4

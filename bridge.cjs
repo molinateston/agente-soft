@@ -184,22 +184,27 @@ try {
 
 const WORKDIR     = process.env.WORK_DIR || __dirname;
 
-// Rede de seguranca do /atualiza. O update roda num servico separado e a saudacao
-// "No ar!" vem do ExecStartPost. Se qualquer elo dessa corrente falhar, o dono
-// ficava esperando pra sempre uma mensagem que nunca vinha. Estes dois despertadores
-// rodam DESTACADOS (sobrevivem ao restart) e garantem um veredito: um aos 25s (nem
-// arrancou) e outro aos 4min (nao fechou). Se o update deu certo, ambos ficam mudos.
-function armarWatchdogUpdate(chatId, threadId) {
-  const script = `${process.env.HOME}/agente-soft/update-watchdog.sh`;
-  for (const [fase, seg] of [["curto", 25], ["longo", 240]]) {
-    try {
-      spawn("systemd-run", [
-        "--user", "--collect", `--on-active=${seg}`,
-        `--unit=updwd-${fase}-${Date.now()}`,
-        "/usr/bin/env", "bash", script, fase, String(chatId), threadId ? String(threadId) : ""
-      ], { detached: true, stdio: "ignore" }).unref();
-    } catch (e) { console.error("[atualiza] watchdog:", e && e.message); }
-  }
+// O antigo despertador do /atualiza (systemd-run) foi aposentado: ele dependia do
+// proprio processo que ia ser morto e falhava calado em servidor sem sessao de
+// usuario ativa. Quem garante o veredito agora e o recibo + o vigia do cron.
+
+// RECIBO do /atualiza. Enquanto este arquivo existir, ALGUEM esta esperando
+// resposta. Quem responde de verdade e o vigia (scripts/update-verdict.sh), que
+// roda no cron FORA do motor: assim a confirmacao nao depende de o update dar
+// certo, nem de o bot estar de pe. Se o motor novo subir e ver o recibo, ele
+// mesmo sauda e apaga — e o vigia fica calado.
+const RECIBO_UPDATE = `${WORKDIR}/.update-pending.json`;
+function gravarReciboUpdate(chatId, threadId) {
+  try {
+    const agora = Date.now();
+    let sig = "";
+    try { sig = require("crypto").createHash("md5").update(fs.readFileSync(`${WORKDIR}/bridge.cjs`)).digest("hex"); } catch {}
+    fs.writeFileSync(RECIBO_UPDATE, JSON.stringify({
+      chatId: String(chatId || OWNER), threadId: threadId || null, pedidoEm: agora,
+      assinaturaAntes: sig, arquitetura: "gratuita",
+      prazoCurto: agora + 90000, prazoLongo: agora + 360000, dir: WORKDIR,
+    }));
+  } catch (e) { console.error("[atualiza] recibo:", e && e.message); }
 }
 
 const BRAIN       = process.env.BRAIN_DIR || `${WORKDIR}/brain`;
@@ -1346,10 +1351,9 @@ function processOne(msg, chatId, threadId, key, cfg, mission) {
     // comando /atualiza — o agente se atualiza sozinho: dispara o agente-update.service (roda
     // num cgroup separado, sobrevive ao restart, valida e reverte sozinho se quebrar). Sem cota.
     if (/^\/atualiza/i.test(text.trim())) {
-      try { fs.writeFileSync(`${WORKDIR}/.greet`, ""); } catch {}   // VOCÊ pediu → saúda "No ar!" quando voltar. Update agendado NÃO cria este flag = silencioso.
+      gravarReciboUpdate(chatId, threadId);   // VOCÊ pediu → alguém está esperando resposta. Update agendado NÃO cria recibo = silencioso.
       try { spawn("systemctl", ["--user", "start", "agente-update.service"], { detached: true, stdio: "ignore" }).unref(); } catch {}
-      armarWatchdogUpdate(chatId, threadId);
-      return send(chatId, `🔄 Atualizando pra última versão do método... o update roda separado e me reinicia sozinho. Já volto com o "✅ No ar!" em até uns minutos. Se der qualquer problema no caminho, eu te aviso aqui mesmo — você não vai ficar no escuro.`, threadId);
+      return send(chatId, `🔄 Atualizando pra última versão do método... o update roda separado e me reinicia sozinho. Volto com o "✅ No ar!" em poucos minutos — e se em 6 minutos eu não tiver voltado, eu mesmo te aviso aqui o que aconteceu. De um jeito ou de outro você vai ter resposta.`, threadId);
     }
     // comando /audio — liga a transcrição de áudio (instala faster-whisper local, SEM root, num cgroup separado)
     if (/^\/(audio|áudio|voz)\b/i.test(text.trim())) {
@@ -1797,10 +1801,9 @@ async function poll() {
         // /atualiza FURA A FILA — funciona MESMO travado: dispara o update separado (que reinicia e mata a trava).
         // Sem isto, /atualiza ficava ENFILEIRADO atrás da sessão presa → o cliente só destravava pela VPS (errado).
         if (/^\/atualiza/i.test((msg.text || msg.caption || "").trim())) {
-          try { fs.writeFileSync(`${WORKDIR}/.greet`, ""); } catch {}
+          gravarReciboUpdate(chatId, threadId);
           try { spawn("systemctl", ["--user", "start", "agente-update.service"], { detached: true, stdio: "ignore" }).unref(); } catch {}
-          armarWatchdogUpdate(chatId, threadId);
-          send(chatId, `🔄 Atualizando pra última versão... o update roda separado e me reinicio sozinho (mato qualquer trava). Já volto com o "✅ No ar!" em até uns minutos. Se der qualquer problema no caminho, eu te aviso aqui mesmo — você não vai ficar no escuro.`, threadId).catch(() => {});
+          send(chatId, `🔄 Atualizando pra última versão... o update roda separado e me reinicio sozinho (mato qualquer trava). Volto com o "✅ No ar!" em poucos minutos — e se em 6 minutos eu não tiver voltado, eu mesmo te aviso aqui o que aconteceu. De um jeito ou de outro você vai ter resposta.`, threadId).catch(() => {});
           continue;
         }
         // /status → saúde do agente SEM sair do Telegram: uptime, ocupado/fila, promessas, últimas
@@ -2015,20 +2018,44 @@ if (require.main === module) {
   setTimeout(sweepMissions, 15000); setInterval(sweepMissions, 21600000);   // FAXINA: apaga missão fechada (done/failed) há +MISSAO_RETAIN_DAYS dias — no boot (após o dreno assentar) + a cada 6h. running fica intacta
   // SELF-CHECK do boot: fala SÓ se algo estiver quebrado (o "no ar" cego anunciava saúde sem checar nada)
   setTimeout(() => { const probs = depsCheck(); if (probs.length) send(OWNER, `⚠️ Subi com pendência(s):\n· ${probs.join("\n· ")}\nManda /status pra acompanhar.`).catch(() => {}); }, 3000);
-  // ROBUSTEZ: instala crons de backup diário (3h AM) + health check (a cada 5min). Idempotente: só adiciona linha que ainda não existe.
+  // SAUDAÇÃO PÓS-UPDATE. O recibo guarda quem pediu (conversa e tópico), então a
+  // resposta volta no mesmo lugar da pergunta. Consumir aqui é o que faz o vigia
+  // ficar calado — sem isso o dono ouviria a mesma boa notícia duas vezes. O flag
+  // antigo sai junto, pelo mesmo motivo (quem saúda por ele é o ExecStartPost).
+  setTimeout(() => {
+    const GREET = `${WORKDIR}/.greet`;
+    let alvo = null, th = null, veioDeUpdate = false;
+    try {
+      const rc = JSON.parse(fs.readFileSync(RECIBO_UPDATE, "utf8"));
+      alvo = rc.chatId || OWNER; th = rc.threadId || null; veioDeUpdate = true;
+      fs.unlinkSync(RECIBO_UPDATE);
+      try { fs.unlinkSync(GREET); } catch {}
+    } catch {}
+    if (veioDeUpdate && alvo) send(alvo, `✅ No ar! Já estou na última versão. Nada da nossa conversa se perdeu.`, th).catch(() => {});
+  }, 4000);
+  // ROBUSTEZ: instala crons de backup diário (3h AM) + health check (a cada 5min) +
+  // o vigia do /atualiza (de minuto em minuto: a pessoa está esperando resposta agora,
+  // não daqui a 5). Idempotente: só adiciona linha que ainda não existe. Os scripts
+  // moram na cópia do repositório, que nem sempre é a pasta do motor — procura nos
+  // dois, senão vira linha de cron apontando pro vazio.
   setTimeout(() => {
     try {
-      const bkp = `${__dirname}/scripts/backup-diario.sh`;
-      const hc  = `${__dirname}/scripts/health-check.sh`;
-      if (!fs.existsSync(bkp) || !fs.existsSync(hc)) return;
+      const acha = (nome) => [`${__dirname}/scripts/${nome}`, `${process.env.HOME}/agente-soft/scripts/${nome}`].find(p => { try { return fs.existsSync(p); } catch { return false; } });
+      const rotinas = [
+        [acha("backup-diario.sh"),  "0 3 * * *"],
+        [acha("health-check.sh"),   "*/5 * * * *"],
+        [acha("update-verdict.sh"), "* * * * *"],
+      ].filter(([p]) => !!p);
+      if (!rotinas.length) return;
       const cur = (spawnSync("crontab", ["-l"], { encoding: "utf8", timeout: 3000 }).stdout || "");
       const linhas = cur.split("\n").filter(Boolean);
       let mudou = false;
-      if (!linhas.some(l => l.includes(bkp)))  { linhas.push(`0 3 * * * ${bkp} >/dev/null 2>&1`); mudou = true; }
-      if (!linhas.some(l => l.includes(hc)))   { linhas.push(`*/5 * * * * ${hc} >/dev/null 2>&1`); mudou = true; }
+      for (const [script, quando] of rotinas) {
+        if (!linhas.some(l => l.includes(script))) { linhas.push(`${quando} ${script} >/dev/null 2>&1`); mudou = true; }
+      }
       if (mudou) {
         const r = spawnSync("crontab", ["-"], { input: linhas.join("\n") + "\n", encoding: "utf8", timeout: 3000 });
-        if (r.status === 0) console.log("[ponte] crons de robustez instalados (backup 3h · health 5min)");
+        if (r.status === 0) console.log("[ponte] crons de robustez instalados (backup · health · vigia do /atualiza)");
         else console.error("[ponte] falha ao instalar crons:", (r.stderr || "").slice(0, 200));
       }
     } catch (e) { console.error("[ponte] cron install:", e && e.message || e); }
