@@ -225,7 +225,9 @@ const TTS_PROVIDER = (process.env.TTS_PROVIDER || "edgetts").toLowerCase(); // "
 const EDGE_TTS_VOICE = process.env.EDGE_TTS_VOICE || ((process.env.AGENT_GENDER || "male").toLowerCase() === "female" ? "pt-BR-FranciscaNeural" : "pt-BR-AntonioNeural");
 const EDGE_TTS_WORKER = process.env.EDGE_TTS_WORKER || `${__dirname}/workers/edge-tts.js`;
 const EDGE_TTS_PY = process.env.EDGE_TTS_PY || `${os.homedir()}/.openclaw/edgetts-venv/bin/python3`;
-const EDGE_TTS_ENABLED = (() => { try { return fs.existsSync(EDGE_TTS_WORKER) && fs.existsSync(EDGE_TTS_PY); } catch { return false; } })();
+// Basta o worker existir: ele mesmo acha o python e o script, e se nao achar a voz
+// cai pro proximo da fila. Exigir o venv aqui matava a voz gratis em maquina nova.
+const EDGE_TTS_ENABLED = (() => { try { return fs.existsSync(EDGE_TTS_WORKER); } catch { return false; } })();
 const KOKORO_WORKER = process.env.KOKORO_WORKER || `${os.homedir()}/.openclaw/workers/kokoro-tts.cjs`;
 const KOKORO_MODEL_PATH = process.env.KOKORO_MODEL || `${os.homedir()}/.openclaw/voices/kokoro/kokoro-v1.0.onnx`;
 const KOKORO_ENABLED = (() => { try { return fs.existsSync(KOKORO_WORKER) && fs.existsSync(KOKORO_MODEL_PATH); } catch { return false; } })();
@@ -877,7 +879,9 @@ async function speakReply(chatId, text, threadId) {
     // VOZ FALHOU ≠ SILÊNCIO: texto já foi entregue, mas dono esperava áudio — avisa 1x/h (sem spam)
     if (!speakReply._warned || Date.now() - speakReply._warned > 3600000) {
       speakReply._warned = Date.now();
-      send(chatId, "_(a voz falhou agora — fica o texto. Piper local não instalado? Sem OPENAI_API_KEY e ELEVENLABS_API_KEY no .env?)_", threadId).catch(() => {});
+      // Dono nao tem que saber de chave nem de instalacao, e NUNCA pedimos servico pago:
+      // a voz gratis e a padrao. O detalhe tecnico fica no log, pra quem cuida do motor.
+      send(chatId, "_(não consegui falar agora, então fica o texto. Se continuar assim, me pede pra conferir a minha voz que eu vejo isso.)_", threadId).catch(() => {});
     }
     return;
   }

@@ -6,10 +6,20 @@
 import { spawn } from "node:child_process";
 import { existsSync, statSync } from "node:fs";
 import { homedir } from "node:os";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const HOME = homedir();
-const EDGE_PY  = process.env.EDGE_TTS_PY     || `${HOME}/.openclaw/edgetts-venv/bin/python3`;
-const EDGE_SCR = process.env.EDGE_TTS_SCRIPT || `${HOME}/.openclaw/workers/edge-tts.py`;
+const AQUI = dirname(fileURLToPath(import.meta.url));
+// O .py mora ao lado deste arquivo no pacote que o cliente recebe. O caminho em
+// ~/.openclaw so vale nas maquinas antigas, entao fica como segunda tentativa.
+const pick = (...cands) => cands.find((c) => c && existsSync(c));
+const EDGE_SCR = process.env.EDGE_TTS_SCRIPT
+  || pick(`${AQUI}/edge-tts.py`, `${HOME}/.openclaw/workers/edge-tts.py`)
+  || `${AQUI}/edge-tts.py`;
+const EDGE_PY = process.env.EDGE_TTS_PY
+  || pick(`${HOME}/.openclaw/edgetts-venv/bin/python3`, "/usr/bin/python3")
+  || "python3";
 
 function parseArgs() {
   const a = process.argv.slice(2), o = {};
