@@ -1449,7 +1449,47 @@ function drainAll() {
 const _isMedia = (m) => !!(m.voice || m.audio || m.photo || m.document || m.video || m.video_note);
 const _isCmd = (m) => /^\/[a-z]/i.test(String(m.text || "").trim());   // comando (barra no início) NUNCA é coalescido — senão fica soterrado no meio de um lote e não dispara
 // enfileira (respeitando QMAX/teto global) OU processa já. Compartilhado por flushPending e pelo bypass de comando.
+// ---- PORTÃO DA CONEXÃO DO META (caminho canônico: MCP oficial da Meta) ----
+// Roda ANTES do modelo, em TODO pedido resolvido — inclusive o que chegou por ÁUDIO.
+// O gatilho lá de cima no loop só enxerga texto DIGITADO (msg.text/caption); áudio só vira
+// texto depois da transcrição, então pedido falado escapava, caía no modelo, e o modelo
+// inventava intermediário de terceiro. Aqui é o funil único: texto, áudio e lote passam.
+function metaConnectGate(chatId, threadId, txt) {
+  const t = String(txt || "").trim();
+  if (!t) return false;
+  let _meta;
+  try { _meta = require("./lib/meta-connect.js"); } catch { return false; }
+  try {
+    if (_meta.isMetaCallback(t)) {
+      (async () => {
+        await send(chatId, "Recebi. Fechando a conexão com o Meta…", threadId).catch(() => {});
+        const r = await _meta.finishMetaConnect(WORKDIR, t);
+        if (r.ok) {
+          const lista = r.accounts.slice(0, 8).map((a) => `· ${a.name}`).join("\n");
+          const resto = r.accounts.length > 8 ? `\n…e mais ${r.accounts.length - 8}.` : "";
+          await send(chatId, `✅ Meta conectado.\n\nAchei ${r.accounts.length} conta(s) de anúncio:\n${lista}${resto}\n\nJá consigo ler resultado, criar campanha e subir anúncio direto por aqui. A conexão vale ${r.days} dias, e eu te aviso antes de vencer.`, threadId);
+        } else if (r.reason === "codigo_expirado" || r.reason === "estado_divergente" || r.reason === "sem_pedido") {
+          const s = await _meta.startMetaConnect(WORKDIR);
+          await send(chatId, `${r.msg}\n\n${_meta.instructions(s.url)}`, threadId);
+        } else {
+          await send(chatId, r.msg, threadId);
+        }
+      })().catch((e) => console.error("[meta-connect]", e && e.message));
+      return true;
+    }
+    if (_meta.detectMetaConnectIntent(t)) {
+      (async () => {
+        const s = await _meta.startMetaConnect(WORKDIR);
+        await send(chatId, _meta.instructions(s.url), threadId);
+      })().catch((e) => console.error("[meta-connect]", e && e.message));
+      return true;
+    }
+  } catch (e) { console.error("[meta-connect]", e && e.message); }
+  return false;
+}
+
 function dispatchResolved(dispatchMsg, chatId, threadId, key, cfg) {
+  if (metaConnectGate(chatId, threadId, String((dispatchMsg && dispatchMsg.text) || ""))) return;
   if (busy[key] || running() >= MAX_CONCURRENT) {
     const q = (queue[key] = queue[key] || []);
     if (q.length < QMAX) { q.push({ msg: dispatchMsg, chatId, threadId, cfg }); console.log(`[ponte] fila: +1 em ${key} (${q.length} aguardando)`); }
