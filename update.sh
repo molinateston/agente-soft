@@ -132,6 +132,10 @@ fi
 # SILÊNCIO, sem erro e sem log. Sincronizar aqui é o que fecha esse buraco.
 PASTAS="lib workers"
 PASTAS_CHANGED=0
+# O onboarding chegando pela PRIMEIRA vez numa instalação que já roda faria o agente se
+# apresentar como recém-instalado, do nada, pra um dono que já usa ele há semanas.
+ONB_NOVO=0
+[ -f "$BRIDGE_DIR/lib/onboarding.js" ] || ONB_NOVO=1
 for d in $PASTAS; do
   [ -d "$REPO_DIR/$d" ] || continue
   if ! diff -rq "$REPO_DIR/$d" "$BRIDGE_DIR/$d" >/dev/null 2>&1; then PASTAS_CHANGED=1; break; fi
@@ -208,6 +212,11 @@ if [ "$PASTAS_CHANGED" -eq 1 ]; then
     if cp -a "$REPO_DIR/$d"/. "$BRIDGE_DIR/$d"/ 2>>"$LOG"; then say "→ pasta sincronizada: $d"
     else say "⚠️ falha ao sincronizar $d — mantida a anterior."; fi
   done
+fi
+
+if [ "$ONB_NOVO" -eq 1 ] && [ -f "$BRIDGE_DIR/lib/onboarding.js" ] && [ ! -f "$BRIDGE_DIR/.onboarding-state.json" ]; then
+  date -Iseconds > "$BRIDGE_DIR/.onboarding-done" 2>/dev/null || true
+  say "→ dono já conhecido: conversa de boas-vindas marcada como feita"
 fi
 
 # ---- Sincroniza os UNITS GENÉRICOS do repo pra frota já instalada -----

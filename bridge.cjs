@@ -1190,8 +1190,14 @@ function ask(key, text, cfg, chatId, threadId, mission) {
         let _sp = sysPrompt;
         if (Buffer.byteLength(_sp, "utf8") > SYS_MAX) {
           const _antes = Buffer.byteLength(_sp, "utf8");
-          _sp = Buffer.from(_sp, "utf8").subarray(0, SYS_MAX).toString("utf8").replace(/\uFFFD+$/, "")
-              + "\n\n[memória cortada aqui por tamanho — o resto está no disco (brain/MEMORIA-VIVA.md); leia se precisar]";
+          // Corta pelo MEIO, nunca pelo fim: a cabeça carrega doutrina/persona e a cauda carrega
+          // o que é mais recente (memória viva, assuntos vivos, resumo da conversa). Cortar o fim
+          // jogava fora justamente o material fresco e deixava o agente vivendo no passado.
+          const _b = Buffer.from(_sp, "utf8");
+          const _cabeca = Math.floor(SYS_MAX * 0.6), _cauda = SYS_MAX - _cabeca;
+          _sp = _b.subarray(0, _cabeca).toString("utf8").replace(/\uFFFD+$/, "")
+              + "\n\n[um trecho do meio foi cortado por tamanho — está inteiro no disco, em brain/MEMORIA-VIVA.md]\n\n"
+              + _b.subarray(_b.length - _cauda).toString("utf8").replace(/^\uFFFD+/, "");
           console.log(`[ponte] system prompt de ${_antes} bytes passou do teto de ${SYS_MAX} — cortado (evita E2BIG no spawn)`);
         }
         args.push("--append-system-prompt", _sp);
