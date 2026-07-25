@@ -604,3 +604,21 @@ Depois de resolver, o caminho novo entra NESTE documento. E assim
 que a lista cresce, nunca por improviso de um agente so.
 
 <!-- CAMINHOS-CANONICOS:FIM -->
+
+<!-- PADRAO-DE-PASTAS:INICIO (gerado por scripts/sync-padrao-pastas.sh, nao edite aqui) -->
+
+📁 **PADRAO DE PASTAS (regra de fabrica — todo trabalho organizado por sala).** Toda entrega de trabalho mora em `~/lean-bridge/trabalho/<sala>/<AAAA-MM>/<AAAA-MM-DD-slug>/`, com os arquivos numerados na ordem em que nascem (`01-brief.md`, `02-copy.md`, `03-arte/`). A pasta da sala tem o MESMO nome da sala do Telegram do dono, minusculo e sem acento. A lista de salas muda de dono pra dono (cada um tem as suas: conteudo, vendas, financeiro, o que for) — o PRINCIPIO e sempre o mesmo: 1 sala do Telegram = 1 pasta, nunca liste um conjunto fixo de salas como se fosse universal. Doc completo: `~/lean-bridge/trabalho/COMO-FUNCIONA.md`.
+
+**Entregou peca: grava na pasta certa E escreve UMA linha no `INDEX.md` da sala ANTES de responder.** Formato da linha: `AAAA-MM-DD | o que e | status | pasta`, mais nova em cima, e a coluna `pasta` e sempre o caminho a partir da PROPRIA sala, sem repetir o nome da sala e sem barra no final (`2026-07/2026-07-25-slug`, nunca `<sala>/2026-07/2026-07-25-slug/`). **Entrega que nao entrou no INDEX nao existe.**
+
+**Quando o dono pedir material ("puxa os roteiros", "cade aquele carrossel", "vai la na nossa pasta"): LEIA o `INDEX.md` da sala primeiro.** Nunca chute de memoria, nunca traga peca de outra sala, nunca traga coisa velha sem dizer a data.
+
+**Melhorar peca que ja existe NUNCA sobrescreve o arquivo antigo.** Acha a entrega pelo INDEX e cria um arquivo NOVO numerado dentro da MESMA pasta (`02-copy-revisada.md` depois de `01-copy.md`): a versao anterior fica intacta, nunca em `-v2`/pasta nova, nunca por cima do original.
+
+**Pedido "so pra pensar" (ideia solta, brainstorm, "so pra eu ver", sem compromisso de usar) fica SO na resposta do chat: nao vira pasta nem linha de INDEX.** So grava quando o pedido e de peca pronta ou pra usar de verdade.
+
+**Sala nova voce NAO cria sozinho.** A pasta espelha a sala do Telegram, um pra um: se o agente cria pasta por conta propria, em pouco tempo tem mais pasta que sala e o espelho quebra. A regua: **sala e fluxo recorrente, nao peca avulsa** (1 roteiro = uma peca; toda semana = uma sala). Pedido que nao tem sala: grava na sala mais proxima, com o nome da pasta dizendo o que a peca e, e AVISA em UMA linha ("nao existe sala pra isso, guardei em X; se virar rotina crio a sala e mudo tudo pra la"). Nunca grava calado. Criar sala no Telegram e ato do dono, ou seu com o OK dele.
+
+Rascunho vive em `/tmp` e morre la. Se a sala tiver um nivel a mais (ex: uma sala de clientes, com uma subpasta por cliente), o padrao e `<sala>/<nome-do-cliente>/<AAAA-MM>/`. Coisa encerrada vai pra `trabalho/_arquivo/AAAA-MM-DD-motivo/`, com `mv`, nunca apagada.
+
+<!-- PADRAO-DE-PASTAS:FIM -->
