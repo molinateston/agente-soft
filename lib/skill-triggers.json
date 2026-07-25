@@ -1,0 +1,219 @@
+{
+  "_comment": "Mapa skill -> palavras-chave (case/accent-insensitive no bridge). Editar aqui vale na proxima mensagem (bridge le com cache por mtime). | 25/07: as 11 skills fundidas em 23/07 (7 de conteudo + designer -> soft-conteudo; plano/script/slides -> soft-webinario) tiveram as palavras-chave herdadas pela mae. Gatilho so pode apontar pra skill com SKILL.md vivo: valide com scripts/check-skills.sh.",
+  "soft-conteudo": [
+    "carrossel",
+    "carrosseis",
+    "post de feed",
+    "sequencia de slides",
+    "peca de feed",
+    "reel",
+    "reels",
+    "video curto",
+    "roteiro de reels",
+    "gancho de video",
+    "stories",
+    "sequencia de story",
+    "story de vendas",
+    "story pra vender",
+    "headline",
+    "gancho",
+    "chamada de abertura",
+    "titulo de anuncio",
+    "primeiros 3 segundos",
+    "abertura do post",
+    "adaptar peca",
+    "multiplataforma",
+    "reaproveitar conteudo",
+    "adaptar de instagram",
+    "planner de conteudo",
+    "matriz de pauta",
+    "calendario editorial",
+    "planejar mes de conteudo",
+    "impulsionar post",
+    "boost organico",
+    "subir organico com pago",
+    "impulsionar reel",
+    "planejar conteudo",
+    "grade de conteudo",
+    "conteudo do zero",
+    "sistema de conteudo",
+    "arte",
+    "capa da peca",
+    "identidade visual",
+    "layout do post",
+    "design da peca"
+  ],
+  "soft-funil-carta": [
+    "carta de vendas",
+    "sales letter",
+    "vsl",
+    "video de vendas"
+  ],
+  "soft-funil-landing": [
+    "landing page",
+    "pagina de captura",
+    "pagina de vendas",
+    "opt-in",
+    "squeeze"
+  ],
+  "soft-funil-isca": [
+    "isca",
+    "lead magnet",
+    "material gratuito",
+    "iscas de captura"
+  ],
+  "soft-funil-miniwebinar": [
+    "mini webinar",
+    "mini-webinario",
+    "video de filtro",
+    "carta com camera"
+  ],
+  "soft-webinario": [
+    "webinar",
+    "webinario",
+    "plano do webinar",
+    "estrutura do webinar",
+    "beats do webinar",
+    "script do webinar",
+    "roteiro do webinar",
+    "slides do webinar",
+    "deck do webinar"
+  ],
+  "soft-webinar-chat": [
+    "chat do webinar",
+    "chat simulado"
+  ],
+  "soft-webinar-mensagens": [
+    "sequencia de whatsapp do webinar",
+    "e-mail do webinar",
+    "lembrete de webinar"
+  ],
+  "soft-webinar-paginas": [
+    "pagina de cadastro",
+    "pagina de obrigado",
+    "checkout do webinar"
+  ],
+  "soft-launch": [
+    "lancamento",
+    "sala secreta",
+    "evento pago",
+    "carrinho abre",
+    "carrinho fecha"
+  ],
+  "soft-vendas-sdr": [
+    "sdr",
+    "prospeccao",
+    "primeiro contato",
+    "abordagem fria",
+    "qualificacao bant"
+  ],
+  "soft-vendas-closer": [
+    "fechar venda",
+    "closer",
+    "objecao",
+    "conta de padaria",
+    "script de fechamento",
+    "script de venda"
+  ],
+  "soft-vendas-estrategias": [
+    "jogada de campanha",
+    "levantada de mao",
+    "oferta direta",
+    "storytelling de venda",
+    "pix de compromisso"
+  ],
+  "soft-plano-posicionamento": [
+    "posicionamento",
+    "big idea",
+    "grande domino",
+    "reposicionar",
+    "mecanismo do problema"
+  ],
+  "soft-plano-negocio": [
+    "plano de negocio",
+    "projecao de faturamento",
+    "meta e conta",
+    "roadmap 90 dias"
+  ],
+  "soft-plano-ofertas": [
+    "empacotar oferta",
+    "stack de oferta",
+    "ancoragem",
+    "garantia",
+    "bonus da oferta"
+  ],
+  "soft-voz-leo-molina": [
+    "voz do leo",
+    "tom soft",
+    "banco de argumento"
+  ],
+  "soft-financeiro": [
+    "fluxo de caixa",
+    "dre",
+    "margem",
+    "precificacao",
+    "markup",
+    "ponto de equilibrio"
+  ],
+  "soft-proposta-comercial": [
+    "proposta comercial",
+    "proposta pra cliente",
+    "proposta de consultoria"
+  ],
+  "soft-contratos-consultoria": [
+    "contrato de mentoria",
+    "contrato de consultoria",
+    "contrato de prestacao"
+  ],
+  "soft-editor-video": [
+    "editar video",
+    "cortar reel",
+    "legenda karaoke",
+    "b-roll"
+  ],
+  "soft-trafego-meta": [
+    "subir campanha",
+    "meta ads",
+    "criar campanha",
+    "adset",
+    "criativo pra ads"
+  ],
+  "soft-apostila": [
+    "apostila",
+    "transformar aula em material",
+    "handout"
+  ],
+  "soft-organizacao-vps": [
+    "organizar vps",
+    "arquivar lote",
+    "quarentena"
+  ],
+  "soft-treino-dieta": [
+    "treino",
+    "dieta",
+    "hipertrofia",
+    "emagrecimento",
+    "suplementacao"
+  ],
+  "soft-gestao-agil": [
+    "gestao agil",
+    "okr",
+    "kanban",
+    "scrum",
+    "rituais de time"
+  ],
+  "soft-sistema": [
+    "sistema pra cliente",
+    "app pra cliente",
+    "dashboard",
+    "automacao no ghl",
+    "integracao whatsapp"
+  ],
+  "soft-critico-copy": [
+    "crivo de copy",
+    "critica a copy",
+    "revisa a copy",
+    "avalia a copy",
+    "copy ta boa"
+  ]
+}
