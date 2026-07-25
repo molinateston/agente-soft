@@ -967,7 +967,21 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       // compactação), pra o agente NUNCA achar que "começou agora". Compactar economiza espaço; a
       // conversa segue sendo UMA só. 'cont' = handoff de sessão nova recém-semeada OU resumo persistido.
       if (cont) sysPrompt += `\n\n# A CONVERSA CONTINUA — NÃO recomece do zero\nVocê JÁ vinha conversando com o dono; este trecho é CONTINUAÇÃO da mesma conversa (ela foi compactada pra caber, só isso). Resumo do que já falaram antes deste ponto:\n${cont}\n\nRegra: trate como continuação natural. NUNCA diga "a conversa começou agora", "não tenho histórico desta sessão" nem peça pra ele repetir o que já foi dito. Se perguntarem o que falaram antes, responda a partir DESTE resumo.`;
-      if (sysPrompt.trim()) args.push("--append-system-prompt", sysPrompt);
+      // LIMITE DO SISTEMA (25/07): cada argumento de um processo cabe em ~128KB no Linux
+      // (MAX_ARG_STRLEN). Identidade + memória viva + assuntos + resumo da conversa vão TODOS
+      // dentro de --append-system-prompt. Se estourarem, o spawn morre com E2BIG e o turno
+      // INTEIRO se perde sem o dono entender por quê. Cortamos com folga e denunciamos no log.
+      const SYS_MAX = 96 * 1024;
+      if (sysPrompt.trim()) {
+        let _sp = sysPrompt;
+        if (Buffer.byteLength(_sp, "utf8") > SYS_MAX) {
+          const _antes = Buffer.byteLength(_sp, "utf8");
+          _sp = Buffer.from(_sp, "utf8").subarray(0, SYS_MAX).toString("utf8").replace(/\uFFFD+$/, "")
+              + "\n\n[memória cortada aqui por tamanho — o resto está no disco (brain/MEMORIA-VIVA.md); leia se precisar]";
+          console.log(`[ponte] system prompt de ${_antes} bytes passou do teto de ${SYS_MAX} — cortado (evita E2BIG no spawn)`);
+        }
+        args.push("--append-system-prompt", _sp);
+      }
       // detached: process group próprio → killTree(-pgid) não deixa subagente órfão queimando cota
       // missão injeta MISSAO_PROGRESS no filho → o agente escreve marcos nesse arquivo e a ponte posta como report
       let _env = childEnv();

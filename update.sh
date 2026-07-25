@@ -124,6 +124,19 @@ if [ -f "$REPO_DIR/bridge.cjs" ] && ! cmp -s "$REPO_DIR/bridge.cjs" "$BRIDGE_DIR
   BRIDGE_CHANGED=1
 fi
 
+# ---- Pastas de apoio (lib/, workers/) --------------------------------
+# Até 25/07 o update copiava SÓ o bridge.cjs. Mas o motor passou a EXIGIR
+# lib/onboarding.js (as salas nascem), lib/meta-connect.js (conta de anúncios) e
+# workers/ (voz). Quem já estava instalado recebia o motor novo apontando pra uma
+# pasta que não existe: o require falha dentro de try/catch e o recurso some EM
+# SILÊNCIO, sem erro e sem log. Sincronizar aqui é o que fecha esse buraco.
+PASTAS="lib workers"
+PASTAS_CHANGED=0
+for d in $PASTAS; do
+  [ -d "$REPO_DIR/$d" ] || continue
+  if ! diff -rq "$REPO_DIR/$d" "$BRIDGE_DIR/$d" >/dev/null 2>&1; then PASTAS_CHANGED=1; break; fi
+done
+
 # Units genéricos mudaram? (pra uma mudança SÓ de .service/.timer também propagar
 # pra frota, e não ser pulada pelo "nada novo" abaixo.)
 UNITS_CHANGED=0
@@ -133,11 +146,11 @@ for u in agente-update.service agente-update.timer agente-health.service agente-
 done
 
 # ---- Nada novo? Sai barato (sem chamar o claude, sem reiniciar) ------
-if [ "$OLD_SHA" = "$NEW_SHA" ] && [ "$BRIDGE_CHANGED" -eq 0 ] && [ "$UNITS_CHANGED" -eq 0 ]; then
+if [ "$OLD_SHA" = "$NEW_SHA" ] && [ "$BRIDGE_CHANGED" -eq 0 ] && [ "$UNITS_CHANGED" -eq 0 ] && [ "$PASTAS_CHANGED" -eq 0 ]; then
   [ "$PULL_FAIL" -eq 1 ] && { say "→ Sem mudança aplicável, mas um pull falhou (veja acima)."; exit 1; }
   say "→ Já está na última versão (nada a fazer)."; exit 0
 fi
-say "→ Mudança detectada (skills $OLD_SHA → $NEW_SHA; bridge=$BRIDGE_CHANGED; units=$UNITS_CHANGED). Aplicando..."
+say "→ Mudança detectada (skills $OLD_SHA → $NEW_SHA; bridge=$BRIDGE_CHANGED; units=$UNITS_CHANGED; pastas=$PASTAS_CHANGED). Aplicando..."
 
 # ---- 2/5 (SEM gate de login) ----------------------------------------
 # O update NÃO bloqueia por login. Aplicar (git + cp + restart) é seguro mesmo
@@ -162,6 +175,9 @@ for f in .env topics.json sessions.json bridge.cjs; do
   [ -f "$BRIDGE_DIR/$f" ] && { cp -p "$BRIDGE_DIR/$f" "$BACKUP_DIR/$f" || snap_fail "$f"; }
 done
 [ -d "$BRIDGE_DIR/persona" ] && { cp -rp "$BRIDGE_DIR/persona" "$BACKUP_DIR/persona" || snap_fail "persona"; }
+for d in $PASTAS; do
+  [ -d "$BRIDGE_DIR/$d" ] && { cp -rp "$BRIDGE_DIR/$d" "$BACKUP_DIR/$d" || snap_fail "$d"; }
+done
 cp -p "$HOME/.config/systemd/user/agente.service" "$BACKUP_DIR/agente.service" 2>/dev/null || true
 # Units genéricos no snapshot (pro rollback poder restaurá-los; ver sync abaixo).
 for u in agente-update.service agente-update.timer agente-health.service agente-health.timer; do
@@ -181,6 +197,17 @@ if [ "$BRIDGE_CHANGED" -eq 1 ]; then
     # sai no fim do script, antes do restart — pra ele saber que atualizei mas
     # o motor novo estava quebrado (segue no antigo, sem impacto imediato).
   fi
+fi
+
+# Aplica as pastas de apoio ANTES do restart — o motor novo depende delas pra subir
+# com onboarding, conexão de anúncios e voz funcionando.
+if [ "$PASTAS_CHANGED" -eq 1 ]; then
+  for d in $PASTAS; do
+    [ -d "$REPO_DIR/$d" ] || continue
+    mkdir -p "$BRIDGE_DIR/$d"
+    if cp -a "$REPO_DIR/$d"/. "$BRIDGE_DIR/$d"/ 2>>"$LOG"; then say "→ pasta sincronizada: $d"
+    else say "⚠️ falha ao sincronizar $d — mantida a anterior."; fi
+  done
 fi
 
 # ---- Sincroniza os UNITS GENÉRICOS do repo pra frota já instalada -----

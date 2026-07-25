@@ -74,6 +74,12 @@ cd ~
 
 mkdir -p ~/lean-bridge/persona ~/lean-bridge/brain
 cp ~/agente-soft/bridge.cjs ~/lean-bridge/bridge.cjs
+# lib/ e workers/ NÃO são opcionais: o motor exige lib/onboarding.js (as salas nascem),
+# lib/meta-connect.js (conexão da conta de anúncios) e workers/ (voz). Sem copiar, o
+# require falha dentro de try/catch e o recurso some EM SILÊNCIO. (defeito real, 25/07)
+for d in lib workers; do
+  [ -d ~/agente-soft/$d ] && { mkdir -p ~/lean-bridge/$d; cp -a ~/agente-soft/$d/. ~/lean-bridge/$d/; }
+done
 node --check ~/lean-bridge/bridge.cjs
 
 # Semeia o índice de memória (brain/MAPA.md) pro PROTOCOLO DE RECALL ter o que ler desde
