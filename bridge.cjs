@@ -1556,6 +1556,9 @@ process.on("SIGINT",  () => shutdown("SIGINT"));
 // `mission` opcional: quando presente, roda no MODO MISSÃO (budget/tempo soltos, reports de marco, retomada durável).
 function processOne(msg, chatId, threadId, key, cfg, mission) {
   busy[key] = true;
+  // RECIBO do turno interativo: se o motor cair/reiniciar agora, o boot reprocessa isto sozinho e o
+  // dono não precisa redigitar. Missão não entra: ela já tem registro durável próprio.
+  if (!mission) saveInflight(key, { key, chatId, threadId: threadId || null, msg, ts: Date.now(), tries: msg._inflightTries || 0 });
   // HEARTBEAT DA MISSÃO no nível do processOne: bate a VIDA INTEIRA da missão (incl. entre runOnce, durante
   // compactação), não só dentro de um runOnce ativo. É o pulso durável enquanto a missão está SENDO processada.
   const _missHb = mission ? setInterval(() => { try { const m = loadMission(mission.id); if (m && m.status === "running") { m.lastHeartbeat = Date.now(); saveMission(m); } } catch {} }, 12000) : null;
@@ -1652,7 +1655,7 @@ function processOne(msg, chatId, threadId, key, cfg, mission) {
       }
     });   // NÃO apaga img/doc aqui (era o bug: 1ª foto sumia antes da 2ª msg): ficam no TMP_DIR pra referência cross-mensagem; sweepTmp() limpa por idade.
   }).catch((e) => console.error("[ponte] erro:", e.message))
-    .finally(() => { clearInterval(_typing); if (_missHb) clearInterval(_missHb); busy[key] = false; drainAll(); });
+    .finally(() => { clearInterval(_typing); if (_missHb) clearInterval(_missHb); if (!mission) clearInflight(key); busy[key] = false; drainAll(); });
 }
 
 // drena filas respeitando o teto GLOBAL: enquanto houver slot, pega o próximo de algum tópico livre
@@ -1783,6 +1786,44 @@ async function flushPending(key) {
 const PROMISES_DIR = `${WORKDIR}/promises`;
 try { fs.mkdirSync(PROMISES_DIR, { recursive: true }); } catch {}
 
+// ---------- REDE DA CONVERSA: turno interrompido volta sozinho ----------
+// Missão tinha rede (registro durável + retomada); conversa normal NÃO tinha: turno morto num restart/crash
+// sumia e o dono tinha que redigitar. Agora todo turno interativo grava um RECIBO em disco antes de começar
+// e só apaga quando a resposta sai. O que sobreviver ao boot é reprocessado sozinho. Teto de tentativas pra
+// nunca virar loop: esgotou, o dono é avisado com honestidade em vez de silêncio.
+const INFLIGHT_DIR = `${WORKDIR}/inflight`;
+const INFLIGHT_MAX_TRIES = 2;
+const INFLIGHT_MAX_AGE_MS = 60 * 60 * 1000;   // recibo mais velho que 1h não vale mais a pena reprocessar
+try { fs.mkdirSync(INFLIGHT_DIR, { recursive: true }); } catch {}
+const inflightPath = (key) => `${INFLIGHT_DIR}/${String(key).replace(/[^a-zA-Z0-9_.-]/g, "_")}.json`;
+function saveInflight(key, rec) { try { fs.writeFileSync(inflightPath(key), JSON.stringify(rec)); } catch (e) { console.error("[inflight] gravar:", e.message); } }
+function clearInflight(key) { try { fs.unlinkSync(inflightPath(key)); } catch {} }
+// Boot: reprocessa o que ficou pendurado. Roda depois do dreno assentar (ver chamada no boot).
+function resumeInflight() {
+  let files; try { files = fs.readdirSync(INFLIGHT_DIR).filter(f => f.endsWith(".json")); } catch { return; }
+  for (const f of files) {
+    const p = `${INFLIGHT_DIR}/${f}`;
+    let rec; try { rec = JSON.parse(fs.readFileSync(p, "utf8")); } catch { try { fs.unlinkSync(p); } catch {} continue; }
+    if (!rec || !rec.key || !rec.msg || !rec.chatId) { try { fs.unlinkSync(p); } catch {} continue; }
+    if (busy[rec.key] || (queue[rec.key] && queue[rec.key].length)) continue;   // já rodando de novo → não duplica
+    const velho = Date.now() - (rec.ts || 0) > INFLIGHT_MAX_AGE_MS;
+    if (velho || (rec.tries || 0) >= INFLIGHT_MAX_TRIES) {
+      try { fs.unlinkSync(p); } catch {}
+      const trecho = String(rec.msg.text || "").slice(0, 140);
+      send(rec.chatId, `⚠️ Teu recado${trecho ? ` («${trecho}${(rec.msg.text || "").length > 140 ? "…" : ""}»)` : ""} morreu num reinício e eu não consegui reprocessar. Me manda de novo, por favor.`, rec.threadId).catch(() => {});
+      continue;
+    }
+    rec.tries = (rec.tries || 0) + 1;
+    saveInflight(rec.key, rec);
+    const cfg = route(rec.chatId, rec.threadId);
+    if (!cfg) { try { fs.unlinkSync(p); } catch {} continue; }
+    console.log(`[inflight] retomando turno perdido em ${rec.key} (tentativa ${rec.tries})`);
+    const msg = { ...rec.msg, _inflightTries: rec.tries, text: `${rec.msg.text || ""}\n\n[Este recado foi interrompido por um reinício do motor e está sendo reprocessado automaticamente — o dono NÃO redigitou nada. Responda normalmente, sem pedir desculpa nem comentar o reinício.]` };
+    if (busy[rec.key] || running() >= MAX_CONCURRENT) (queue[rec.key] = queue[rec.key] || []).push({ msg, chatId: rec.chatId, threadId: rec.threadId, cfg });
+    else processOne(msg, rec.chatId, rec.threadId, rec.key, cfg);
+  }
+}
+
 // ---------- MODO MISSÃO: disparo + retomada durável ----------
 // Cria o registro em disco e dispara. `existing` = retomada (reusa id/prompt, incrementa retries).
 function startMission(chatId, threadId, prompt, cfg, existing) {
@@ -1805,7 +1846,7 @@ function startMission(chatId, threadId, prompt, cfg, existing) {
   const seedBlock = seed ? `\n\n[CONTEXTO DO TÓPICO onde a missão nasceu — as últimas trocas com o dono ANTES dela (pra você saber do que ele estava falando; NÃO responda isso, é pano de fundo):\n${seed}]` : "";
   const missionPrompt = existing
     ? `[RETOMADA DE MISSÃO (tentativa ${existing.retries}${existing.bgResumes ? `, verificação de background ${existing.bgResumes}` : ""}) — você JÁ fez parte do trabalho. PRIMEIRO confira o que já está pronto: arquivos que criou, checkpoint, E qualquer JOB que deixou rodando (cheque se o processo/PID terminou e se o ARQUIVO DE SAÍDA existe, com \`ls -la\`/\`test -s\`). Se o job ainda roda, ESPERE ele com polling em chamadas Bash curtas (\`sleep 480; ls -la <saída> 2>/dev/null; ps -p <PID> >/dev/null && echo RODANDO || echo FIM\`) até o arquivo aparecer — NÃO recomece do zero. Se um passo falhou por limite de imagem/API ("exceeds the dimension limit / fewer images"), refaça em LOTES menores e redimensione pra ≤2000px com ffmpeg/ImageMagick antes de reenviar. Só declare CONCLUÍDA quando o entregável EXISTIR de verdade (confira com \`ls -la\`). Reporte o que encontrou e siga até o fim.]\n\n${prompt}${seedBlock}`
-    : `${prompt}\n\n[MODO MISSÃO — tarefa longa, trabalhe até o ENTREGÁVEL final (não pare no meio, não peça licença). Reporte cada MARCO concluído escrevendo UMA linha curta no arquivo do env $MISSAO_PROGRESS, ex: \`echo "Etapa 2/5 ok: os 3 depoimentos processados" >> "$MISSAO_PROGRESS"\` — o dono recebe isso na hora. No fim, entregue o resultado completo aqui.]${seedBlock}`;
+    : `${prompt}\n\n[MODO MISSÃO — tarefa longa, trabalhe até o ENTREGÁVEL final (não pare no meio, não peça licença). Reporte cada MARCO concluído escrevendo UMA linha curta no arquivo do env $MISSAO_PROGRESS, ex: \`echo "Etapa 2/5 ok: os 3 depoimentos processados" >> "$MISSAO_PROGRESS"\` — o dono recebe isso na hora. No fim, entregue o resultado completo aqui.\n\n⚠️ ANTES do primeiro marco de trabalho, escreva UM marco de ENTENDIMENTO: nem todo mundo que pede sabe pedir pra IA, e ninguém quer ficar horas rodando em cima de leitura errada. Formato: \`echo "Entendi: <parafraseie em 1 frase o que voce vai fazer, pra quem/com que objetivo, e o formato do resultado>" >> "$MISSAO_PROGRESS"\`. NÃO é pergunta, NÃO espera resposta, NÃO trava o trabalho — é uma foto da tua leitura que o dono vê chegar em segundos e pode corrigir ANTES de você gastar horas na leitura errada. Se o pedido já é cristalino, essa linha pode ser bem curta; se veio solto, capriche mais nela porque é a única rede que existe contra mal-entendido.\n\n⚠️ COMO ESCREVER OS MARCOS (LINGUAGEM AMIGÁVEL): sempre em português, verbo no infinitivo, sem jargão técnico, sem inglês, sem nome interno de fase/módulo/função. Cada marco tem que ser uma linha que um leigo lê no celular e entende o que aconteceu. BOM: "Separar as 40 fotos boas do lote e descartar as tremidas". RUIM: "Apply batch corrections", "Fase A · cross-check", "Passo 3/5 ok". Zero label técnico. Zero hash. Zero caminho de arquivo.]${seedBlock}`;
   const msg = { text: missionPrompt, ...(threadId ? { message_thread_id: Number(threadId) } : {}) };
   guardTmp();   // antes de uma missão pesada, garante o /tmp respirando (defesa extra além do TMPDIR no disco real)
   // missão nunca ocupa o ÚLTIMO slot (fica 1 reservado pro turno interativo do dono — ele NUNCA espera)
@@ -2288,6 +2329,7 @@ if (require.main === module) {
   poll();
   guardTmp(); setInterval(guardTmp, 300000);   // blindagem /tmp (tmpfs pequeno enche com whisper/vídeo e trava): limpa regenerável + avisa cedo, a cada 5min (08/jul)
   checkPromises(); setInterval(checkPromises, 30000);   // agendador DURÁVEL: dispara promessas vencidas (inclusive as perdidas num restart) + checa a cada 30s
+  setTimeout(resumeInflight, 6000);   // REDE DA CONVERSA: reprocessa turno que morreu num restart/crash — o dono não redigita nada
   setTimeout(checkMissions, 8000); setInterval(checkMissions, 30000);   // MODO MISSÃO: retoma no boot missão que caiu num restart (espera 8s o dreno assentar) + varre a cada 30s
   setTimeout(sweepMissions, 15000); setInterval(sweepMissions, 21600000);   // FAXINA: apaga missão fechada (done/failed) há +MISSAO_RETAIN_DAYS dias — no boot (após o dreno assentar) + a cada 6h. running fica intacta
   // SELF-CHECK do boot: fala SÓ se algo estiver quebrado (o "no ar" cego anunciava saúde sem checar nada)
