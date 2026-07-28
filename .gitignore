@@ -13,3 +13,7 @@ backups/
 *.log
 __pycache__/
 *.pyc
+
+# backups locais do meu trabalho — nunca vao pro cliente
+*.bak*
+*.staged
