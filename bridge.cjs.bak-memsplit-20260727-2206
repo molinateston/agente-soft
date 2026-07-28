@@ -1005,17 +1005,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
     return new Promise((resolve) => {
       const isMissao = !!mission;   // MODO MISSÃO: tarefa longa deliberada (budget/tempo soltos + reports de marco + retomada durável)
       // HORÁRIO de Brasília vai no INPUT (não no system-prompt: evita cache-bust). Prepende ao texto do usuário.
-      // MEMÓRIA VIVA + ASSUNTOS VIVOS mudam a CADA turno: vão no INPUT (stdin), não no system-prompt.
-      // Motivo (27/07): (1) system-prompt estável = prompt cache barato, memória volátil lá dentro
-      // bustava o cache todo turno; (2) cada ARGUMENTO de processo cabe em ~128KB no Linux
-      // (MAX_ARG_STRLEN) e a memória competia por esse teto até estourar E2BIG — o stdin não tem limite.
-      const _mvv = capBytes(readLines(MEMVIVA_FILE, 120), MEMVIVA_READ_MAX);
-      const _asv = capBytes(readAssuntosVivos(48), ASSUNTOS_READ_MAX);
-      const mbDyn = [
-        _mvv ? `# MEMÓRIA VIVA — decisões/projetos/pendências ATIVAS (leia SEMPRE antes de responder; ESCREVA aqui na hora quando algo for decidido/combinado/ficar pendente):\n${_mvv}` : "",
-        _asv ? `# ASSUNTOS VIVOS — nomes/projetos/decisões NOVAS que apareceram em QUALQUER tópico das últimas 48h (contexto CRUZADO, pra você NUNCA ficar por fora do que rolou em outro tópico; regra: se aparecer aqui um NOME/PROJETO novo, você JÁ conhece; quando você mesmo detectar assunto novo, ESCREVA nesse arquivo em ${ASSUNTOS_FILE} no formato "- YYYY-MM-DD HHhMM [TÓPICO] resumo em 1 linha"):\n${_asv}` : "",
-      ].filter(Boolean).join("\n\n");
-      const userText = [timeBlock(), mbDyn, text].filter(Boolean).join("\n\n");
+      const userText = [timeBlock(), text].filter(Boolean).join("\n\n");
       // COPY sempre em sonnet 5, mesmo que a sala rode outro modelo.
       const _model = isCopyTask(text) ? COPY_MODEL : cfg.model;
       const args = ["-p", "--model", _model, "--output-format", "stream-json", "--verbose",
@@ -1038,7 +1028,10 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       // MEMÓRIA VIVA — decisões/projetos/pendências ATIVAS, injetadas TODO turno (estilo terminal): o
       // agente lê SEMPRE antes de responder e ESCREVE aqui na hora quando algo é decidido/combinado/fica
       // pendente. Estável entre turnos = cai no prompt cache, barato.
-      // (memória viva + assuntos vivos saíram daqui em 27/07 — agora viajam pelo INPUT, ver mbDyn acima)
+      const memviva = capBytes(readLines(MEMVIVA_FILE, 120), MEMVIVA_READ_MAX);
+      if (memviva) sysPrompt += (sysPrompt ? "\n\n" : "") + `# MEMÓRIA VIVA — decisões/projetos/pendências ATIVAS (leia SEMPRE antes de responder; ESCREVA aqui na hora quando algo for decidido/combinado/ficar pendente):\n${memviva}`;
+      const assuntos = capBytes(readAssuntosVivos(48), ASSUNTOS_READ_MAX);
+      if (assuntos) sysPrompt += (sysPrompt ? "\n\n" : "") + `# ASSUNTOS VIVOS — nomes/projetos/decisões NOVAS que apareceram em QUALQUER tópico das últimas 48h (contexto CRUZADO, pra você NUNCA ficar por fora do que rolou em outro tópico; regra: se aparecer aqui um NOME/PROJETO novo, você JÁ conhece; quando você mesmo detectar assunto novo, ESCREVA nesse arquivo em ${ASSUNTOS_FILE} no formato "- YYYY-MM-DD HHhMM [TÓPICO] resumo em 1 linha"):\n${assuntos}`;
       // PROTOCOLO DE MEMÓRIA — paridade c/ terminal: aponta o histórico COMPLETO no disco + manda grepar na dúvida
       sysPrompt += (sysPrompt ? "\n\n" : "") + convoBlock();
       // A CONVERSA CONTINUA — injeta o resumo do que já falamos TODO turno (não só no 1º depois da
