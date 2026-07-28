@@ -1015,7 +1015,9 @@ function ask(key, text, cfg, chatId, threadId, mission) {
         _mvv ? `# MEMÓRIA VIVA — decisões/projetos/pendências ATIVAS (leia SEMPRE antes de responder; ESCREVA aqui na hora quando algo for decidido/combinado/ficar pendente):\n${_mvv}` : "",
         _asv ? `# ASSUNTOS VIVOS — nomes/projetos/decisões NOVAS que apareceram em QUALQUER tópico das últimas 48h (contexto CRUZADO, pra você NUNCA ficar por fora do que rolou em outro tópico; regra: se aparecer aqui um NOME/PROJETO novo, você JÁ conhece; quando você mesmo detectar assunto novo, ESCREVA nesse arquivo em ${ASSUNTOS_FILE} no formato "- YYYY-MM-DD HHhMM [TÓPICO] resumo em 1 linha"):\n${_asv}` : "",
       ].filter(Boolean).join("\n\n");
-      const userText = [timeBlock(), mbDyn, text].filter(Boolean).join("\n\n");
+      // resumo da conversa também é volátil (muda a cada compactação): vai no INPUT, não no system-prompt.
+      const contBlock = cont ? `# A CONVERSA CONTINUA — NÃO recomece do zero\nVocê JÁ vinha conversando com o dono; este trecho é CONTINUAÇÃO da mesma conversa (ela foi compactada pra caber, só isso). Resumo do que já falaram antes deste ponto:\n${cont}\n\nRegra: trate como continuação natural. NUNCA diga "a conversa começou agora", "não tenho histórico desta sessão" nem peça pra ele repetir o que já foi dito. Se perguntarem o que falaram antes, responda a partir DESTE resumo.` : "";
+      const userText = [timeBlock(), contBlock, mbDyn, text].filter(Boolean).join("\n\n");
       // COPY sempre em sonnet 5, mesmo que a sala rode outro modelo.
       const _model = isCopyTask(text) ? COPY_MODEL : cfg.model;
       const args = ["-p", "--model", _model, "--output-format", "stream-json", "--verbose",
@@ -1044,7 +1046,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       // A CONVERSA CONTINUA — injeta o resumo do que já falamos TODO turno (não só no 1º depois da
       // compactação), pra o agente NUNCA achar que "começou agora". Compactar economiza espaço; a
       // conversa segue sendo UMA só. 'cont' = handoff de sessão nova recém-semeada OU resumo persistido.
-      if (cont) sysPrompt += `\n\n# A CONVERSA CONTINUA — NÃO recomece do zero\nVocê JÁ vinha conversando com o dono; este trecho é CONTINUAÇÃO da mesma conversa (ela foi compactada pra caber, só isso). Resumo do que já falaram antes deste ponto:\n${cont}\n\nRegra: trate como continuação natural. NUNCA diga "a conversa começou agora", "não tenho histórico desta sessão" nem peça pra ele repetir o que já foi dito. Se perguntarem o que falaram antes, responda a partir DESTE resumo.`;
+      // (o resumo da conversa saiu daqui em 27/07 — vai no INPUT junto com a memória, ver contBlock acima)
       // LIMITE DO SISTEMA (25/07): cada argumento de um processo cabe em ~128KB no Linux
       // (MAX_ARG_STRLEN). Identidade + memória viva + assuntos + resumo da conversa vão TODOS
       // dentro de --append-system-prompt. Se estourarem, o spawn morre com E2BIG e o turno
