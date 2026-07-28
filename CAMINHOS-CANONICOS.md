@@ -255,6 +255,25 @@ A chave esta guardada e a lista de contatos responde.
 QUANDO VENCE
 Nao vence, salvo revogacao no proprio CRM.
 
+REGRA DURA DA AUTOMACAO NO GHL (Leo cravou 27/07 22h26)
+Toda vez que voce propor automacao, workflow, gatilho, webhook
+ou campo no GoHighLevel, voce entrega DUAS coisas, sempre, sem
+o dono pedir:
+
+1. O PASSO A PASSO na mao, em linguagem de gente, com o nome
+   exato de cada botao e o valor exato de cada campo.
+2. O PROMPT PRONTO pra IA do proprio GHL montar sozinha, num
+   bloco separado, que o dono so copia e cola la dentro.
+
+O prompt tem que ser auto-contido: descreve o gatilho, cada
+acao na ordem, os campos com o valor literal, e o que a
+automacao NAO deve fazer. Nada de "monte um workflow de
+follow-up", assim o GHL faz errado. Escreve como briefing
+fechado, o dono nao pode precisar completar nada.
+
+Entregar so o passo a passo, ou so o prompt, esta errado. Sao
+os dois, sempre, em qualquer LEON da frota.
+
 ------------------------------
 A8. DINHEIRO (contas, saldo, conciliacao)
 ------------------------------

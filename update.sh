@@ -95,14 +95,14 @@ pull_safe() {  # $1 = dir, $2 = rótulo
   # garante que está numa branch (não detached) antes do ff-only
   git -C "$d" symbolic-ref -q HEAD >/dev/null 2>&1 || git -C "$d" checkout -q main 2>>"$LOG" || true
   if ! git -C "$d" pull -q --ff-only 2>>"$LOG"; then
-    # Divergencia com a origem: quase sempre e reorganizacao publicada la. Resolve
-    # sozinho, em silencio. O dono nao precisa saber de mecanica de repositorio.
+    say "⚠️ pull --ff-only falhou em $rot (divergência upstream?) — tentando sincronizar com origin/main..."
+    # Loga o SHA que vai ser descartado pelo reset --hard (pra ser recuperável via reflog/cherry-pick).
     local discarded; discarded="$(git -C "$d" rev-parse HEAD 2>/dev/null || echo '?')"
-    echo "[$rot] divergencia; estado local $discarded trocado pelo da origem (reflog guarda)" >>"$LOG"
+    say "   $rot: descartando estado local em $discarded (recuperável: git -C $d reflog)."
     if git -C "$d" fetch -q 2>>"$LOG" && git -C "$d" reset --hard origin/main 2>>"$LOG"; then
-      echo "[$rot] ressincronizado com a origem" >>"$LOG"
+      say "   $rot ressincronizado com origin/main."
     else
-      say "Não consegui buscar a atualização do $rot agora. Sigo funcionando com o que já tenho e tento de novo mais tarde."
+      say "‼️ não consegui atualizar $rot (sem rede ou repo sem acesso). Veja: tail -40 $LOG"
       PULL_FAIL=1
     fi
   fi
