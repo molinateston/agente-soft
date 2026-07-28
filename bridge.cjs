@@ -1063,6 +1063,40 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       let buf = "", err = "", finalResult = null, finalSid = null, finalUsage = null, mainUsage = null, settled = false, timedOut = false, lastActivity = Date.now();
       let finalIsError = false, finalErrors = "";
       let lastAction = "começando…", panelId = null, _lastMarco = "", _marcos = [], _lastPanelEditAt = 0;
+      // tradutor: nome cru da ferramenta interna vira acao humana pro painel do dono (portado do LEON 27/07)
+      const friendlyAction = (name, input) => {
+        const inp = input || {}; const bn = (p) => p ? String(p).split("/").pop() : "";
+        switch (name) {
+          case "Read":  return `Lendo ${bn(inp.file_path) || "arquivo"}`;
+          case "Write": return `Escrevendo ${bn(inp.file_path) || "arquivo"}`;
+          case "Edit":  return `Editando ${bn(inp.file_path) || "arquivo"}`;
+          case "Grep":  return "Procurando no material";
+          case "Glob":  return "Procurando arquivo";
+          case "Bash": {
+            const d = String(inp.description || "").trim();
+            const _en = /\b(upload|download|run|batch|fire|flags|rest|api|request|response|error|success|retry|check|validate|apply|fix|add|remove|update|create|delete|get|set|load|save|parse|build|deploy|start|stop|kill|install|search|analyze|generate|render|test|debug|verify|scan|list|copy|move|write|read|edit|patch|commit|push|pull|clone|merge|log|status|show|open|close|send|receive|monitor|track|store|fetch|cache|clear|reset|init|setup|config|export|import)\b/i;
+            const _ptOk = /[\u00e1\u00e0\u00e2\u00e3\u00e9\u00ea\u00ed\u00f3\u00f4\u00f5\u00fa\u00fc\u00e7]|\b(rodando|lendo|escrevendo|editando|procurando|olhando|organizando|baixando|consultando|chamando|pesquisando|anotando|criando|apagando|movendo|copiando|conferindo|salvando|abrindo|fechando|enviando|recebendo|montando|arrumando|pegando|tocando|mexendo)\b/i;
+            if (d && (_ptOk.test(d) || !_en.test(d))) return d.length > 60 ? d.slice(0, 57) + "\u2026" : d;
+            // "cd /pasta && node x.js" -> o que importa e o comando DEPOIS do cd, nao o cd
+            let _cmd = String(inp.command || "").trim();
+            if (/^cd\s/.test(_cmd) && /&&/.test(_cmd)) _cmd = _cmd.split("&&").slice(1).join("&&").trim();
+            const c = _cmd.split(/\s+/)[0] || "";
+            if (!c) return "Rodando comando";
+            if (c === "node" || c === "python" || c === "python3") return "Rodando um script";
+            if (c === "git") return "Salvando versao";
+            if (c === "curl" || c === "wget") return "Consultando na internet";
+            if (c === "ls" || c === "find" || c === "cat" || c === "head" || c === "tail" || c === "grep") return "Olhando arquivo";
+            if (c === "cp" || c === "mv" || c === "mkdir" || c === "rm" || c === "chmod") return "Organizando arquivo";
+            return "Rodando comando";
+          }
+          case "Task":       return "Chamando um ajudante";
+          case "WebFetch":   return "Consultando um site";
+          case "WebSearch":  return "Pesquisando na internet";
+          case "TodoWrite":  return "Anotando o plano";
+          case "NotebookEdit": return "Editando notebook";
+          default: return "Pensando";
+        }
+      };
       const elapsed = () => { const s = Math.round((Date.now() - t0) / 1000);
         return s < 60 ? `${s}s` : `${Math.floor(s / 60)}min${s % 60 ? (s % 60) + "s" : ""}`; };
 
@@ -1180,8 +1214,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
             if (ev.message.usage && !ev.isSidechain) mainUsage = ev.message.usage;   // usage da SESSÃO PRINCIPAL (não dos braços) = contexto real; result.usage agrega o fan-out e infla
             for (const c of ev.message.content) {
               if (c.type === "tool_use") {
-                const alvo = (c.input && (c.input.description || c.input.command || c.input.file_path || c.input.pattern)) || "";
-                lastAction = `${c.name}${alvo ? `: ${String(alvo).slice(0, 60)}` : ""}`;
+                lastAction = friendlyAction(c.name, c.input);
               }
             }
           }
