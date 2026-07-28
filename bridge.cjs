@@ -1207,7 +1207,11 @@ function ask(key, text, cfg, chatId, threadId, mission) {
         else {
           // 21/jul FIX: subprocess morreu sem finalResult E sem stderr (OOM/SIGKILL/exit silencioso).
           // Sintetiza diag (exit + signal + duração) pra o dono NÃO ver só "erro do meu lado".
-          const _diag = (err || buf) || `claude fechou sem resposta (exit=${code == null ? "?" : code} signal=${signal || "none"} após ${dur}). Provável OOM/kill do processo.`;
+          // 27/07: exit 143 (=128+SIGTERM) NUNCA e OOM — e desligamento PLANEJADO (restart/self-update)
+          // matando o filho. Chamar isso de "provavel OOM" jogava jargao cru no dono no lugar da entrega
+          // dele. Marca como reinicio: vira mensagem humana + retomada automatica.
+          const _diag = (code === 143 || signal === "SIGTERM") ? "__REINICIO__"
+            : ((err || buf) || `claude fechou sem resposta (exit=${code == null ? "?" : code} signal=${signal || "none"} após ${dur}). Provável OOM/kill do processo.`);
           done({ result: null, sid: finalSid, ctx, err: _diag });
         }
       });
@@ -1263,6 +1267,10 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       //            pra o próximo turno re-semear em vez de virar amnésia.
       // ESCALADA: na 3ª falha seguida do MESMO tópico, para de dizer "é passageiro" — mostra a causa
       // e pede o dono (erro permanente tipo login vencido/chave morta não pode virar loop infinito).
+      // REINÍCIO PLANEJADO vem ANTES de tudo: não é falha do tópico, não conta streak, não vira jargão.
+      if (String(out.err) === "__REINICIO__" || fs.existsSync("/tmp/lean-cliente.selfupd-active")) {
+        return { result: "⚙️ Reiniciei no meio do teu recado (estava aplicando um ajuste). Guardei ele aqui e volto com a resposta em ~1 min — não precisa repetir.", sid: out.sid, ctx: out.ctx || 0, ok: false, retomar: true };
+      }
       const streak = (_failStreak[key] = (_failStreak[key] || 0) + 1);
       if (streak >= 3) {
         const causa = String(out.err || "").split("\n").map(s => s.trim()).filter(Boolean).pop() || "";
