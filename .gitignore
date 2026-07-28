@@ -13,4 +13,3 @@ backups/
 *.log
 __pycache__/
 *.pyc
-inflight/

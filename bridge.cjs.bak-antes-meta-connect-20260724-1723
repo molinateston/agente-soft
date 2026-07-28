@@ -184,27 +184,22 @@ try {
 
 const WORKDIR     = process.env.WORK_DIR || __dirname;
 
-// O antigo despertador do /atualiza (systemd-run) foi aposentado: ele dependia do
-// proprio processo que ia ser morto e falhava calado em servidor sem sessao de
-// usuario ativa. Quem garante o veredito agora e o recibo + o vigia do cron.
-
-// RECIBO do /atualiza. Enquanto este arquivo existir, ALGUEM esta esperando
-// resposta. Quem responde de verdade e o vigia (scripts/update-verdict.sh), que
-// roda no cron FORA do motor: assim a confirmacao nao depende de o update dar
-// certo, nem de o bot estar de pe. Se o motor novo subir e ver o recibo, ele
-// mesmo sauda e apaga — e o vigia fica calado.
-const RECIBO_UPDATE = `${WORKDIR}/.update-pending.json`;
-function gravarReciboUpdate(chatId, threadId) {
-  try {
-    const agora = Date.now();
-    let sig = "";
-    try { sig = require("crypto").createHash("md5").update(fs.readFileSync(`${WORKDIR}/bridge.cjs`)).digest("hex"); } catch {}
-    fs.writeFileSync(RECIBO_UPDATE, JSON.stringify({
-      chatId: String(chatId || OWNER), threadId: threadId || null, pedidoEm: agora,
-      assinaturaAntes: sig, arquitetura: "gratuita",
-      prazoCurto: agora + 90000, prazoLongo: agora + 360000, dir: WORKDIR,
-    }));
-  } catch (e) { console.error("[atualiza] recibo:", e && e.message); }
+// Rede de seguranca do /atualiza. O update roda num servico separado e a saudacao
+// "No ar!" vem do ExecStartPost. Se qualquer elo dessa corrente falhar, o dono
+// ficava esperando pra sempre uma mensagem que nunca vinha. Estes dois despertadores
+// rodam DESTACADOS (sobrevivem ao restart) e garantem um veredito: um aos 25s (nem
+// arrancou) e outro aos 4min (nao fechou). Se o update deu certo, ambos ficam mudos.
+function armarWatchdogUpdate(chatId, threadId) {
+  const script = `${process.env.HOME}/agente-soft/update-watchdog.sh`;
+  for (const [fase, seg] of [["curto", 25], ["longo", 240]]) {
+    try {
+      spawn("systemd-run", [
+        "--user", "--collect", `--on-active=${seg}`,
+        `--unit=updwd-${fase}-${Date.now()}`,
+        "/usr/bin/env", "bash", script, fase, String(chatId), threadId ? String(threadId) : ""
+      ], { detached: true, stdio: "ignore" }).unref();
+    } catch (e) { console.error("[atualiza] watchdog:", e && e.message); }
+  }
 }
 
 const BRAIN       = process.env.BRAIN_DIR || `${WORKDIR}/brain`;
@@ -225,9 +220,7 @@ const TTS_PROVIDER = (process.env.TTS_PROVIDER || "edgetts").toLowerCase(); // "
 const EDGE_TTS_VOICE = process.env.EDGE_TTS_VOICE || ((process.env.AGENT_GENDER || "male").toLowerCase() === "female" ? "pt-BR-FranciscaNeural" : "pt-BR-AntonioNeural");
 const EDGE_TTS_WORKER = process.env.EDGE_TTS_WORKER || `${__dirname}/workers/edge-tts.js`;
 const EDGE_TTS_PY = process.env.EDGE_TTS_PY || `${os.homedir()}/.openclaw/edgetts-venv/bin/python3`;
-// Basta o worker existir: ele mesmo acha o python e o script, e se nao achar a voz
-// cai pro proximo da fila. Exigir o venv aqui matava a voz gratis em maquina nova.
-const EDGE_TTS_ENABLED = (() => { try { return fs.existsSync(EDGE_TTS_WORKER); } catch { return false; } })();
+const EDGE_TTS_ENABLED = (() => { try { return fs.existsSync(EDGE_TTS_WORKER) && fs.existsSync(EDGE_TTS_PY); } catch { return false; } })();
 const KOKORO_WORKER = process.env.KOKORO_WORKER || `${os.homedir()}/.openclaw/workers/kokoro-tts.cjs`;
 const KOKORO_MODEL_PATH = process.env.KOKORO_MODEL || `${os.homedir()}/.openclaw/voices/kokoro/kokoro-v1.0.onnx`;
 const KOKORO_ENABLED = (() => { try { return fs.existsSync(KOKORO_WORKER) && fs.existsSync(KOKORO_MODEL_PATH); } catch { return false; } })();
@@ -271,14 +264,6 @@ const SNAPSHOT_EVERY = Number(process.env.SNAPSHOT_EVERY || 8); // a cada N turn
 const COMPACT_TIMEOUT_MS = Number(process.env.COMPACT_TIMEOUT_SEG || 120) * 1000;
 const MEMVIVA_FILE = process.env.MEMVIVA_FILE || `${BRAIN}/MEMORIA-VIVA.md`;   // memória de trabalho (decisões/projetos/pendências ATIVAS): SEMPRE no contexto (estilo NAIA)
 const ASSUNTOS_FILE = process.env.ASSUNTOS_FILE || `${BRAIN}/ASSUNTOS-VIVOS.md`;   // ASSUNTOS CRUZADOS — nomes/projetos/decisões novas que apareceram em QUALQUER tópico das últimas 48h; injetado em TODAS as personas pra você nunca ficar por fora do que rolou em OUTRO tópico. Linhas velhas (>48h) são filtradas na leitura.
-// TETO DA MEMÓRIA VIVA (27/07): o arquivo só cresce (todo turno faz append) e um dia estoura o
-// limite de argumento do Linux (E2BIG) — o agente fica MUDO nos tópicos sem ninguém entender.
-// Duas redes independentes: (1) leitura sempre capada em bytes, o motor nunca trava nem com o
-// arquivo gigante; (2) rotação automática e silenciosa, que move as seções velhas pro arquivo
-// morto. Nenhuma das duas fala com o dono: manutenção de casa não vira mensaginha.
-const MEMVIVA_READ_MAX = Number(process.env.MEMVIVA_READ_MAX || 24 * 1024);    // bytes injetados por turno
-const ASSUNTOS_READ_MAX = Number(process.env.ASSUNTOS_READ_MAX || 12 * 1024);
-const MEMVIVA_ROTATE_AT = Number(process.env.MEMVIVA_ROTATE_AT || 32 * 1024);  // acima disto, roda a faxina
 // janela de contexto por modelo (p/ escalar SOFT/HARD e limiar de órfão — não queimar cota no cliente sonnet)
 const winFor = (m) => ({ "opus": 200000, "opus[1m]": 1000000, "sonnet": 400000, "sonnet[1m]": 1000000, "haiku": 200000 }[m] || 200000);
 
@@ -418,21 +403,6 @@ function missaoTravou(txt) { return /\b(SIGABRT|ENOSPC)\b|sem\s+shell|bash\s+(ca
 // lê as primeiras N linhas de um arquivo pequeno (MEMÓRIA VIVA). Arquivos pequenos: readFileSync ok.
 const readLines = (file, maxLines) => { try { return fs.readFileSync(file, "utf8").split("\n").slice(0, maxLines).join("\n").trim(); } catch { return ""; } };
 
-// REDE 1 — teto em BYTES. Contar linha não protege: 120 linhas podem ter 100KB e derrubar o spawn
-// (E2BIG). Corta em borda de linha, guardando o TOPO (é onde mora o mais recente).
-function capBytes(txt, maxBytes) {
-  if (!txt || Buffer.byteLength(txt, "utf8") <= maxBytes) return txt;
-  const out = [];
-  let used = 0;
-  for (const line of txt.split("\n")) {
-    const n = Buffer.byteLength(line, "utf8") + 1;
-    if (used + n > maxBytes) break;
-    out.push(line); used += n;
-  }
-  return out.join("\n").trim() + "\n\n[trecho antigo omitido por tamanho — está inteiro no disco]";
-}
-
-
 // ASSUNTOS-VIVOS: linhas com timestamp ISO/pt-BR (YYYY-MM-DD HHhMM ou HH:MM) — descarta as mais velhas que maxAgeH.
 function readAssuntosVivos(maxAgeH = 48) {
   let raw = "";
@@ -449,50 +419,6 @@ function readAssuntosVivos(maxAgeH = 48) {
   }
   return kept.join("\n").trim();
 }
-// REDE 2 — faxina automática da MEMÓRIA VIVA. Passou do teto, as seções mais VELHAS (as de baixo:
-// escrita nova entra no topo) descem pro arquivo morto ao lado, e o vivo volta a ser um arquivo de
-// trabalho. Roda no arranque e a cada 6h, em silêncio: o dono nunca é chamado pra fazer faxina.
-// Escrita atômica (tmp + rename) pra não corromper se um turno estiver escrevendo ao mesmo tempo.
-function rotateMemViva() {
-  try {
-    const st = fs.statSync(MEMVIVA_FILE);
-    if (st.size <= MEMVIVA_ROTATE_AT) return 0;
-    const ARQ = MEMVIVA_FILE.replace(/\.md$/, "") + "-ARQUIVO.md";
-    const raw = fs.readFileSync(MEMVIVA_FILE, "utf8").replace(/\n*---\n+>[^\n]*(MEMORIA-VIVA-ARQUIVO|movid[ao]s? pra|movido para)[^\n]*\n*$/i, "\n");
-    const lines = raw.split("\n");
-    const first = lines.findIndex(l => /^##\s/.test(l));
-    if (first < 0) return 0;   // formato desconhecido: não mexe
-    const head = lines.slice(0, first).join("\n").trim();
-    const blocks = [];
-    let cur = null;
-    for (const l of lines.slice(first)) {
-      if (/^##\s/.test(l)) { if (cur) blocks.push(cur); cur = [l]; }
-      else if (cur) cur.push(l);
-    }
-    if (cur) blocks.push(cur);
-    const alvo = Math.floor(MEMVIVA_ROTATE_AT * 0.6);
-    const keep = [], moved = [];
-    let used = Buffer.byteLength(head, "utf8");
-    for (const b of blocks) {
-      const txt = b.join("\n").replace(/\s+$/, "");
-      const n = Buffer.byteLength(txt, "utf8") + 2;
-      if (keep.length === 0 || used + n <= alvo) { keep.push(txt); used += n; }
-      else moved.push(txt);
-    }
-    if (!moved.length) return 0;
-    let velho = "";
-    try { velho = fs.readFileSync(ARQ, "utf8"); } catch {}
-    fs.writeFileSync(ARQ + ".tmp", moved.join("\n\n") + "\n\n" + velho);
-    fs.renameSync(ARQ + ".tmp", ARQ);
-    const novo = (head ? head + "\n\n" : "") + keep.join("\n\n")
-      + `\n\n---\n\n> Seções anteriores foram movidas pra ${ARQ.split("/").pop()} (mesma pasta). Consulte com grep se precisar.\n`;
-    fs.writeFileSync(MEMVIVA_FILE + ".tmp", novo);
-    fs.renameSync(MEMVIVA_FILE + ".tmp", MEMVIVA_FILE);
-    console.log(`[memviva] faxina: ${st.size}B > teto ${MEMVIVA_ROTATE_AT}B — ${moved.length} seção(ões) velhas foram pro arquivo morto`);
-    return moved.length;
-  } catch (e) { console.log("[memviva] faxina falhou (segue a vida):", e.message); return 0; }
-}
-
 
 // HORÁRIO LOCAL (Brasília) — injetado no INPUT de TODO turno e TODO tópico. A VPS roda em UTC;
 // sem isto o agente acha que é 3h mais tarde ("já passou das 11h" às 9h). Intl converte mesmo
@@ -946,9 +872,7 @@ async function speakReply(chatId, text, threadId) {
     // VOZ FALHOU ≠ SILÊNCIO: texto já foi entregue, mas dono esperava áudio — avisa 1x/h (sem spam)
     if (!speakReply._warned || Date.now() - speakReply._warned > 3600000) {
       speakReply._warned = Date.now();
-      // Dono nao tem que saber de chave nem de instalacao, e NUNCA pedimos servico pago:
-      // a voz gratis e a padrao. O detalhe tecnico fica no log, pra quem cuida do motor.
-      send(chatId, "_(não consegui falar agora, então fica o texto. Se continuar assim, me pede pra conferir a minha voz que eu vejo isso.)_", threadId).catch(() => {});
+      send(chatId, "_(a voz falhou agora — fica o texto. Piper local não instalado? Sem OPENAI_API_KEY e ELEVENLABS_API_KEY no .env?)_", threadId).catch(() => {});
     }
     return;
   }
@@ -1028,9 +952,9 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       // MEMÓRIA VIVA — decisões/projetos/pendências ATIVAS, injetadas TODO turno (estilo terminal): o
       // agente lê SEMPRE antes de responder e ESCREVE aqui na hora quando algo é decidido/combinado/fica
       // pendente. Estável entre turnos = cai no prompt cache, barato.
-      const memviva = capBytes(readLines(MEMVIVA_FILE, 120), MEMVIVA_READ_MAX);
+      const memviva = readLines(MEMVIVA_FILE, 120);
       if (memviva) sysPrompt += (sysPrompt ? "\n\n" : "") + `# MEMÓRIA VIVA — decisões/projetos/pendências ATIVAS (leia SEMPRE antes de responder; ESCREVA aqui na hora quando algo for decidido/combinado/ficar pendente):\n${memviva}`;
-      const assuntos = capBytes(readAssuntosVivos(48), ASSUNTOS_READ_MAX);
+      const assuntos = readAssuntosVivos(48);
       if (assuntos) sysPrompt += (sysPrompt ? "\n\n" : "") + `# ASSUNTOS VIVOS — nomes/projetos/decisões NOVAS que apareceram em QUALQUER tópico das últimas 48h (contexto CRUZADO, pra você NUNCA ficar por fora do que rolou em outro tópico; regra: se aparecer aqui um NOME/PROJETO novo, você JÁ conhece; quando você mesmo detectar assunto novo, ESCREVA nesse arquivo em ${ASSUNTOS_FILE} no formato "- YYYY-MM-DD HHhMM [TÓPICO] resumo em 1 linha"):\n${assuntos}`;
       // PROTOCOLO DE MEMÓRIA — paridade c/ terminal: aponta o histórico COMPLETO no disco + manda grepar na dúvida
       sysPrompt += (sysPrompt ? "\n\n" : "") + convoBlock();
@@ -1038,21 +962,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       // compactação), pra o agente NUNCA achar que "começou agora". Compactar economiza espaço; a
       // conversa segue sendo UMA só. 'cont' = handoff de sessão nova recém-semeada OU resumo persistido.
       if (cont) sysPrompt += `\n\n# A CONVERSA CONTINUA — NÃO recomece do zero\nVocê JÁ vinha conversando com o dono; este trecho é CONTINUAÇÃO da mesma conversa (ela foi compactada pra caber, só isso). Resumo do que já falaram antes deste ponto:\n${cont}\n\nRegra: trate como continuação natural. NUNCA diga "a conversa começou agora", "não tenho histórico desta sessão" nem peça pra ele repetir o que já foi dito. Se perguntarem o que falaram antes, responda a partir DESTE resumo.`;
-      // LIMITE DO SISTEMA (25/07): cada argumento de um processo cabe em ~128KB no Linux
-      // (MAX_ARG_STRLEN). Identidade + memória viva + assuntos + resumo da conversa vão TODOS
-      // dentro de --append-system-prompt. Se estourarem, o spawn morre com E2BIG e o turno
-      // INTEIRO se perde sem o dono entender por quê. Cortamos com folga e denunciamos no log.
-      const SYS_MAX = 96 * 1024;
-      if (sysPrompt.trim()) {
-        let _sp = sysPrompt;
-        if (Buffer.byteLength(_sp, "utf8") > SYS_MAX) {
-          const _antes = Buffer.byteLength(_sp, "utf8");
-          _sp = Buffer.from(_sp, "utf8").subarray(0, SYS_MAX).toString("utf8").replace(/\uFFFD+$/, "")
-              + "\n\n[memória cortada aqui por tamanho — o resto está no disco (brain/MEMORIA-VIVA.md); leia se precisar]";
-          console.log(`[ponte] system prompt de ${_antes} bytes passou do teto de ${SYS_MAX} — cortado (evita E2BIG no spawn)`);
-        }
-        args.push("--append-system-prompt", _sp);
-      }
+      if (sysPrompt.trim()) args.push("--append-system-prompt", sysPrompt);
       // detached: process group próprio → killTree(-pgid) não deixa subagente órfão queimando cota
       // missão injeta MISSAO_PROGRESS no filho → o agente escreve marcos nesse arquivo e a ponte posta como report
       let _env = childEnv();
@@ -1063,40 +973,6 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       let buf = "", err = "", finalResult = null, finalSid = null, finalUsage = null, mainUsage = null, settled = false, timedOut = false, lastActivity = Date.now();
       let finalIsError = false, finalErrors = "";
       let lastAction = "começando…", panelId = null, _lastMarco = "", _marcos = [], _lastPanelEditAt = 0;
-      // tradutor: nome cru da ferramenta interna vira acao humana pro painel do dono (portado do LEON 27/07)
-      const friendlyAction = (name, input) => {
-        const inp = input || {}; const bn = (p) => p ? String(p).split("/").pop() : "";
-        switch (name) {
-          case "Read":  return `Lendo ${bn(inp.file_path) || "arquivo"}`;
-          case "Write": return `Escrevendo ${bn(inp.file_path) || "arquivo"}`;
-          case "Edit":  return `Editando ${bn(inp.file_path) || "arquivo"}`;
-          case "Grep":  return "Procurando no material";
-          case "Glob":  return "Procurando arquivo";
-          case "Bash": {
-            const d = String(inp.description || "").trim();
-            const _en = /\b(upload|download|run|batch|fire|flags|rest|api|request|response|error|success|retry|check|validate|apply|fix|add|remove|update|create|delete|get|set|load|save|parse|build|deploy|start|stop|kill|install|search|analyze|generate|render|test|debug|verify|scan|list|copy|move|write|read|edit|patch|commit|push|pull|clone|merge|log|status|show|open|close|send|receive|monitor|track|store|fetch|cache|clear|reset|init|setup|config|export|import)\b/i;
-            const _ptOk = /[\u00e1\u00e0\u00e2\u00e3\u00e9\u00ea\u00ed\u00f3\u00f4\u00f5\u00fa\u00fc\u00e7]|\b(rodando|lendo|escrevendo|editando|procurando|olhando|organizando|baixando|consultando|chamando|pesquisando|anotando|criando|apagando|movendo|copiando|conferindo|salvando|abrindo|fechando|enviando|recebendo|montando|arrumando|pegando|tocando|mexendo)\b/i;
-            if (d && (_ptOk.test(d) || !_en.test(d))) return d.length > 60 ? d.slice(0, 57) + "\u2026" : d;
-            // "cd /pasta && node x.js" -> o que importa e o comando DEPOIS do cd, nao o cd
-            let _cmd = String(inp.command || "").trim();
-            if (/^cd\s/.test(_cmd) && /&&/.test(_cmd)) _cmd = _cmd.split("&&").slice(1).join("&&").trim();
-            const c = _cmd.split(/\s+/)[0] || "";
-            if (!c) return "Rodando comando";
-            if (c === "node" || c === "python" || c === "python3") return "Rodando um script";
-            if (c === "git") return "Salvando versao";
-            if (c === "curl" || c === "wget") return "Consultando na internet";
-            if (c === "ls" || c === "find" || c === "cat" || c === "head" || c === "tail" || c === "grep") return "Olhando arquivo";
-            if (c === "cp" || c === "mv" || c === "mkdir" || c === "rm" || c === "chmod") return "Organizando arquivo";
-            return "Rodando comando";
-          }
-          case "Task":       return "Chamando um ajudante";
-          case "WebFetch":   return "Consultando um site";
-          case "WebSearch":  return "Pesquisando na internet";
-          case "TodoWrite":  return "Anotando o plano";
-          case "NotebookEdit": return "Editando notebook";
-          default: return "Pensando";
-        }
-      };
       const elapsed = () => { const s = Math.round((Date.now() - t0) / 1000);
         return s < 60 ? `${s}s` : `${Math.floor(s / 60)}min${s % 60 ? (s % 60) + "s" : ""}`; };
 
@@ -1214,7 +1090,8 @@ function ask(key, text, cfg, chatId, threadId, mission) {
             if (ev.message.usage && !ev.isSidechain) mainUsage = ev.message.usage;   // usage da SESSÃO PRINCIPAL (não dos braços) = contexto real; result.usage agrega o fan-out e infla
             for (const c of ev.message.content) {
               if (c.type === "tool_use") {
-                lastAction = friendlyAction(c.name, c.input);
+                const alvo = (c.input && (c.input.description || c.input.command || c.input.file_path || c.input.pattern)) || "";
+                lastAction = `${c.name}${alvo ? `: ${String(alvo).slice(0, 60)}` : ""}`;
               }
             }
           }
@@ -1240,11 +1117,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
         else {
           // 21/jul FIX: subprocess morreu sem finalResult E sem stderr (OOM/SIGKILL/exit silencioso).
           // Sintetiza diag (exit + signal + duração) pra o dono NÃO ver só "erro do meu lado".
-          // 27/07: exit 143 (=128+SIGTERM) NUNCA e OOM — e desligamento PLANEJADO (restart/self-update)
-          // matando o filho. Chamar isso de "provavel OOM" jogava jargao cru no dono no lugar da entrega
-          // dele. Marca como reinicio: vira mensagem humana + retomada automatica.
-          const _diag = (code === 143 || signal === "SIGTERM") ? "__REINICIO__"
-            : ((err || buf) || `claude fechou sem resposta (exit=${code == null ? "?" : code} signal=${signal || "none"} após ${dur}). Provável OOM/kill do processo.`);
+          const _diag = (err || buf) || `claude fechou sem resposta (exit=${code == null ? "?" : code} signal=${signal || "none"} após ${dur}). Provável OOM/kill do processo.`;
           done({ result: null, sid: finalSid, ctx, err: _diag });
         }
       });
@@ -1300,10 +1173,6 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       //            pra o próximo turno re-semear em vez de virar amnésia.
       // ESCALADA: na 3ª falha seguida do MESMO tópico, para de dizer "é passageiro" — mostra a causa
       // e pede o dono (erro permanente tipo login vencido/chave morta não pode virar loop infinito).
-      // REINÍCIO PLANEJADO vem ANTES de tudo: não é falha do tópico, não conta streak, não vira jargão.
-      if (String(out.err) === "__REINICIO__" || fs.existsSync("/tmp/lean-cliente.selfupd-active")) {
-        return { result: "⚙️ Reiniciei no meio do teu recado (estava aplicando um ajuste). Guardei ele aqui e volto com a resposta em ~1 min — não precisa repetir.", sid: out.sid, ctx: out.ctx || 0, ok: false, retomar: true };
-      }
       const streak = (_failStreak[key] = (_failStreak[key] || 0) + 1);
       if (streak >= 3) {
         const causa = String(out.err || "").split("\n").map(s => s.trim()).filter(Boolean).pop() || "";
@@ -1477,9 +1346,10 @@ function processOne(msg, chatId, threadId, key, cfg, mission) {
     // comando /atualiza — o agente se atualiza sozinho: dispara o agente-update.service (roda
     // num cgroup separado, sobrevive ao restart, valida e reverte sozinho se quebrar). Sem cota.
     if (/^\/atualiza/i.test(text.trim())) {
-      gravarReciboUpdate(chatId, threadId);   // VOCÊ pediu → alguém está esperando resposta. Update agendado NÃO cria recibo = silencioso.
+      try { fs.writeFileSync(`${WORKDIR}/.greet`, ""); } catch {}   // VOCÊ pediu → saúda "No ar!" quando voltar. Update agendado NÃO cria este flag = silencioso.
       try { spawn("systemctl", ["--user", "start", "agente-update.service"], { detached: true, stdio: "ignore" }).unref(); } catch {}
-      return send(chatId, `🔄 Atualizando pra última versão do método... o update roda separado e me reinicia sozinho. Volto com o "✅ No ar!" em poucos minutos — e se em 6 minutos eu não tiver voltado, eu mesmo te aviso aqui o que aconteceu. De um jeito ou de outro você vai ter resposta.`, threadId);
+      armarWatchdogUpdate(chatId, threadId);
+      return send(chatId, `🔄 Atualizando pra última versão do método... o update roda separado e me reinicia sozinho. Já volto com o "✅ No ar!" em até uns minutos. Se der qualquer problema no caminho, eu te aviso aqui mesmo — você não vai ficar no escuro.`, threadId);
     }
     // comando /audio — liga a transcrição de áudio (instala faster-whisper local, SEM root, num cgroup separado)
     if (/^\/(audio|áudio|voz)\b/i.test(text.trim())) {
@@ -1575,47 +1445,7 @@ function drainAll() {
 const _isMedia = (m) => !!(m.voice || m.audio || m.photo || m.document || m.video || m.video_note);
 const _isCmd = (m) => /^\/[a-z]/i.test(String(m.text || "").trim());   // comando (barra no início) NUNCA é coalescido — senão fica soterrado no meio de um lote e não dispara
 // enfileira (respeitando QMAX/teto global) OU processa já. Compartilhado por flushPending e pelo bypass de comando.
-// ---- PORTÃO DA CONEXÃO DO META (caminho canônico: MCP oficial da Meta) ----
-// Roda ANTES do modelo, em TODO pedido resolvido — inclusive o que chegou por ÁUDIO.
-// O gatilho lá de cima no loop só enxerga texto DIGITADO (msg.text/caption); áudio só vira
-// texto depois da transcrição, então pedido falado escapava, caía no modelo, e o modelo
-// inventava intermediário de terceiro. Aqui é o funil único: texto, áudio e lote passam.
-function metaConnectGate(chatId, threadId, txt) {
-  const t = String(txt || "").trim();
-  if (!t) return false;
-  let _meta;
-  try { _meta = require("./lib/meta-connect.js"); } catch { return false; }
-  try {
-    if (_meta.isMetaCallback(t)) {
-      (async () => {
-        await send(chatId, "Recebi. Fechando a conexão com o Meta…", threadId).catch(() => {});
-        const r = await _meta.finishMetaConnect(WORKDIR, t);
-        if (r.ok) {
-          const lista = r.accounts.slice(0, 8).map((a) => `· ${a.name}`).join("\n");
-          const resto = r.accounts.length > 8 ? `\n…e mais ${r.accounts.length - 8}.` : "";
-          await send(chatId, `✅ Meta conectado.\n\nAchei ${r.accounts.length} conta(s) de anúncio:\n${lista}${resto}\n\nJá consigo ler resultado, criar campanha e subir anúncio direto por aqui. A conexão vale ${r.days} dias, e eu te aviso antes de vencer.`, threadId);
-        } else if (r.reason === "codigo_expirado" || r.reason === "estado_divergente" || r.reason === "sem_pedido") {
-          const s = await _meta.startMetaConnect(WORKDIR);
-          await send(chatId, `${r.msg}\n\n${_meta.instructions(s.url)}`, threadId);
-        } else {
-          await send(chatId, r.msg, threadId);
-        }
-      })().catch((e) => console.error("[meta-connect]", e && e.message));
-      return true;
-    }
-    if (_meta.detectMetaConnectIntent(t)) {
-      (async () => {
-        const s = await _meta.startMetaConnect(WORKDIR);
-        await send(chatId, _meta.instructions(s.url), threadId);
-      })().catch((e) => console.error("[meta-connect]", e && e.message));
-      return true;
-    }
-  } catch (e) { console.error("[meta-connect]", e && e.message); }
-  return false;
-}
-
 function dispatchResolved(dispatchMsg, chatId, threadId, key, cfg) {
-  if (metaConnectGate(chatId, threadId, String((dispatchMsg && dispatchMsg.text) || ""))) return;
   if (busy[key] || running() >= MAX_CONCURRENT) {
     const q = (queue[key] = queue[key] || []);
     if (q.length < QMAX) { q.push({ msg: dispatchMsg, chatId, threadId, cfg }); console.log(`[ponte] fila: +1 em ${key} (${q.length} aguardando)`); }
@@ -1923,53 +1753,15 @@ async function poll() {
         }
         const hasInput = msg.text || msg.caption || msg.voice || msg.audio || msg.photo || msg.document;
         if (!hasInput) continue;                             // nada que eu saiba processar
-
-        // ---- CONECTAR O META (MCP oficial da Meta) — roda ANTES do turno normal ----
-        // O dono só faz login no Facebook dele: nada de app de desenvolvedor, Business Manager
-        // ou aprovação. Dois gatilhos: pedir pra conectar (linguagem natural ou /conectarmeta),
-        // e colar de volta o endereço que o navegador mostrou.
-        {
-          const _mtxt = (msg.text || msg.caption || "").trim();
-          if (_mtxt) {
-            try {
-              const _meta = require("./lib/meta-connect.js");
-              if (_meta.isMetaCallback(_mtxt)) {
-                send(chatId, "Recebi. Fechando a conexão com o Meta…", threadId).catch(() => {});
-                const _r = await _meta.finishMetaConnect(WORKDIR, _mtxt);
-                if (_r.ok) {
-                  const _lista = _r.accounts.slice(0, 8).map((a) => `· ${a.name}`).join("\n");
-                  const _resto = _r.accounts.length > 8 ? `\n…e mais ${_r.accounts.length - 8}.` : "";
-                  send(chatId, `✅ Meta conectado.\n\nAchei ${_r.accounts.length} conta(s) de anúncio:\n${_lista}${_resto}\n\nJá consigo ler resultado, criar campanha e subir anúncio direto por aqui. A conexão vale ${_r.days} dias, e eu te aviso antes de vencer.`, threadId).catch(() => {});
-                } else if (_r.reason === "codigo_expirado" || _r.reason === "estado_divergente" || _r.reason === "sem_pedido") {
-                  const _s = await _meta.startMetaConnect(WORKDIR);
-                  send(chatId, `${_r.msg}\n\n${_meta.instructions(_s.url)}`, threadId).catch(() => {});
-                } else {
-                  send(chatId, _r.msg, threadId).catch(() => {});
-                }
-                continue;
-              }
-              if (_meta.detectMetaConnectIntent(_mtxt)) {
-                const _s = await _meta.startMetaConnect(WORKDIR);
-                send(chatId, _meta.instructions(_s.url), threadId).catch(() => {});
-                continue;
-              }
-              // aviso espontâneo de vencimento: no máximo 1× por dia, e já com o link novo.
-              if (isOwner && _meta.shouldWarnExpiry(WORKDIR)) {
-                _meta.startMetaConnect(WORKDIR)
-                  .then((_s) => send(chatId, `⚠️ Tua conexão com o Meta está perto de vencer.\n\n${_meta.instructions(_s.url)}`, threadId))
-                  .catch(() => {});
-              }
-            } catch (e) { console.error("[meta-connect]", e && e.message); }
-          }
-        }
         const key = `${chatId}:${threadId || "main"}`;       // 1 sessão por chat+tópico
         const cfg = route(chatId, threadId);
         // /atualiza FURA A FILA — funciona MESMO travado: dispara o update separado (que reinicia e mata a trava).
         // Sem isto, /atualiza ficava ENFILEIRADO atrás da sessão presa → o cliente só destravava pela VPS (errado).
         if (/^\/atualiza/i.test((msg.text || msg.caption || "").trim())) {
-          gravarReciboUpdate(chatId, threadId);
+          try { fs.writeFileSync(`${WORKDIR}/.greet`, ""); } catch {}
           try { spawn("systemctl", ["--user", "start", "agente-update.service"], { detached: true, stdio: "ignore" }).unref(); } catch {}
-          send(chatId, `🔄 Atualizando pra última versão... o update roda separado e me reinicio sozinho (mato qualquer trava). Volto com o "✅ No ar!" em poucos minutos — e se em 6 minutos eu não tiver voltado, eu mesmo te aviso aqui o que aconteceu. De um jeito ou de outro você vai ter resposta.`, threadId).catch(() => {});
+          armarWatchdogUpdate(chatId, threadId);
+          send(chatId, `🔄 Atualizando pra última versão... o update roda separado e me reinicio sozinho (mato qualquer trava). Já volto com o "✅ No ar!" em até uns minutos. Se der qualquer problema no caminho, eu te aviso aqui mesmo — você não vai ficar no escuro.`, threadId).catch(() => {});
           continue;
         }
         // /status → saúde do agente SEM sair do Telegram: uptime, ocupado/fila, promessas, últimas
@@ -2178,55 +1970,30 @@ if (require.main === module) {
   acquireLock();   // FIX H — garante instância única antes de abrir o long-poll (evita 409 + sessions.json corrompido)
   console.log(`[ponte-fina] no ar · ${Object.keys(topics).length} tópicos roteados · owner=${OWNER} grupo=${GROUP} · ctx redondo: SOFT=${SOFT_FRAC} HARD=${HARD_FRAC} floor=${STATIC_FLOOR}`);
   poll();
-  rotateMemViva(); setInterval(rotateMemViva, 21600000).unref();   // faxina da memória viva: no boot + a cada 6h, silenciosa (nunca deixa o arquivo crescer até o E2BIG)
   guardTmp(); setInterval(guardTmp, 300000);   // blindagem /tmp (tmpfs pequeno enche com whisper/vídeo e trava): limpa regenerável + avisa cedo, a cada 5min (08/jul)
   checkPromises(); setInterval(checkPromises, 30000);   // agendador DURÁVEL: dispara promessas vencidas (inclusive as perdidas num restart) + checa a cada 30s
   setTimeout(checkMissions, 8000); setInterval(checkMissions, 30000);   // MODO MISSÃO: retoma no boot missão que caiu num restart (espera 8s o dreno assentar) + varre a cada 30s
   setTimeout(sweepMissions, 15000); setInterval(sweepMissions, 21600000);   // FAXINA: apaga missão fechada (done/failed) há +MISSAO_RETAIN_DAYS dias — no boot (após o dreno assentar) + a cada 6h. running fica intacta
   // SELF-CHECK do boot: fala SÓ se algo estiver quebrado (o "no ar" cego anunciava saúde sem checar nada)
   setTimeout(() => { const probs = depsCheck(); if (probs.length) send(OWNER, `⚠️ Subi com pendência(s):\n· ${probs.join("\n· ")}\nManda /status pra acompanhar.`).catch(() => {}); }, 3000);
-  // SAUDAÇÃO PÓS-UPDATE. O recibo guarda quem pediu (conversa e tópico), então a
-  // resposta volta no mesmo lugar da pergunta. Consumir aqui é o que faz o vigia
-  // ficar calado — sem isso o dono ouviria a mesma boa notícia duas vezes. O flag
-  // antigo sai junto, pelo mesmo motivo (quem saúda por ele é o ExecStartPost).
-  setTimeout(() => {
-    const GREET = `${WORKDIR}/.greet`;
-    let alvo = null, th = null, veioDeUpdate = false;
-    try {
-      const rc = JSON.parse(fs.readFileSync(RECIBO_UPDATE, "utf8"));
-      alvo = rc.chatId || OWNER; th = rc.threadId || null; veioDeUpdate = true;
-      fs.unlinkSync(RECIBO_UPDATE);
-      try { fs.unlinkSync(GREET); } catch {}
-    } catch {}
-    if (veioDeUpdate && alvo) send(alvo, `✅ No ar! Já estou na última versão. Nada da nossa conversa se perdeu.`, th).catch(() => {});
-  }, 4000);
-  // ROBUSTEZ: instala crons de backup diário (3h AM) + health check (a cada 5min) +
-  // o vigia do /atualiza (de minuto em minuto: a pessoa está esperando resposta agora,
-  // não daqui a 5). Idempotente: só adiciona linha que ainda não existe. Os scripts
-  // moram na cópia do repositório, que nem sempre é a pasta do motor — procura nos
-  // dois, senão vira linha de cron apontando pro vazio.
+  // ROBUSTEZ: instala crons de backup diário (3h AM) + health check (a cada 5min). Idempotente: só adiciona linha que ainda não existe.
   setTimeout(() => {
     try {
-      const acha = (nome) => [`${__dirname}/scripts/${nome}`, `${process.env.HOME}/agente-soft/scripts/${nome}`].find(p => { try { return fs.existsSync(p); } catch { return false; } });
-      const rotinas = [
-        [acha("backup-diario.sh"),  "0 3 * * *"],
-        [acha("health-check.sh"),   "*/5 * * * *"],
-        [acha("update-verdict.sh"), "* * * * *"],
-      ].filter(([p]) => !!p);
-      if (!rotinas.length) return;
+      const bkp = `${__dirname}/scripts/backup-diario.sh`;
+      const hc  = `${__dirname}/scripts/health-check.sh`;
+      if (!fs.existsSync(bkp) || !fs.existsSync(hc)) return;
       const cur = (spawnSync("crontab", ["-l"], { encoding: "utf8", timeout: 3000 }).stdout || "");
       const linhas = cur.split("\n").filter(Boolean);
       let mudou = false;
-      for (const [script, quando] of rotinas) {
-        if (!linhas.some(l => l.includes(script))) { linhas.push(`${quando} ${script} >/dev/null 2>&1`); mudou = true; }
-      }
+      if (!linhas.some(l => l.includes(bkp)))  { linhas.push(`0 3 * * * ${bkp} >/dev/null 2>&1`); mudou = true; }
+      if (!linhas.some(l => l.includes(hc)))   { linhas.push(`*/5 * * * * ${hc} >/dev/null 2>&1`); mudou = true; }
       if (mudou) {
         const r = spawnSync("crontab", ["-"], { input: linhas.join("\n") + "\n", encoding: "utf8", timeout: 3000 });
-        if (r.status === 0) console.log("[ponte] crons de robustez instalados (backup · health · vigia do /atualiza)");
+        if (r.status === 0) console.log("[ponte] crons de robustez instalados (backup 3h · health 5min)");
         else console.error("[ponte] falha ao instalar crons:", (r.stderr || "").slice(0, 200));
       }
     } catch (e) { console.error("[ponte] cron install:", e && e.message || e); }
   }, 5000);
-} else module.exports = { capBytes, rotateMemViva, readLines, readTail, tailBytes, timeBlock, convoBlock, winFor, projDir, sidExists, persistSession, gate,
+} else module.exports = { readLines, readTail, tailBytes, timeBlock, convoBlock, winFor, projDir, sidExists, persistSession, gate,
   ask, compactSession, withCompactSlot, chunk,
   _state: () => sessions, _setSessions: (s) => { sessions = s; }, SOFT_FRAC, HARD_FRAC, STATIC_FLOOR };

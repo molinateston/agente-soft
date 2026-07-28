@@ -124,23 +124,6 @@ if [ -f "$REPO_DIR/bridge.cjs" ] && ! cmp -s "$REPO_DIR/bridge.cjs" "$BRIDGE_DIR
   BRIDGE_CHANGED=1
 fi
 
-# ---- Pastas de apoio (lib/, workers/) --------------------------------
-# Até 25/07 o update copiava SÓ o bridge.cjs. Mas o motor passou a EXIGIR
-# lib/onboarding.js (as salas nascem), lib/meta-connect.js (conta de anúncios) e
-# workers/ (voz). Quem já estava instalado recebia o motor novo apontando pra uma
-# pasta que não existe: o require falha dentro de try/catch e o recurso some EM
-# SILÊNCIO, sem erro e sem log. Sincronizar aqui é o que fecha esse buraco.
-PASTAS="lib workers"
-PASTAS_CHANGED=0
-# O onboarding chegando pela PRIMEIRA vez numa instalação que já roda faria o agente se
-# apresentar como recém-instalado, do nada, pra um dono que já usa ele há semanas.
-ONB_NOVO=0
-[ -f "$BRIDGE_DIR/lib/onboarding.js" ] || ONB_NOVO=1
-for d in $PASTAS; do
-  [ -d "$REPO_DIR/$d" ] || continue
-  if ! diff -rq "$REPO_DIR/$d" "$BRIDGE_DIR/$d" >/dev/null 2>&1; then PASTAS_CHANGED=1; break; fi
-done
-
 # Units genéricos mudaram? (pra uma mudança SÓ de .service/.timer também propagar
 # pra frota, e não ser pulada pelo "nada novo" abaixo.)
 UNITS_CHANGED=0
@@ -150,11 +133,11 @@ for u in agente-update.service agente-update.timer agente-health.service agente-
 done
 
 # ---- Nada novo? Sai barato (sem chamar o claude, sem reiniciar) ------
-if [ "$OLD_SHA" = "$NEW_SHA" ] && [ "$BRIDGE_CHANGED" -eq 0 ] && [ "$UNITS_CHANGED" -eq 0 ] && [ "$PASTAS_CHANGED" -eq 0 ]; then
+if [ "$OLD_SHA" = "$NEW_SHA" ] && [ "$BRIDGE_CHANGED" -eq 0 ] && [ "$UNITS_CHANGED" -eq 0 ]; then
   [ "$PULL_FAIL" -eq 1 ] && { say "→ Sem mudança aplicável, mas um pull falhou (veja acima)."; exit 1; }
   say "→ Já está na última versão (nada a fazer)."; exit 0
 fi
-say "→ Mudança detectada (skills $OLD_SHA → $NEW_SHA; bridge=$BRIDGE_CHANGED; units=$UNITS_CHANGED; pastas=$PASTAS_CHANGED). Aplicando..."
+say "→ Mudança detectada (skills $OLD_SHA → $NEW_SHA; bridge=$BRIDGE_CHANGED; units=$UNITS_CHANGED). Aplicando..."
 
 # ---- 2/5 (SEM gate de login) ----------------------------------------
 # O update NÃO bloqueia por login. Aplicar (git + cp + restart) é seguro mesmo
@@ -179,9 +162,6 @@ for f in .env topics.json sessions.json bridge.cjs; do
   [ -f "$BRIDGE_DIR/$f" ] && { cp -p "$BRIDGE_DIR/$f" "$BACKUP_DIR/$f" || snap_fail "$f"; }
 done
 [ -d "$BRIDGE_DIR/persona" ] && { cp -rp "$BRIDGE_DIR/persona" "$BACKUP_DIR/persona" || snap_fail "persona"; }
-for d in $PASTAS; do
-  [ -d "$BRIDGE_DIR/$d" ] && { cp -rp "$BRIDGE_DIR/$d" "$BACKUP_DIR/$d" || snap_fail "$d"; }
-done
 cp -p "$HOME/.config/systemd/user/agente.service" "$BACKUP_DIR/agente.service" 2>/dev/null || true
 # Units genéricos no snapshot (pro rollback poder restaurá-los; ver sync abaixo).
 for u in agente-update.service agente-update.timer agente-health.service agente-health.timer; do
@@ -201,22 +181,6 @@ if [ "$BRIDGE_CHANGED" -eq 1 ]; then
     # sai no fim do script, antes do restart — pra ele saber que atualizei mas
     # o motor novo estava quebrado (segue no antigo, sem impacto imediato).
   fi
-fi
-
-# Aplica as pastas de apoio ANTES do restart — o motor novo depende delas pra subir
-# com onboarding, conexão de anúncios e voz funcionando.
-if [ "$PASTAS_CHANGED" -eq 1 ]; then
-  for d in $PASTAS; do
-    [ -d "$REPO_DIR/$d" ] || continue
-    mkdir -p "$BRIDGE_DIR/$d"
-    if cp -a "$REPO_DIR/$d"/. "$BRIDGE_DIR/$d"/ 2>>"$LOG"; then say "→ pasta sincronizada: $d"
-    else say "⚠️ falha ao sincronizar $d — mantida a anterior."; fi
-  done
-fi
-
-if [ "$ONB_NOVO" -eq 1 ] && [ -f "$BRIDGE_DIR/lib/onboarding.js" ] && [ ! -f "$BRIDGE_DIR/.onboarding-state.json" ]; then
-  date -Iseconds > "$BRIDGE_DIR/.onboarding-done" 2>/dev/null || true
-  say "→ dono já conhecido: conversa de boas-vindas marcada como feita"
 fi
 
 # ---- Sincroniza os UNITS GENÉRICOS do repo pra frota já instalada -----
@@ -273,24 +237,54 @@ fi
 # motor novo ao subir (consome o recibo e saúda), e se ele não subir, o vigia entrega
 # o veredito honesto de fora.
 trap - EXIT
-systemctl --user restart agente
+
+# COMO reiniciar e COMO conferir NESTA máquina. Nunca supor que existe systemd de
+# usuário: há instalação sem sessão de usuário, onde "systemctl --user" não responde
+# — lá o reinício não acontecia e ninguém ficava sabendo. Tenta o caminho de sempre;
+# se ele não servir, pergunta ao detector qual é o jeito desta máquina. E pra saber
+# se o agente está de pé sem barramento, olha o processo em vez do systemd.
+BUS_OK=0
+timeout 6 systemctl --user show --property=Version >/dev/null 2>&1 && BUS_OK=1
+
+agente_reiniciar() {
+  if [ "$BUS_OK" = "1" ] && systemctl --user restart agente 2>>"$LOG"; then return 0; fi
+  local det="$REPO_DIR/scripts/runtime-detect.sh" cmd=""
+  [ -x "$det" ] || det="$BRIDGE_DIR/scripts/runtime-detect.sh"
+  if [ -x "$det" ]; then
+    cmd="$("$det" --dir "$BRIDGE_DIR" --print 2>/dev/null | sed -n 's/.*"reiniciar"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)"
+  fi
+  if [ -n "$cmd" ]; then
+    say "sem o caminho de sempre; reiniciando pelo jeito desta máquina: $cmd"
+    bash -lc "$cmd" >>"$LOG" 2>&1 && return 0
+  fi
+  say "⚠️ não encontrei jeito de reiniciar o agente nesta máquina"
+  return 1
+}
+
+agente_vivo() {
+  if [ "$BUS_OK" = "1" ]; then systemctl --user is-active --quiet agente && return 0; fi
+  pgrep -u "$(id -u)" -f "$BRIDGE_DIR/bridge.cjs" >/dev/null 2>&1
+}
+
+agente_reiniciar || true
 sleep 4
 
 # ---- 5/5 Validação (e auto-rollback se falhar) -----------------------
 FAIL=0
 node --check "$BRIDGE_DIR/bridge.cjs" || FAIL=1
-systemctl --user is-active --quiet agente || FAIL=1
+agente_vivo || FAIL=1
 ls "$SKILLS_DIR"/*/SKILL.md >/dev/null 2>&1 || FAIL=1
 # 2ª checagem ~18s depois: pega crash-loop TARDIO (sobe, passa o is-active de 4s, e morre
 # no 1º getUpdates ou batendo no StartLimitBurst). is-failed pega o systemd desistindo.
 if [ "$FAIL" -eq 0 ]; then
   sleep 18
-  systemctl --user is-active --quiet agente || FAIL=1
-  systemctl --user is-failed --quiet agente && FAIL=1
+  agente_vivo || FAIL=1
+  [ "$BUS_OK" = "1" ] && systemctl --user is-failed --quiet agente && FAIL=1
 fi
 # Timer de auto-update sobreviveu ao push? Um .timer/.service quebrado mataria o
 # auto-update da frota EM SILÊNCIO — aqui isso vira FAIL e dispara o rollback.
-if [ "$UNITS_CHANGED" -eq 1 ] || [ "$NEED_RELOAD" -eq 1 ]; then
+# Só vale onde existe systemd de usuário: sem ele, não há timer nenhum pra checar.
+if [ "$BUS_OK" = "1" ] && { [ "$UNITS_CHANGED" -eq 1 ] || [ "$NEED_RELOAD" -eq 1 ]; }; then
   systemctl --user is-active --quiet agente-update.timer || { say "⚠️ agente-update.timer não ficou ativo após o update."; FAIL=1; }
 fi
 if [ "$FAIL" -eq 0 ]; then

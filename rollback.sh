@@ -68,13 +68,6 @@ if [ -d "$BACKUP_DIR/persona" ]; then
     say "⚠️ cp da persona falhou — MANTIDA a persona atual (não apaguei nada)."; rm -rf "$BRIDGE_DIR/persona.new" 2>/dev/null || true
   fi
 fi
-# Pastas de apoio (lib/, workers/): o motor antigo pode depender de versões antigas delas.
-# Só sobrescreve o que veio no snapshot; nada é apagado.
-for d in lib workers; do
-  [ -d "$BACKUP_DIR/$d" ] || continue
-  mkdir -p "$BRIDGE_DIR/$d"
-  cp -a "$BACKUP_DIR/$d"/. "$BRIDGE_DIR/$d"/ || say "⚠️ restore de $d falhou — segui (não abortei o rollback)."
-done
 # Restaura os units do backup: agente.service + os 4 genéricos (update/health .service/.timer),
 # senão um rollback deixa units quebrados de um push ruim no lugar.
 [ -f "$BACKUP_DIR/agente.service" ] && { cp -p "$BACKUP_DIR/agente.service" "$HOME/.config/systemd/user/agente.service" || say "⚠️ restore do agente.service falhou."; }
