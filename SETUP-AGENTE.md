@@ -76,6 +76,17 @@ mkdir -p ~/lean-bridge/persona ~/lean-bridge/brain
 cp ~/agente-soft/bridge.cjs ~/lean-bridge/bridge.cjs
 node --check ~/lean-bridge/bridge.cjs
 
+# AS SKILLS DO METODO. Sem este clone o agente responde de cabeca em carrossel,
+# headline, landing e webinar: marketing generico no lugar do metodo. Pior, o
+# update.sh valida `ls $SKILLS_DIR/*/SKILL.md` e faz ROLLBACK se nao achar, entao
+# sem as skills o cliente nunca recebe atualizacao nenhuma, para sempre e calado.
+mkdir -p ~/.claude
+[ -d ~/.claude/skills/.git ] && (cd ~/.claude/skills && git pull -q) || \
+  git clone https://github.com/molinateston/agente-soft-skills.git ~/.claude/skills
+
+# confere que chegou (tem que listar varias)
+ls ~/.claude/skills/*/SKILL.md | wc -l
+
 # Semeia o índice de memória (brain/MAPA.md) pro PROTOCOLO DE RECALL ter o que ler desde
 # o dia 1. Sem isso, em cliente novo o Read do MAPA falha e o recall vira no-op (o agente
 # não acha as notas que vai criando). Só cria se não existir (não sobrescreve memória).
@@ -113,7 +124,7 @@ MEMVIVAEOF
 
 mkdir -p ~/.claude
 ```
-> O agente gratuito não instala as skills do método (isso é exclusivo do Projeto LEON pago).
+> As skills do método são instaladas na ETAPA 2. Se `ls ~/.claude/skills/*/SKILL.md` não listar nada, pare e resolva antes de seguir: sem elas o agente responde de cabeça e o update entra em rollback eterno.
 
 ## ETAPA 3 — Configurar (.env, persona, roteamento)
 > Note: **NÃO existe token Claude no .env.** O runtime usa o login nativo que está

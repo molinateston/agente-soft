@@ -1498,6 +1498,33 @@ function processOne(msg, chatId, threadId, key, cfg, mission) {
     if (/^\/(id|topic_?id|grupo_?id|chat_?id)\b/i.test(text.trim())) {
       return send(chatId, `📍 Onde você está agora:\nchat_id: ${chatId}\ntopic_id: ${threadId || "(sem tópico — chat principal/DM)"}\nsala: ${cfg.label || "Geral"}\n\nÉ esse o id deste grupo/tópico — use no .env (GROUP_CHAT_ID) ou no topics.json pra me configurar aqui.`, threadId);
     }
+    // /ajuda — a PORTA DE ENTRADA. O botao azul "INICIAR" do Telegram manda /start por padrao, e
+    // ate 29/07 nao havia resposta nenhuma pra ele: a primeira interacao do produto era um botao
+    // morto. Pior, o dono nao tinha como descobrir o que o agente sabe fazer sem adivinhar o nome
+    // da skill. Os exemplos abaixo sao em linguagem de RESULTADO ("pagina que captura e-mail"),
+    // nao de metodo ("soft-funil-landing"): quem chega nao conhece o vocabulario interno.
+    if (/^\/(ajuda|help|start|comandos|menu|skills)\b/i.test(text.trim())) {
+      return send(chatId, [
+        `Eu sou teu sócio de operação. Você me fala o que precisa, em português normal, e eu faço.`,
+        ``,
+        `*Pra começar (nesta ordem dá mais resultado):*`,
+        `1. _me ajuda a definir o que eu vendo e pra quem_ — a base. Tudo depois sai melhor.`,
+        `2. _me escreve 3 headlines pra vender [teu produto]_`,
+        `3. _monta um carrossel sobre [teu tema]_`,
+        ``,
+        `*Outras coisas que eu faço:*`,
+        `· _faz a página que captura e-mail_`,
+        `· _escreve o roteiro de um reel_`,
+        `· _monta o plano do meu webinário: o que vender e por quanto_`,
+        `· _me ajuda a fechar essa venda_ (cola a conversa)`,
+        `· _quanto eu devo cobrar por isso_`,
+        `· _dá uma olhada nessa copy e melhora_`,
+        ``,
+        `*Comandos:* /status (como eu tô) · /atualiza (pego a última versão do método)`,
+        ``,
+        `Pode mandar áudio, print, PDF. E não precisa acertar a palavra certa: fala do teu jeito que eu entendo.`
+      ].join("\n"), threadId);
+    }
     // comando /atualiza — o agente se atualiza sozinho: dispara o agente-update.service (roda
     // num cgroup separado, sobrevive ao restart, valida e reverte sozinho se quebrar). Sem cota.
     if (/^\/atualiza/i.test(text.trim())) {
@@ -1843,6 +1870,22 @@ function checkPromises() {
     try { firePromise(job); } catch (e) { console.error("[ponte] promessa erro:", e.message); }
   }
 }
+
+// MENU NATIVO DO TELEGRAM (29/07). Sem isto, o cliente digita "/" e nao aparece nada: ele precisa
+// ADIVINHAR que existe /ajuda. O setMyCommands faz o Telegram mostrar a lista sozinho, com
+// descricao, no proprio campo de digitacao. Roda uma vez no boot; falha aqui nunca derruba o bot.
+async function registrarMenu() {
+  try {
+    await tg("setMyCommands", { commands: [
+      { command: "ajuda",     description: "o que eu faco e como pedir" },
+      { command: "status",    description: "como eu estou (conta, versao, saude)" },
+      { command: "atualiza",  description: "pego a ultima versao do metodo" },
+      { command: "id",        description: "o id deste grupo/topico" },
+    ]});
+    console.log("[ponte] menu de comandos registrado no Telegram");
+  } catch (e) { console.error("[ponte] setMyCommands falhou (segue a vida):", e && e.message); }
+}
+registrarMenu();
 
 async function poll() {
   while (!_shuttingDown) {   // no shutdown: para de pegar mensagem nova; o dreno espera as em voo terminarem
