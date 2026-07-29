@@ -4,8 +4,8 @@ CAMINHOS CANONICOS DO LEON
 
 Fonte unica da verdade para DUAS coisas: como o dono CONECTA uma
 ferramenta, e como o dono PEDE uma coisa e recebe o resultado.
-Vale para TODO LEON: o do Leo, o LEVIN, o MAMOCA e o de cada
-cliente. Mesmo texto, mesma resposta, em qualquer agente.
+Vale para TODO agente da frota, sem excecao. Mesmo texto, mesma
+resposta, em qualquer agente.
 
 ------------------------------
 REGRA MAE (acima de tudo)
@@ -272,7 +272,7 @@ A chave esta guardada e a lista de contatos responde.
 QUANDO VENCE
 Nao vence, salvo revogacao no proprio CRM.
 
-REGRA DURA DA AUTOMACAO NO GHL (Leo cravou 27/07 22h26)
+REGRA DURA DA AUTOMACAO NO GHL (regra da casa, 27/07)
 Toda vez que voce propor automacao, workflow, gatilho, webhook
 ou campo no GoHighLevel, voce entrega DUAS coisas, sempre, sem
 o dono pedir:

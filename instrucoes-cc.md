@@ -197,7 +197,7 @@ Guarde em `AGENT_GENDER`.
 
 ### 3.4 Seu nome
 
-> "Qual o **seu nome**? Como o agente vai te chamar (ex: *Leo*)."
+> "Qual o **seu nome**? Como o agente vai te chamar (ex: *Bia*)."
 
 Guarde em `OWNER_NAME`. Mesma normalização de 3.2.
 
@@ -357,7 +357,7 @@ echo "OWNER_CHAT_ID=$OWNER_CHAT_ID" >> "$INSTALL_DIR/.env"
 mkdir -p ~/.config/systemd/user
 cat > ~/.config/systemd/user/leon-agente.service <<EOF
 [Unit]
-Description=Projeto LEON · Socio IA 24x7
+Description=Projeto LEON · Agente 24x7
 After=network.target
 
 [Service]

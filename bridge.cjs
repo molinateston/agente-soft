@@ -216,7 +216,7 @@ const VOICE_PY      = process.env.VOICE_PY || "/usr/bin/python3";
 const VOICE_HANDLER = process.env.VOICE_HANDLER || `${WORKDIR}/workers/voice-handler.py`;
 const VOICE_ENABLED = (() => { try { return fs.existsSync(VOICE_HANDLER); } catch { return false; } })();
 // VOZ DE SAÍDA (TTS): "mirror" = responde em áudio quando o dono manda áudio; "always" = toda resposta; "off" = nunca.
-// Default MIRROR desde 23/07: áudio-in vira áudio-out por padrão (paridade com o LEON do Léo, feedback do dono).
+// Default MIRROR desde 23/07: áudio-in vira áudio-out por padrão (paridade com o padrao da frota, feedback do dono).
 // Provider default é edgetts (Antonio/Francisca pt-BR, grátis), então áudio de volta funciona sem chave paga.
 const VOICE_REPLY = (process.env.VOICE_REPLY || "mirror").toLowerCase();
 const TTS_VOICE   = process.env.TTS_VOICE || "echo";              // OpenAI fallback: echo/onyx/nova/shimmer/alloy/fable/ash/sage/verse
@@ -282,7 +282,7 @@ const MEMVIVA_ROTATE_AT = Number(process.env.MEMVIVA_ROTATE_AT || 32 * 1024);  /
 // janela de contexto por modelo (p/ escalar SOFT/HARD e limiar de órfão — não queimar cota no cliente sonnet)
 const winFor = (m) => ({ "opus": 200000, "opus[1m]": 1000000, "sonnet": 400000, "sonnet[1m]": 1000000, "haiku": 200000 }[m] || 200000);
 
-// TRADUTOR de erro tecnico -> linguagem amigavel (Leo 21/07: "todo erro tem que ser mais friendly").
+// TRADUTOR de erro tecnico -> linguagem amigavel (regra da casa 21/07: "todo erro tem que ser mais friendly").
 // Regra: NUNCA vomitar JSON cru / "API Error {...}" / stack trace pro dono. Detecta padrao comum e traduz.
 function friendlyError(errText) {
   const s = String(errText || "");

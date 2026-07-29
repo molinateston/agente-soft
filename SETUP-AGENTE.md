@@ -39,7 +39,7 @@ claude -p --model sonnet "responda só OK" | head -c 40 | grep -qiE '^[^a-z]*ok'
 > **Este check é só sanity interno — NÃO mostre a string `CHECK_FALHOU` (nem `LOGIN_OK`) pro dono.** Você já está rodando DENTRO do `claude` logado dele, então normalmente passa. Se `CHECK_FALHOU` aparecer, NÃO peça pra ele "rodar claude e logar" (ele já está dentro). Quase sempre é um soluço de rede/limite momentâneo: espere alguns segundos e rode o `claude -p` de novo. Se insistir em falhar, traduza pra algo acionável em português simples — ex.: *"O login parece não ter completado. Volte na aba do navegador onde você autorizou o Claude e confirme que terminou; se tiver fechado antes, rode `claude` numa OUTRA aba do terminal e refaça o login."* — e só então continue.
 
 ## ETAPA 1 — Coletar os dados (uma pergunta por vez)
-1. "Qual o **nome do agente**? Pode ser qualquer nome, mas o padrão da casa é **LEON** (é o nome do agente do Léo Molina, e todo mundo que manteve LEON prosperou — dizem que dá sorte kkk). Se preferir outro (ex: Bia, Sofia), fica à vontade." → `AGENT_NAME`
+1. "Qual o **nome do agente**? Pode ser qualquer nome, mas o padrão da casa é **LEON** (é o nome original do agente, e todo mundo que manteve LEON prosperou, dizem que dá sorte kkk). Se preferir outro (ex: Bia, Sofia), fica à vontade." → `AGENT_NAME`
 1b. "Essa persona é **masculina** ou **feminina**? (isso define a voz que ele/ela vai usar quando responder em áudio — Alex se masculina, Dora se feminina)." → `AGENT_GENDER` (aceita: `male`/`m`/`masculino`/`masc` ou `female`/`f`/`feminino`/`fem`; normalize pra `male` ou `female` antes de gravar. Se ficar em dúvida — nome unissex ou o dono não decidiu — assuma `male` e avise: "vou deixar masculina (Alex); se quiser trocar depois, é só falar").
 2. "Qual o **seu nome**? (como o agente vai te chamar)" → `OWNER_NAME`
 3. **Crie o bot do Telegram** — guie o dono assim (mande estas instruções pra ele e espere o token):
@@ -54,7 +54,7 @@ claude -p --model sonnet "responda só OK" | head -c 40 | grep -qiE '^[^a-z]*ok'
    (Se o dono colar algo que não parece um token, ou se a ETAPA 3.5a `getMe` der "TOKEN INVALIDO", peça pra ele copiar de novo a linha inteira que o BotFather mandou — só o token, sem texto em volta.)
 4. (Opcional, só se ele for **publicar páginas/landing**) "Tem token do **Cloudflare** (Pages:Edit) e o **Account ID**? Se não for publicar site, pode pular." → `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
 
-> **Antes de seguir, normalize o nome.** AGENT_NAME e OWNER_NAME entram em comandos de shell e no ExecStartPost do .service (que roda a cada boot, entre aspas simples). Aceite só letras (com acento), espaço e hífen. Se o dono digitar apóstrofo (ex: "Léo's", "D'Angelo"), aspas, `$`, crase, `\` ou `#` (o parser de .env corta ` #...` como comentário inline), remova/troque esses caracteres e confirme com ele o nome limpo (ex: "vou usar 'Léos', ok?") antes de gravar. Nome próprio simples é o esperado.
+> **Antes de seguir, normalize o nome.** AGENT_NAME e OWNER_NAME entram em comandos de shell e no ExecStartPost do .service (que roda a cada boot, entre aspas simples). Aceite só letras (com acento), espaço e hífen. Se o dono digitar apóstrofo (ex: "D'Angelo", "O'Brien"), aspas, `$`, crase, `\` ou `#` (o parser de .env corta ` #...` como comentário inline), remova/troque esses caracteres e confirme com ele o nome limpo (ex: "vou usar 'DAngelo', ok?") antes de gravar. Nome próprio simples é o esperado.
 
 > **NÃO peça o id do dono aqui — nada de `@userinfobot`.** O `OWNER_CHAT_ID` é capturado
 > sozinho na **ETAPA 3.5**: o próprio dono manda uma mensagem no bot e você pega o id
@@ -194,7 +194,7 @@ curl -s "https://api.telegram.org/bot$TOKEN/getUpdates?timeout=30" | node -e 'le
 
 **e) Confirme a identidade ANTES de gravar.** A prova de identidade vem do **TEXTO** da
 mensagem (`sou eu, $OWNER_NAME`) — **NÃO** do nome de perfil do Telegram (que costuma diferir
-do que o dono digitou: ele digita "Léo", o perfil é "Leonardo Molina"). Escolha o `chat_id`
+do que o dono digitou: ele digita "Bia", o perfil é "Beatriz Andrade"). Escolha o `chat_id`
 cuja mensagem é `sou eu, $OWNER_NAME`.
 > 🔒 **Trava de segurança:** se aparecer MAIS DE UM remetente distinto, **PARE e pergunte ao
 > dono explicitamente** qual id é dele antes de gravar — quem ficar no `OWNER_CHAT_ID`
