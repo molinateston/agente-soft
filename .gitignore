@@ -17,3 +17,4 @@ __pycache__/
 # backups locais do meu trabalho — nunca vao pro cliente
 *.bak*
 *.staged
+*.ANTES-*

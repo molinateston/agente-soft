@@ -133,6 +133,21 @@ fi
 EDGE_SETUP
 echo "   Edge TTS pronto (Antonio masc / Francisca fem, escolhido por AGENT_GENDER)."
 
+
+# --- Leitor de documento (markitdown) — PDF/Word/Excel/PowerPoint viram texto limpo ---
+# Sem isso o agente lê o arquivo cru, gasta muito mais e entende pior planilha e apresentação.
+# É OPCIONAL por desenho: se falhar, o motor cai sozinho no caminho antigo e nada quebra.
+echo "→ Leitor de documento (PDF/Word/Excel/PowerPoint)..."
+sudo -u agente bash -s <<'MKD_SETUP' || echo "   (aviso) leitor de documento opcional falhou — o agente segue lendo o arquivo original." >&2
+set -e
+mkdir -p ~/.local
+if [ ! -x ~/.local/venv-markitdown/bin/markitdown ]; then
+  python3 -m venv ~/.local/venv-markitdown
+  ~/.local/venv-markitdown/bin/pip install --quiet markitdown mammoth openpyxl python-pptx pdfminer.six >/dev/null
+fi
+MKD_SETUP
+echo "   Leitor de documento pronto (converte antes de ler, custa 0)."
+
 # --- faster-whisper (transcrição local grátis, pt-BR) ---
 # Usado pra transcrever mensagens de áudio que o dono manda. Roda em venv próprio
 # do user 'agente', modelo puxado sob demanda no 1º áudio. Sem isso, áudio-in cai
@@ -182,8 +197,9 @@ seguindo do início ao fim.
 Vou te dar conforme você pedir: nome do agente, meu nome e o token do bot
 do Telegram (@BotFather). Meu id você captura sozinho (eu mando uma mensagem
 no próprio bot, sem @userinfobot).
-Sobe a ponte, baixa as skills do método, sobe o serviço, valida, e me
-confirma quando estiver no ar. Se travar, me explica em português simples.
+Sobe a ponte, sobe o serviço, valida, e me confirma quando estiver no ar.
+Não baixe nem clone repositório de skill/método: esta instalação não usa isso.
+Se travar, me explica em português simples.
 ----------8<---------- ATÉ AQUI ----------8<----------
 
  🖼️ IMAGEM DE GRAÇA (faça UMA vez, depois do agente estar no ar):

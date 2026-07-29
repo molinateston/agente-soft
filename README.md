@@ -41,8 +41,8 @@ Runtime **lean**: node puro, login nativo do Claude (na conta Pro/Max, não na A
 > ⚠️ Encaminhar pro agente um arquivo/imagem/PDF que VEIO de terceiro é como rodar na sua VPS algo que um terceiro escreveu. O agente trata anexo como dado e tem regra pra não obedecer comando escondido dentro dele, mas anexo de origem confiável é sempre mais seguro.
 
 ## Atualização automática (você publica → cai em todos os clientes)
-O método vive num repo só (`molinateston/agente-soft-skills`). Cada agente instalado
-**checa esse repo 1x por semana** e, se você publicou habilidade nova, **puxa, revalida
+O código do agente vive neste repo. Cada agente instalado
+**checa este repo 1x por semana** e, se você publicou versão nova, **puxa, revalida
 e reinicia sozinho** — sem ninguém tocar na VPS do cliente. Se uma atualização vier
 quebrada, o agente **se reverte sozinho** e segue no ar na versão anterior.
 - Liga-se sozinho na instalação (timer `agente-update`).
@@ -66,4 +66,4 @@ quebrada, o agente **se reverte sozinho** e segue no ar na versão anterior.
 | `bridge.cjs` | A ponte fina Telegram ⇄ Claude Code |
 | `.env.example` | Variáveis (sem token Claude — login nativo) |
 
-As skills do método vêm de [`molinateston/agente-soft-skills`](https://github.com/molinateston/agente-soft-skills).
+Este pacote é só o código do agente. As skills do método não são distribuídas aqui.

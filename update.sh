@@ -201,6 +201,16 @@ if [ "$BRIDGE_CHANGED" -eq 1 ]; then
   fi
 fi
 
+
+# --- Leitor de documento (markitdown) — instala pra quem já era cliente antes dele existir ---
+# Idempotente e silencioso: se já está lá, não faz nada; se falhar, o motor cai no caminho antigo.
+if [ ! -x "$HOME/.local/venv-markitdown/bin/markitdown" ]; then
+  ( mkdir -p "$HOME/.local" \
+    && python3 -m venv "$HOME/.local/venv-markitdown" \
+    && "$HOME/.local/venv-markitdown/bin/pip" install --quiet markitdown mammoth openpyxl python-pptx pdfminer.six ) >/dev/null 2>&1 \
+    || true
+fi
+
 # ---- Sincroniza os UNITS GENÉRICOS do repo pra frota já instalada -----
 # Sem isto, mudança em .service/.timer só chega em quem reinstala. Sincronizamos
 # apenas os units que NÃO têm nada interpolado na instalação (usam %h). O
@@ -291,7 +301,14 @@ sleep 4
 FAIL=0
 node --check "$BRIDGE_DIR/bridge.cjs" || FAIL=1
 agente_vivo || FAIL=1
-ls "$SKILLS_DIR"/*/SKILL.md >/dev/null 2>&1 || FAIL=1
+# Skill é OPCIONAL nesta instalação: este pacote não baixa método nenhum, então a
+# pasta ~/.claude/skills pode simplesmente não existir. Se ela não existir, não há
+# nada a validar e o update segue. Antes isto era um FAIL seco: quem não tinha skill
+# caía em rollback a cada update, pra sempre e sem aviso — nunca mais recebia versão
+# nova. Só cobramos integridade QUANDO a pasta existe como repositório de verdade.
+if [ -d "$SKILLS_DIR/.git" ]; then
+  ls "$SKILLS_DIR"/*/SKILL.md >/dev/null 2>&1 || FAIL=1
+fi
 # 2ª checagem ~18s depois: pega crash-loop TARDIO (sobe, passa o is-active de 4s, e morre
 # no 1º getUpdates ou batendo no StartLimitBurst). is-failed pega o systemd desistindo.
 if [ "$FAIL" -eq 0 ]; then
