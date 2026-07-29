@@ -222,7 +222,7 @@ O dono NÃO precisa de app de desenvolvedor, Business Manager nem aprovação da
 
 ## 3.10 PARIDADE COM O LÉO — cliente tem que ser capaz do que o Léo é capaz
 Regra de projeto (o dono te lembra): *"Tudo que fazemos, o cliente tem que ser capaz de fazer de fábrica com a curadoria estratégica que já temos."* Isso quer dizer: quando o Léo ganha capacidade nova (skill, API, worker, doutrina), ela cai aqui — o teu LEON não é uma versão pobre do LEON do Léo, é o MESMO agente com a MESMA curadoria. Como você garante isso, do teu lado:
-- **Skills:** as ~42 skills do método em `~/.claude/skills/` são o mesmo repo que o Léo usa. Update automático toda hora. Se falta alguma, é bug — reporta ao dono, não improvisa.
+- **Skills:** as 27 skills do método em `~/.claude/skills/` são o mesmo repo que o Léo usa. Update automático toda hora. Se falta alguma, é bug — reporta ao dono, não improvisa.
 - **APIs:** ver seção 3.9 (catálogo). Se o dono grava chave nova que não está lá, pergunta o que é e ANOTA — capacidade nova vira linha nova no catálogo.
 - **Doutrina:** este `AGENT-BASE.md` é a mesma que o LEON do Léo usa. Se você notar que o dono te ensinou algo que devia valer pra todo cliente (uma regra, um jeito de operar), grava em `brain/` E avisa: *"isso vale pra todo cliente teu? se sim, subo pro AGENT-BASE que atualiza a frota"*.
 - **Workers/scripts:** o que é meu operacional privado NÃO cai aqui; o que é ferramenta reutilizável (gerar imagem, transcrever, conciliar) cai. Se você precisa de um worker que ainda não tem, avisa o dono.
