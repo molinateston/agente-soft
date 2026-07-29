@@ -35,23 +35,33 @@ chmod 700 "$BRIDGE_DIR/backups" 2>/dev/null || true   # estrutura de backup não
 # --- Aviso ao dono (best-effort) lendo token+owner do .env ---------------
 GREET="$BRIDGE_DIR/.greet"
 env_get(){ grep -E "^$1=" "$BRIDGE_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2- | sed 's/[[:space:]]*#.*$//; s/^"//; s/"$//'; }
-tg(){ local T O; T="$(env_get TELEGRAM_BOT_TOKEN)"; O="$(env_get OWNER_CHAT_ID)"; [ -n "$T" ] && [ -n "$O" ] && \
+RECIBO="$BRIDGE_DIR/.update-pending.json"
+# O recibo guarda em qual conversa (e tópico) o pedido foi feito, pra resposta voltar
+# no mesmo lugar da pergunta em vez de cair sempre na conversa principal.
+recibo_campo(){ sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\{0,1\}\([^,\"}]*\)\"\{0,1\}.*/\1/p" "$RECIBO" 2>/dev/null | head -1; }
+tg(){ local T O TH; T="$(env_get TELEGRAM_BOT_TOKEN)"
+  O="$(recibo_campo chatId)"; [ -n "$O" ] || O="$(env_get OWNER_CHAT_ID)"
+  TH="$(recibo_campo threadId)"; [ "$TH" = "null" ] && TH=""
+  [ -n "$T" ] && [ -n "$O" ] && \
   curl -s --max-time 15 "https://api.telegram.org/bot${T}/sendMessage" \
-  --data-urlencode "chat_id=${O}" --data-urlencode "text=$1" >/dev/null 2>&1 || true; }
+  --data-urlencode "chat_id=${O}" ${TH:+--data-urlencode "message_thread_id=${TH}"} \
+  --data-urlencode "text=$1" >/dev/null 2>&1 || true; }
 
-# Se este update foi disparado por /atualiza, o bridge cria o .greet ANTES. Mas há 5
+# Se este update foi disparado por /atualiza, o bridge grava o RECIBO ANTES. Mas há 5
 # saídas-precoces aqui ANTES do restart (HALT, claude ausente, "já na última", disco,
-# snapshot) — nelas o .greet ficaria órfão (saudação fantasma no próximo boot) E o dono
-# nunca ouviria de volta. O trap fecha os dois furos: avisa o dono (só se foi /atualiza)
-# e limpa o flag. Desarmado logo antes do restart, pra aí o .greet ser consumido pelo
-# ExecStartPost (= saúda "✅ No ar!"). Update AGENDADO não tem .greet → trap fica mudo.
+# snapshot) — nelas o dono nunca ouviria de volta. O trap responde na hora (só se foi
+# /atualiza) e rasga o recibo DEPOIS de falar, pra o vigia não repetir a mesma notícia
+# minutos depois. Se a mensagem não sair, o recibo fica e o vigia cobre. Desarmado logo
+# antes do restart: daí quem saúda é o motor novo ao subir. Update AGENDADO não tem
+# recibo → trap fica mudo.
 on_exit(){
   local rc=$?
-  if [ -f "$GREET" ]; then
-    if [ "$rc" -eq 0 ]; then tg "✅ Já tava na última versão, tudo certo. Segui no ar."
-    else tg "⚠️ Tentei atualizar e não consegui agora — segui no ar na versão atual. Tento de novo no automático."; fi
-    rm -f "$GREET" 2>/dev/null || true
+  if [ -f "$RECIBO" ]; then
+    if [ "$rc" -eq 0 ]; then tg "✅ Conferi: você já estava na última versão, não precisou trocar nada. Segui no ar o tempo todo."
+    else tg "⚠️ Tentei atualizar e não consegui agora — continuo no ar na versão de antes e nada da nossa conversa se perdeu. Tento de novo no automático."; fi
+    rm -f "$RECIBO" 2>/dev/null || true
   fi
+  rm -f "$GREET" 2>/dev/null || true
 }
 trap on_exit EXIT
 
@@ -107,6 +117,24 @@ NEW_SHA="$( [ -d "$SKILLS_DIR/.git" ] && git -C "$SKILLS_DIR" rev-parse HEAD 2>/
 if [ -f "$REPO_DIR/HALT" ] || [ -f "$SKILLS_DIR/HALT" ]; then
   say "⛔ HALT presente no repo — update suspenso de propósito. Nada aplicado. (remova o HALT pra religar)"
   exit 0
+fi
+
+# ---- Codex CLI (imagem grátis pela assinatura ChatGPT do dono) --------
+# Quem instalou ANTES do codex entrar no bootstrap não tem o binário. Aqui a
+# frota antiga alcança a capacidade nova. Roda como 'agente' (sem sudo), então
+# instala no prefixo do próprio usuário — que já está no PATH do serviço.
+# Fica ANTES da saída-precoce "nada novo" de propósito: senão cliente sem
+# mudança de skills nunca ganharia o codex.
+# O LOGIN não é feito aqui (é interativo e pessoal): quem conduz é o agente no chat.
+if ! command -v codex >/dev/null 2>&1 && [ ! -x "$HOME/.npm-global/bin/codex" ]; then
+  if command -v npm >/dev/null 2>&1; then
+    say "→ instalando o Codex (imagem grátis pela conta ChatGPT do dono)..."
+    if timeout 300 npm install -g --prefix "$HOME/.npm-global" @openai/codex >>"$LOG" 2>&1; then
+      say "   codex instalado em $HOME/.npm-global/bin/codex (falta só o dono fazer o login uma vez)."
+    else
+      say "   ⚠️ codex não instalou agora — tento no próximo update. Imagem segue pelas chaves do .env."
+    fi
+  fi
 fi
 
 BRIDGE_CHANGED=0
@@ -222,28 +250,59 @@ if [ -f "$SVC" ] && grep -q 'No ar' "$SVC" && ! grep -q '\.greet' "$SVC"; then
 fi
 
 # ---- 4/5 Reinício -----------------------------------------------------
-# NÃO cria .greet aqui de propósito: update AGENDADO = silencioso. (instalação e
-# /atualiza criam o .greet antes; só esses saúdam.) Desarma o trap: daqui o .greet
-# (se houver, foi um /atualiza) deve ser consumido pelo ExecStartPost = saúda "✅ No ar!".
+# NÃO cria recibo aqui de propósito: update AGENDADO = silencioso. (só o /atualiza
+# grava recibo, e só ele é saudado.) Desarma o trap: daqui em diante quem responde é o
+# motor novo ao subir (consome o recibo e saúda), e se ele não subir, o vigia entrega
+# o veredito honesto de fora.
 trap - EXIT
-systemctl --user restart agente
+
+# COMO reiniciar e COMO conferir NESTA máquina. Nunca supor que existe systemd de
+# usuário: há instalação sem sessão de usuário, onde "systemctl --user" não responde
+# — lá o reinício não acontecia e ninguém ficava sabendo. Tenta o caminho de sempre;
+# se ele não servir, pergunta ao detector qual é o jeito desta máquina. E pra saber
+# se o agente está de pé sem barramento, olha o processo em vez do systemd.
+BUS_OK=0
+timeout 6 systemctl --user show --property=Version >/dev/null 2>&1 && BUS_OK=1
+
+agente_reiniciar() {
+  if [ "$BUS_OK" = "1" ] && systemctl --user restart agente 2>>"$LOG"; then return 0; fi
+  local det="$REPO_DIR/scripts/runtime-detect.sh" cmd=""
+  [ -x "$det" ] || det="$BRIDGE_DIR/scripts/runtime-detect.sh"
+  if [ -x "$det" ]; then
+    cmd="$("$det" --dir "$BRIDGE_DIR" --print 2>/dev/null | sed -n 's/.*"reiniciar"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)"
+  fi
+  if [ -n "$cmd" ]; then
+    say "sem o caminho de sempre; reiniciando pelo jeito desta máquina: $cmd"
+    bash -lc "$cmd" >>"$LOG" 2>&1 && return 0
+  fi
+  say "⚠️ não encontrei jeito de reiniciar o agente nesta máquina"
+  return 1
+}
+
+agente_vivo() {
+  if [ "$BUS_OK" = "1" ]; then systemctl --user is-active --quiet agente && return 0; fi
+  pgrep -u "$(id -u)" -f "$BRIDGE_DIR/bridge.cjs" >/dev/null 2>&1
+}
+
+agente_reiniciar || true
 sleep 4
 
 # ---- 5/5 Validação (e auto-rollback se falhar) -----------------------
 FAIL=0
 node --check "$BRIDGE_DIR/bridge.cjs" || FAIL=1
-systemctl --user is-active --quiet agente || FAIL=1
+agente_vivo || FAIL=1
 ls "$SKILLS_DIR"/*/SKILL.md >/dev/null 2>&1 || FAIL=1
 # 2ª checagem ~18s depois: pega crash-loop TARDIO (sobe, passa o is-active de 4s, e morre
 # no 1º getUpdates ou batendo no StartLimitBurst). is-failed pega o systemd desistindo.
 if [ "$FAIL" -eq 0 ]; then
   sleep 18
-  systemctl --user is-active --quiet agente || FAIL=1
-  systemctl --user is-failed --quiet agente && FAIL=1
+  agente_vivo || FAIL=1
+  [ "$BUS_OK" = "1" ] && systemctl --user is-failed --quiet agente && FAIL=1
 fi
 # Timer de auto-update sobreviveu ao push? Um .timer/.service quebrado mataria o
 # auto-update da frota EM SILÊNCIO — aqui isso vira FAIL e dispara o rollback.
-if [ "$UNITS_CHANGED" -eq 1 ] || [ "$NEED_RELOAD" -eq 1 ]; then
+# Só vale onde existe systemd de usuário: sem ele, não há timer nenhum pra checar.
+if [ "$BUS_OK" = "1" ] && { [ "$UNITS_CHANGED" -eq 1 ] || [ "$NEED_RELOAD" -eq 1 ]; }; then
   systemctl --user is-active --quiet agente-update.timer || { say "⚠️ agente-update.timer não ficou ativo após o update."; FAIL=1; }
 fi
 if [ "$FAIL" -eq 0 ]; then

@@ -76,6 +76,20 @@ if ! claude --version >/dev/null 2>&1; then
 fi
 echo "   claude $(claude --version 2>/dev/null)"
 
+# --- Codex CLI (geração de imagem grátis pela assinatura ChatGPT do dono) ---
+# Instalado como root (vai pra /usr/local/bin, visível pro user 'agente').
+# O LOGIN é interativo e pessoal — NÃO dá pra automatizar aqui. Só instalamos;
+# a mensagem final ensina o dono a rodar o login uma única vez.
+echo "→ Codex CLI (imagem grátis pela conta ChatGPT do dono)..."
+if ! command -v codex >/dev/null 2>&1; then
+  npm install -g @openai/codex >/dev/null 2>&1 || true
+fi
+if command -v codex >/dev/null 2>&1; then
+  echo "   codex $(codex --version 2>/dev/null | head -1)"
+else
+  echo "   (aviso) codex não instalou — o agente cai em chave do Google/OpenAI pra gerar imagem." >&2
+fi
+
 echo "→ 4/4 Usuário não-root 'agente' (o serviço roda sob ele)..."
 if ! id agente >/dev/null 2>&1; then
   adduser --disabled-password --gecos "" agente >/dev/null
@@ -85,6 +99,56 @@ fi
 # linger ANTES de qualquer 'systemctl --user' (o serviço roda como --user):
 # garante o bus do usuário e que o serviço sobreviva a logout/reboot.
 loginctl enable-linger agente >/dev/null 2>&1 || true
+
+# ffmpeg — pré-req do TTS local (Piper gera wav; conversão pra mp3).
+apt-get install -y -qq ffmpeg >/dev/null 2>&1 || true
+
+# --- Piper TTS local (voz grátis pt_BR — default do LEON) ---
+# Instala como user 'agente' num venv próprio (usuário sem sudo).
+echo "→ Voz local grátis (Piper TTS · pt_BR)..."
+sudo -u agente bash -s <<'PIPER_SETUP' || echo "   (aviso) Piper opcional falhou — LEON cai em nuvem se você ativar voz." >&2
+set -e
+mkdir -p ~/.openclaw/piper-venv ~/.openclaw/voices/piper
+if [ ! -x ~/.openclaw/piper-venv/bin/piper ]; then
+  python3 -m venv ~/.openclaw/piper-venv
+  ~/.openclaw/piper-venv/bin/pip install --quiet piper-tts >/dev/null
+fi
+if [ ! -s ~/.openclaw/voices/piper/pt_BR-faber-medium.onnx ]; then
+  curl -sfL -o ~/.openclaw/voices/piper/pt_BR-faber-medium.onnx      https://huggingface.co/rhasspy/piper-voices/resolve/main/pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx
+  curl -sfL -o ~/.openclaw/voices/piper/pt_BR-faber-medium.onnx.json https://huggingface.co/rhasspy/piper-voices/resolve/main/pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx.json
+fi
+PIPER_SETUP
+echo "   Piper pronto (roda offline, custa 0)."
+
+# --- Edge TTS (voz nuvem grátis Microsoft, Antonio/Francisca pt-BR — default do LEON desde 22/07) ---
+# Piper vira fallback. Roda no user 'agente', venv próprio, só requer conexão pra Microsoft (grátis, sem cadastro).
+echo "→ Voz nuvem grátis (Edge TTS · Antonio/Francisca pt-BR)..."
+sudo -u agente bash -s <<'EDGE_SETUP' || echo "   (aviso) Edge TTS opcional falhou — cai em Piper." >&2
+set -e
+mkdir -p ~/.openclaw/edgetts-venv
+if [ ! -x ~/.openclaw/edgetts-venv/bin/edge-tts ]; then
+  python3 -m venv ~/.openclaw/edgetts-venv
+  ~/.openclaw/edgetts-venv/bin/pip install --quiet edge-tts >/dev/null
+fi
+EDGE_SETUP
+echo "   Edge TTS pronto (Antonio masc / Francisca fem, escolhido por AGENT_GENDER)."
+
+# --- faster-whisper (transcrição local grátis, pt-BR) ---
+# Usado pra transcrever mensagens de áudio que o dono manda. Roda em venv próprio
+# do user 'agente', modelo puxado sob demanda no 1º áudio. Sem isso, áudio-in cai
+# em fallback ou falha silenciosa.
+echo "→ Transcrição local grátis (faster-whisper · pt-BR)..."
+sudo -u agente bash -s <<'WHISPER_SETUP' || echo "   (aviso) faster-whisper opcional falhou — áudio-in pode não funcionar." >&2
+set -e
+mkdir -p ~/.openclaw/whisper-venv
+if [ ! -x ~/.openclaw/whisper-venv/bin/python3 ]; then
+  python3 -m venv ~/.openclaw/whisper-venv
+fi
+if ! ~/.openclaw/whisper-venv/bin/python3 -c "import faster_whisper" 2>/dev/null; then
+  ~/.openclaw/whisper-venv/bin/pip install --quiet faster-whisper >/dev/null
+fi
+WHISPER_SETUP
+echo "   faster-whisper pronto (roda offline, custa 0)."
 
 cat <<'NEXT'
 
@@ -121,6 +185,18 @@ no próprio bot, sem @userinfobot).
 Sobe a ponte, baixa as skills do método, sobe o serviço, valida, e me
 confirma quando estiver no ar. Se travar, me explica em português simples.
 ----------8<---------- ATÉ AQUI ----------8<----------
+
+ 🖼️ IMAGEM DE GRAÇA (faça UMA vez, depois do agente estar no ar):
+    Seu agente já sabe criar imagem (arte de post, criativo, capa). Se você
+    tem ChatGPT PAGO, isso sai sem custo nenhum por imagem — mas você precisa
+    ligar sua conta do ChatGPT nele uma única vez.
+    É simples: quando o agente estiver respondendo no Telegram, mande
+    "quero gerar imagem" e ele te guia. Vai aparecer um CÓDIGO de 8
+    caracteres; você abre o endereço que ele mandar, entra na SUA conta
+    ChatGPT, digita o código e pronto — nunca mais precisa fazer isso.
+    Não tem ChatGPT pago? Sem problema: ele também gera por uma chave do
+    Google (tem faixa gratuita) ou da OpenAI (aí é centavo por imagem).
+    É só dizer a ele qual você prefere.
 
  💾 O mesmo prompt também está em:
     https://raw.githubusercontent.com/molinateston/agente-soft/main/prompt-instalador.txt

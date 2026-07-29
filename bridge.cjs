@@ -1005,7 +1005,19 @@ function ask(key, text, cfg, chatId, threadId, mission) {
     return new Promise((resolve) => {
       const isMissao = !!mission;   // MODO MISSÃO: tarefa longa deliberada (budget/tempo soltos + reports de marco + retomada durável)
       // HORÁRIO de Brasília vai no INPUT (não no system-prompt: evita cache-bust). Prepende ao texto do usuário.
-      const userText = [timeBlock(), text].filter(Boolean).join("\n\n");
+      // MEMÓRIA VIVA + ASSUNTOS VIVOS mudam a CADA turno: vão no INPUT (stdin), não no system-prompt.
+      // Motivo (27/07): (1) system-prompt estável = prompt cache barato, memória volátil lá dentro
+      // bustava o cache todo turno; (2) cada ARGUMENTO de processo cabe em ~128KB no Linux
+      // (MAX_ARG_STRLEN) e a memória competia por esse teto até estourar E2BIG — o stdin não tem limite.
+      const _mvv = capBytes(readLines(MEMVIVA_FILE, 120), MEMVIVA_READ_MAX);
+      const _asv = capBytes(readAssuntosVivos(48), ASSUNTOS_READ_MAX);
+      const mbDyn = [
+        _mvv ? `# MEMÓRIA VIVA — decisões/projetos/pendências ATIVAS (leia SEMPRE antes de responder; ESCREVA aqui na hora quando algo for decidido/combinado/ficar pendente):\n${_mvv}` : "",
+        _asv ? `# ASSUNTOS VIVOS — nomes/projetos/decisões NOVAS que apareceram em QUALQUER tópico das últimas 48h (contexto CRUZADO, pra você NUNCA ficar por fora do que rolou em outro tópico; regra: se aparecer aqui um NOME/PROJETO novo, você JÁ conhece; quando você mesmo detectar assunto novo, ESCREVA nesse arquivo em ${ASSUNTOS_FILE} no formato "- YYYY-MM-DD HHhMM [TÓPICO] resumo em 1 linha"):\n${_asv}` : "",
+      ].filter(Boolean).join("\n\n");
+      // resumo da conversa também é volátil (muda a cada compactação): vai no INPUT, não no system-prompt.
+      const contBlock = cont ? `# A CONVERSA CONTINUA — NÃO recomece do zero\nVocê JÁ vinha conversando com o dono; este trecho é CONTINUAÇÃO da mesma conversa (ela foi compactada pra caber, só isso). Resumo do que já falaram antes deste ponto:\n${cont}\n\nRegra: trate como continuação natural. NUNCA diga "a conversa começou agora", "não tenho histórico desta sessão" nem peça pra ele repetir o que já foi dito. Se perguntarem o que falaram antes, responda a partir DESTE resumo.` : "";
+      const userText = [timeBlock(), contBlock, mbDyn, text].filter(Boolean).join("\n\n");
       // COPY sempre em sonnet 5, mesmo que a sala rode outro modelo.
       const _model = isCopyTask(text) ? COPY_MODEL : cfg.model;
       const args = ["-p", "--model", _model, "--output-format", "stream-json", "--verbose",
@@ -1028,16 +1040,13 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       // MEMÓRIA VIVA — decisões/projetos/pendências ATIVAS, injetadas TODO turno (estilo terminal): o
       // agente lê SEMPRE antes de responder e ESCREVE aqui na hora quando algo é decidido/combinado/fica
       // pendente. Estável entre turnos = cai no prompt cache, barato.
-      const memviva = capBytes(readLines(MEMVIVA_FILE, 120), MEMVIVA_READ_MAX);
-      if (memviva) sysPrompt += (sysPrompt ? "\n\n" : "") + `# MEMÓRIA VIVA — decisões/projetos/pendências ATIVAS (leia SEMPRE antes de responder; ESCREVA aqui na hora quando algo for decidido/combinado/ficar pendente):\n${memviva}`;
-      const assuntos = capBytes(readAssuntosVivos(48), ASSUNTOS_READ_MAX);
-      if (assuntos) sysPrompt += (sysPrompt ? "\n\n" : "") + `# ASSUNTOS VIVOS — nomes/projetos/decisões NOVAS que apareceram em QUALQUER tópico das últimas 48h (contexto CRUZADO, pra você NUNCA ficar por fora do que rolou em outro tópico; regra: se aparecer aqui um NOME/PROJETO novo, você JÁ conhece; quando você mesmo detectar assunto novo, ESCREVA nesse arquivo em ${ASSUNTOS_FILE} no formato "- YYYY-MM-DD HHhMM [TÓPICO] resumo em 1 linha"):\n${assuntos}`;
+      // (memória viva + assuntos vivos saíram daqui em 27/07 — agora viajam pelo INPUT, ver mbDyn acima)
       // PROTOCOLO DE MEMÓRIA — paridade c/ terminal: aponta o histórico COMPLETO no disco + manda grepar na dúvida
       sysPrompt += (sysPrompt ? "\n\n" : "") + convoBlock();
       // A CONVERSA CONTINUA — injeta o resumo do que já falamos TODO turno (não só no 1º depois da
       // compactação), pra o agente NUNCA achar que "começou agora". Compactar economiza espaço; a
       // conversa segue sendo UMA só. 'cont' = handoff de sessão nova recém-semeada OU resumo persistido.
-      if (cont) sysPrompt += `\n\n# A CONVERSA CONTINUA — NÃO recomece do zero\nVocê JÁ vinha conversando com o dono; este trecho é CONTINUAÇÃO da mesma conversa (ela foi compactada pra caber, só isso). Resumo do que já falaram antes deste ponto:\n${cont}\n\nRegra: trate como continuação natural. NUNCA diga "a conversa começou agora", "não tenho histórico desta sessão" nem peça pra ele repetir o que já foi dito. Se perguntarem o que falaram antes, responda a partir DESTE resumo.`;
+      // (o resumo da conversa saiu daqui em 27/07 — vai no INPUT junto com a memória, ver contBlock acima)
       // LIMITE DO SISTEMA (25/07): cada argumento de um processo cabe em ~128KB no Linux
       // (MAX_ARG_STRLEN). Identidade + memória viva + assuntos + resumo da conversa vão TODOS
       // dentro de --append-system-prompt. Se estourarem, o spawn morre com E2BIG e o turno

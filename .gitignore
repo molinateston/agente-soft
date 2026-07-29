@@ -1,5 +1,8 @@
 # segredos e estado de runtime — NUNCA versionar
 .env
+.meta-token.json
+.meta-connect.json
+.meta-token-warned
 sessions.json
 sessions.json.bak
 sessions.json.tmp
@@ -10,3 +13,7 @@ backups/
 *.log
 __pycache__/
 *.pyc
+
+# backups locais do meu trabalho — nunca vao pro cliente
+*.bak*
+*.staged

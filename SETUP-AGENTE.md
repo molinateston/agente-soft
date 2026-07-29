@@ -111,11 +111,9 @@ MAPAEOF
 ## ⏳ Pendências / aguardando o dono
 MEMVIVAEOF
 
-# Skills do método (o cérebro). Repo público de fonte-da-verdade:
 mkdir -p ~/.claude
-[ -d ~/.claude/skills/.git ] && (cd ~/.claude/skills && git pull -q) || \
-  git clone https://github.com/molinateston/agente-soft-skills.git ~/.claude/skills
 ```
+> O agente gratuito não instala as skills do método (isso é exclusivo do Projeto LEON pago).
 
 ## ETAPA 3 — Configurar (.env, persona, roteamento)
 > Note: **NÃO existe token Claude no .env.** O runtime usa o login nativo que está
