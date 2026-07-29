@@ -287,6 +287,12 @@ const winFor = (m) => ({ "opus": 200000, "opus[1m]": 1000000, "sonnet": 400000, 
 function friendlyError(errText) {
   const s = String(errText || "");
   if (!s) return null;
+  // TURNO MUDO: o claude fechou logo depois de usar uma ferramenta, sem escrever a resposta.
+  // Rede secundária — a primária é a retomada silenciosa no processOne. Se até ela falhar,
+  // o dono ouve frase de gente, nunca o diagnóstico cru do CLI (vazou pra cliente 29/07).
+  if (/stop_reason=tool_use|_diagnostic\]\s*result_type/i.test(s)) {
+    return "Parei no meio do trabalho, entre uma ferramenta e outra, e não cheguei a escrever a resposta. Manda de novo que eu concluo.";
+  }
   if (/Internal server error|"type":"api_error"|500 status/i.test(s)) return "A API da Anthropic teve uma instabilidade agora (erro 500 do lado deles). Manda de novo em ~30s — se persistir, confere status.anthropic.com.";
   if (/overloaded|529/i.test(s)) return "A Anthropic esta sobrecarregada agora. Espera 1–2min e manda de novo.";
   if (/429|rate.?limit|too many requests/i.test(s)) return "Bati o teto de ritmo da API (muitas requests seguidas). Espera 1min e manda de novo.";
@@ -1001,7 +1007,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
   const { win, floor, ctxConv, SOFT, HARD } = gate(_s, cfg.model);   // CAMADA 1: crescimento da conversa, não janela bruta
 
   // roda o claude uma vez. resumeSid=null força sessão nova; 'cont' é o resumo de continuação a injetar.
-  function runOnce(resumeSid, cont) {
+  function runOnce(resumeSid, cont, soConclui) {
     return new Promise((resolve) => {
       const isMissao = !!mission;   // MODO MISSÃO: tarefa longa deliberada (budget/tempo soltos + reports de marco + retomada durável)
       // HORÁRIO de Brasília vai no INPUT (não no system-prompt: evita cache-bust). Prepende ao texto do usuário.
@@ -1017,7 +1023,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       ].filter(Boolean).join("\n\n");
       // resumo da conversa também é volátil (muda a cada compactação): vai no INPUT, não no system-prompt.
       const contBlock = cont ? `# A CONVERSA CONTINUA — NÃO recomece do zero\nVocê JÁ vinha conversando com o dono; este trecho é CONTINUAÇÃO da mesma conversa (ela foi compactada pra caber, só isso). Resumo do que já falaram antes deste ponto:\n${cont}\n\nRegra: trate como continuação natural. NUNCA diga "a conversa começou agora", "não tenho histórico desta sessão" nem peça pra ele repetir o que já foi dito. Se perguntarem o que falaram antes, responda a partir DESTE resumo.` : "";
-      const userText = [timeBlock(), contBlock, mbDyn, text].filter(Boolean).join("\n\n");
+      const userText = [timeBlock(), contBlock, mbDyn, soConclui || text].filter(Boolean).join("\n\n");
       // COPY sempre em sonnet 5, mesmo que a sala rode outro modelo.
       const _model = isCopyTask(text) ? COPY_MODEL : cfg.model;
       const args = ["-p", "--model", _model, "--output-format", "stream-json", "--verbose",
@@ -1302,6 +1308,15 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       out = await runOnce(null, seed);
       // se o retry SEM resume também falhou, o sid antigo está morto: devolve sid:null pra NÃO re-gravar o id morto
       if (out.result == null) out.sid = null;
+    }
+    // TURNO MUDO (29/07): o claude fechou o turno logo depois de uma ferramenta, SEM escrever a
+    // resposta — o CLI devolve "[..._diagnostic] result_type=user stop_reason=tool_use" no stderr.
+    // O trabalho JÁ foi feito; faltou só a fala. Retoma a MESMA sessão pedindo só a conclusão, em
+    // silêncio, 1 vez. Reclamar aqui deixa o dono sem entrega nenhuma.
+    if (out.result == null && out.sid && /stop_reason=tool_use|_diagnostic\]\s*result_type/i.test(String(out.err || ""))) {
+      console.log("[ponte] turno terminou sem texto (tool_use) — pedindo a conclusão na mesma sessão");
+      const r3 = await runOnce(out.sid, "", "Seu turno anterior terminou logo depois de uma ferramenta, sem resposta escrita. NÃO refaça o trabalho: escreva agora o texto final pro dono, com o resultado do que já foi feito.");
+      if (r3.result != null) out = r3;
     }
     if (out.result == null) {
       console.error("[ponte] claude falhou:", String(out.err || "").slice(-400));   // stack/stderr só no LOG, nunca no chat
