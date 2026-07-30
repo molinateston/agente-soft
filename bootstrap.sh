@@ -100,6 +100,65 @@ fi
 # garante o bus do usuário e que o serviço sobreviva a logout/reboot.
 loginctl enable-linger agente >/dev/null 2>&1 || true
 
+# =====================================================================
+# O PACOTE DO AGENTE (30/07/2026 — antes disto, aqui se clonava o repositório).
+#
+# Por que mudou: clonar trazia o repositório inteiro com todo o histórico (7 MB pra
+# 450 KB de sistema) e obrigava o repositório público a carregar o sistema todo, o
+# que é justamente a superfície onde os vazamentos de julho nasceram. Agora baixa
+# UM arquivo compactado, da versão que o arquivo VERSAO aponta.
+#
+# O comando que o dono cola NÃO mudou uma letra, e os dois endereços que a página
+# aponta continuam existindo. Isto aqui é o miolo, e o dono não vê diferença.
+#
+# Os dois endereços aceitam ser trocados por variável de ambiente. Isso existe SÓ
+# pra permitir provar a instalação limpa sem publicar nada; instalação de verdade
+# nunca define essas variáveis e cai no padrão do GitHub.
+# =====================================================================
+BASE_AGENTE="${AGENTE_SOFT_BASE:-https://raw.githubusercontent.com/molinateston/agente-soft/main}"
+
+echo "→ Baixando o agente (pacote pronto, sem histórico)..."
+VERSAO_PUB="$(curl -fsSL "$BASE_AGENTE/VERSAO" 2>/dev/null | tr -d '[:space:]')" || VERSAO_PUB=""
+if [ -z "$VERSAO_PUB" ]; then
+  echo "✗ Não consegui descobrir qual é a versão do agente." >&2
+  echo "  Isso quase sempre é internet ou GitHub fora do ar. Tente de novo em alguns minutos." >&2
+  exit 1
+fi
+TMP_PKG="$(mktemp -d)"
+if ! curl -fsSL -o "$TMP_PKG/agente-soft.tar.gz" "$BASE_AGENTE/pacote/$VERSAO_PUB/agente-soft.tar.gz"; then
+  echo "✗ Não consegui baixar o agente na versão $VERSAO_PUB." >&2
+  echo "  O arquivo da versão pode ainda não ter sido publicado. Avise o suporte." >&2
+  rm -rf "$TMP_PKG"; exit 1
+fi
+# Confere a soma antes de descompactar: download pela metade vira agente quebrado.
+# A soma é OBRIGATÓRIA de propósito. A primeira versão disto pulava a conferência
+# quando o arquivo de soma faltava — ou seja, bastava a soma sumir pra ninguém mais
+# conferir nada, e em silêncio. O gerador sempre produz a soma junto do pacote; se
+# ela não estiver lá, a publicação está incompleta e a instalação PARA.
+if ! curl -fsSL -o "$TMP_PKG/soma" "$BASE_AGENTE/pacote/$VERSAO_PUB/agente-soft.tar.gz.sha256"; then
+  echo "✗ A versão $VERSAO_PUB foi publicada sem o arquivo de conferência." >&2
+  echo "  Não vou instalar sem poder conferir o que baixei. Avise o suporte." >&2
+  rm -rf "$TMP_PKG"; exit 1
+fi
+if ! ( cd "$TMP_PKG" && sha256sum -c soma >/dev/null 2>&1 ); then
+  echo "✗ O arquivo baixado chegou corrompido. Rode o comando de instalação de novo." >&2
+  rm -rf "$TMP_PKG"; exit 1
+fi
+if ! tar -tzf "$TMP_PKG/agente-soft.tar.gz" >/dev/null 2>&1; then
+  echo "✗ O arquivo baixado não abre. Rode o comando de instalação de novo." >&2
+  rm -rf "$TMP_PKG"; exit 1
+fi
+DESTINO_PKG="$(getent passwd agente | cut -d: -f6)/agente-soft"
+mkdir -p "$DESTINO_PKG"
+tar -xzf "$TMP_PKG/agente-soft.tar.gz" -C "$DESTINO_PKG"
+rm -rf "$TMP_PKG"
+chown -R agente:agente "$DESTINO_PKG"
+if [ ! -s "$DESTINO_PKG/bridge.cjs" ] || [ ! -s "$DESTINO_PKG/SETUP-AGENTE.md" ]; then
+  echo "✗ O agente baixou incompleto. Rode o comando de instalação de novo." >&2
+  exit 1
+fi
+echo "   agente $VERSAO_PUB baixado em $DESTINO_PKG"
+
 # ffmpeg — pré-req do TTS local (Piper gera wav; conversão pra mp3).
 apt-get install -y -qq ffmpeg >/dev/null 2>&1 || true
 
@@ -188,11 +247,11 @@ cat <<'NEXT'
 ----------8<---------- COPIE A PARTIR DAQUI ----------8<----------
 Quero instalar meu Agente Soft (Telegram + Claude) nesta VPS.
 
-Primeiro baixe o repo e leia o manual:
-  cd ~ && git clone https://github.com/molinateston/agente-soft.git agente-soft
-  Se a pasta já existir: cd ~/agente-soft && git pull -q
-Depois leia e execute ~/agente-soft/SETUP-AGENTE.md com a ferramenta Read,
-seguindo do início ao fim.
+O agente já foi baixado em ~/agente-soft (pacote pronto, versão em ~/agente-soft/VERSAO).
+Leia e execute ~/agente-soft/SETUP-AGENTE.md com a ferramenta Read, do início ao fim.
+Se por algum motivo a pasta não existir, baixe assim antes de continuar:
+  V=$(curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/VERSAO | tr -d '[:space:]')
+  mkdir -p ~/agente-soft && curl -fsSL "https://raw.githubusercontent.com/molinateston/agente-soft/main/pacote/$V/agente-soft.tar.gz" | tar -xz -C ~/agente-soft
 
 Vou te dar conforme você pedir: nome do agente, meu nome e o token do bot
 do Telegram (@BotFather). Meu id você captura sozinho (eu mando uma mensagem

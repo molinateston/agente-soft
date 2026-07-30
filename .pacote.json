@@ -1,6 +1,0 @@
-{
-  "modo": "gratuito",
-  "instalador": "sudo bash -c \"$(curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/bootstrap.sh)\"",
-  "usuario": "agente",
-  "suporte": "https://github.com/molinateston/agente-soft/issues"
-}

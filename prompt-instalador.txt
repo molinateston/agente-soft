@@ -20,9 +20,14 @@ aqui, não siga.
 
 Se NÃO for root, siga normal.
 
-Primeiro baixe o repo e leia o manual (o clone vem ANTES de precisar do arquivo):
-  cd ~ && git clone https://github.com/molinateston/agente-soft.git agente-soft
-Se a pasta já existir: cd ~/agente-soft && git pull -q
+Primeiro baixe o agente e leia o manual (o download vem ANTES de precisar do arquivo).
+Não é clone de repositório: é um pacote pronto e versionado.
+  V=$(curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/VERSAO | tr -d '[:space:]')
+  mkdir -p ~/agente-soft
+  curl -fsSL -o /tmp/agente-soft.tar.gz "https://raw.githubusercontent.com/molinateston/agente-soft/main/pacote/$V/agente-soft.tar.gz"
+  tar -xzf /tmp/agente-soft.tar.gz -C ~/agente-soft && rm -f /tmp/agente-soft.tar.gz
+Confira que ~/agente-soft/bridge.cjs e ~/agente-soft/SETUP-AGENTE.md existem antes de seguir.
+Se o download falhar, PARE e me explique em português simples — não tente clonar repositório.
 
 Depois leia e execute ~/agente-soft/SETUP-AGENTE.md com a ferramenta Read,
 seguindo o passo a passo do início ao fim.
