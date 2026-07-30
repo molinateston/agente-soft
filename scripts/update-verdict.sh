@@ -30,7 +30,10 @@
 # =====================================================================
 set -uo pipefail
 
-SUPORTE="https://wa.me/5511961562217"
+# O endereco de suporte muda por pacote: o gerador troca este marcador.
+# Antes ficava cravado aqui o WhatsApp do dono, e ele viajava junto pro
+# pacote publico. Achado na revisao de 30/07.
+SUPORTE="https://github.com/molinateston/agente-soft/issues"
 
 # --- onde mora o motor -----------------------------------------------
 # Duas instalacoes, dois lugares. Na gratuita o motor mora em ~/lean-bridge
