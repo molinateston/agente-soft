@@ -171,7 +171,7 @@ if [ "$LOG_RECENTE" -eq 1 ]; then
   BRUTA="$(grep -E '✗|‼️|⚠️|erro|falh|FALH' "$LOG" 2>/dev/null | tail -1)"
   case "$BRUTA" in
     *spa[çc]o*|*disco*|*space*)        PISTA="Faltou espaço em disco na máquina." ;;
-    *licen[çc]a*|*403*|*401*)          PISTA="Minha licença não foi reconhecida na hora de baixar a versão nova." ;;
+    *403*|*401*)                       PISTA="O servidor de onde eu baixo a versão nova recusou o acesso." ;;
     *rede*|*curl*|*download*|*000*|*timeout*|*conex*) PISTA="A internet da máquina falhou na hora de baixar a versão nova." ;;
     *sintaxe*|*node*)                  PISTA="A versão nova veio com defeito e eu barrei a troca de propósito." ;;
     *snapshot*|*backup*|*c[óo]pia*)    PISTA="Não consegui guardar uma cópia de segurança, então nem comecei a troca." ;;

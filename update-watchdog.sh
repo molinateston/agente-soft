@@ -44,12 +44,8 @@ T="$(env_get TELEGRAM_BOT_TOKEN)"
 [ -n "$CHAT" ] || CHAT="$(env_get OWNER_CHAT_ID)"
 [ -n "$T" ] && [ -n "$CHAT" ] || exit 0
 
-# Quem está fazendo o trabalho depende da instalação: na gratuita é um serviço
-# separado; na paga é o update-pago.sh rodando como processo comum.
+# Quem faz o trabalho da atualização é um serviço separado.
 EST="$(systemctl --user is-active agente-update.service 2>/dev/null || true)"
-if [ -z "$EST" ] || [ "$EST" = "inactive" ]; then
-  if pgrep -f "update-pago.sh" >/dev/null 2>&1; then EST="active"; fi
-fi
 [ -n "$EST" ] || EST="desconhecido"
 
 # Na fase curta só interessa o caso "nem arrancou". Se está rodando, deixa rodar.
