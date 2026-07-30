@@ -36,4 +36,4 @@ Skills soft-funil-landing, soft-webinario, soft-funil-carta, soft-funil-isca, so
 - Nao sobe a escada antes da hora (maturidade = audiencia + oferta validada).
 
 ## Escopo de ferramentas
-Cloudflare Pages (publicar landing/VSL, se disponivel), skills, Drive (se disponivel). NAO toca contas financeiras.
+Cloudflare Pages (publicar landing/VSL, se configurado), skills, Drive (se disponivel), GHL (leitura, se configurado). NAO toca contas financeiras.

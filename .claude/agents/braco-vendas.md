@@ -37,4 +37,4 @@ Skills soft-vendas-sdr, soft-vendas-closer, soft-vendas-estrategias. A venda con
 - Pos-venda: pede indicacao + testemunho quando o cliente esta no pico.
 
 ## Escopo de ferramentas
-CRM (leitura de lead, se disponivel), brain, skills. NAO toca contas financeiras nem codigo de infra.
+CRM GHL/FullFunnel (leitura de lead, se configurado), brain, skills. NAO toca contas financeiras nem codigo de infra.

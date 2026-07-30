@@ -20,9 +20,14 @@ const fs = require("fs");
 const https = require("https");
 const os = require("os");
 
-// === TEMPLATE GRATUITO agente-soft — ZERO CÓDIGO DE LICENÇA ===
-// Se você (LEON ou humano) precisa checar licença, está no arquivo ERRADO.
-// Vai pra socio-ia-template. Aqui é gratuito e roda pra todo mundo.
+// === FONTE UNICA · o MESMO motor roda os dois pacotes ===
+// A diferenca entre pago e gratuito NAO mora no codigo. Mora em duas coisas que o
+// gerador decide: o arquivo .pacote.json gravado dentro do pacote, e o fato de o
+// pacote gratuito nao levar lib/license.js. Editar este arquivo muda os dois de uma
+// vez, que e o ponto: enquanto existiam duas copias quase iguais, material do produto
+// pago escorregava pro pacote publico toda semana, sempre pelo mesmo caminho.
+let license = null;
+try { license = require("./lib/license.js"); } catch { license = null; }
 
 // carrega .env do diretório do script sem dotenv
 try {
@@ -52,9 +57,14 @@ let GROUP    = String(process.env.GROUP_CHAT_ID || "");   // grupo com tópicos
 // pra limitar taxa de reinício.
 if (process.platform === "linux" && typeof process.getuid === "function" && process.getuid() === 0) {
   const _flagFile = `${__dirname}/.root-blocked`;
+  // O comando de reinstalação e o nome do usuário do serviço mudam por pacote, e por isso
+  // vêm do arquivo de modo em vez de estarem escritos aqui: string de um produto dentro do
+  // motor é justamente o que fazia material do pago vazar pro pacote público.
+  let _pac = { instalador: "", usuario: "agente" };
+  try { Object.assign(_pac, JSON.parse(fs.readFileSync(`${__dirname}/.pacote.json`, "utf8"))); } catch {}
   const _rootMsg = "⛔ Bridge iniciado como ROOT. O CLI claude recusa rodar assim (bypassPermissions). "
-    + "Solução — rode NA VPS (como root) em UMA linha, o instalador para o serviço quebrado, cria o usuário 'agente' e reinstala certo: "
-    + "sudo bash -c \"$(curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/bootstrap.sh)\"";
+    + `Solução automática — rode NA VPS (como root) em UMA linha, o instalador para o serviço quebrado, cria o usuário '${_pac.usuario}' e reinstala certo: `
+    + _pac.instalador;
   console.error("\n" + _rootMsg + "\n");
   let _alreadyWarned = false;
   try { _alreadyWarned = fs.existsSync(_flagFile); } catch {}
@@ -74,14 +84,12 @@ if (process.platform === "linux" && typeof process.getuid === "function" && proc
         _req.end();
       } catch {}
     }
-    // Tenta parar o próprio serviço systemd (best-effort, ignora erros).
     try {
       const { spawnSync: _sp } = require("child_process");
       _sp("systemctl", ["--user", "disable", "--now", "leon-agente.service"], { stdio: "ignore", timeout: 5000 });
       _sp("systemctl", ["disable", "--now", "leon-agente.service"], { stdio: "ignore", timeout: 5000 });
     } catch {}
   }
-  // Dorme 60s antes de sair pra segurar o respawn (evita centenas de restarts/min mesmo se Restart=always).
   setTimeout(() => process.exit(0), 60000);
   return;
 }
@@ -184,15 +192,58 @@ try {
 
 const WORKDIR     = process.env.WORK_DIR || __dirname;
 
-// O antigo despertador do /atualiza (systemd-run) foi aposentado: ele dependia do
-// proprio processo que ia ser morto e falhava calado em servidor sem sessao de
-// usuario ativa. Quem garante o veredito agora e o recibo + o vigia do cron.
+// ATUALIZAÇÃO — existem DUAS instalações, e cada uma se atualiza de um jeito.
+// GRATUITA: tem uma cópia do repositório e um serviço separado
+//   (agente-update.service) que faz o trabalho; quem saúda "✅ No ar!" é o systemd.
+// PAGA: não tem cópia do repositório, não tem esse serviço e nem sessão de usuário
+//   do systemd. Quem atualiza é o update-pago.sh (baixa o motor do próprio servidor
+//   de licenças usando o e-mail que já mora no .env) e quem saúda é ESTE motor ao
+//   subir, consumindo o marcador .pos-update.json.
+// Escolher o caminho errado = o /atualiza fala com o vazio e o dono espera pra
+// sempre. Foi exatamente o buraco de nascença da versão paga.
+// A CHAVE. Quem decide o modo é um arquivo dentro da PRÓPRIA pasta do agente, gravado
+// pelo gerador na hora de montar o pacote. Antes disso o motor adivinhava o modo pela
+// existência da pasta do OUTRO pacote (~/agente-soft), o que dava errado de dois jeitos:
+// numa máquina que tem os dois, a instalação paga se achava gratuita e falava com o
+// vazio; e a pasta do outro pacote virava dependência escondida. Nada aqui olha pra
+// fora de casa. Instalação antiga, sem o arquivo, é reconhecida pelo que ela tem dentro.
+const PACOTE = (() => {
+  const padrao = { modo: "gratuito", instalador: "", usuario: "agente" };
+  try {
+    const p = JSON.parse(fs.readFileSync(`${WORKDIR}/.pacote.json`, "utf8"));
+    if (p && (p.modo === "pago" || p.modo === "gratuito")) return Object.assign(padrao, p);
+  } catch {}
+  try { if (fs.existsSync(`${WORKDIR}/lib/license.js`)) return Object.assign(padrao, { modo: "pago", usuario: "leon" }); } catch {}
+  return padrao;
+})();
+const MODO_PAGO = PACOTE.modo === "pago";
+function arquiteturaGratuita() { return !MODO_PAGO; }
 
-// RECIBO do /atualiza. Enquanto este arquivo existir, ALGUEM esta esperando
-// resposta. Quem responde de verdade e o vigia (scripts/update-verdict.sh), que
-// roda no cron FORA do motor: assim a confirmacao nao depende de o update dar
-// certo, nem de o bot estar de pe. Se o motor novo subir e ver o recibo, ele
-// mesmo sauda e apaga — e o vigia fica calado.
+// A doutrina do agente. Casa própria primeiro; o caminho antigo fica só como socorro
+// pra quem instalou antes da fonte única. Devolve string vazia se não achar nenhuma,
+// e quem chama é responsável por não deixar isso passar calado (ver depsCheck).
+function doutrinaOrigem() {
+  for (const p of [`${WORKDIR}/AGENT-BASE.md`, `${process.env.HOME}/agente-soft/AGENT-BASE.md`]) {
+    try { if (fs.existsSync(p)) return p; } catch {}
+  }
+  return "";
+}
+function doutrinaBase() {
+  const p = doutrinaOrigem();
+  if (!p) return "";
+  try { return fs.readFileSync(p, "utf8"); } catch { return ""; }
+}
+
+// RECIBO DO /atualiza — a promessa que NÃO morre junto com a atualização.
+// Buraco de nascença: todo caminho que prometia "✅ No ar!" rodava DENTRO da coisa
+// que estava sendo substituída (este motor, ou um despertador armado pelo processo
+// prestes a ser morto). Quando ela morria, a promessa morria junto e o dono ficava
+// exatamente no escuro que a mensagem jurava que ele não ficaria.
+// Agora existe um recibo: gravado ANTES de disparar, ele diz quem pediu, onde,
+// quando e qual era a assinatura do motor de então. Enquanto o recibo existir,
+// ALGUÉM está esperando resposta. Quem cumpre é o vigia (scripts/update-verdict.sh,
+// no cron de minuto em minuto), que roda FORA do motor e fora do update, e por isso
+// sobrevive a qualquer coisa que aconteça com os dois.
 const RECIBO_UPDATE = `${WORKDIR}/.update-pending.json`;
 function gravarReciboUpdate(chatId, threadId) {
   try {
@@ -201,10 +252,59 @@ function gravarReciboUpdate(chatId, threadId) {
     try { sig = require("crypto").createHash("md5").update(fs.readFileSync(`${WORKDIR}/bridge.cjs`)).digest("hex"); } catch {}
     fs.writeFileSync(RECIBO_UPDATE, JSON.stringify({
       chatId: String(chatId || OWNER), threadId: threadId || null, pedidoEm: agora,
-      assinaturaAntes: sig, arquitetura: "gratuita",
+      assinaturaAntes: sig, arquitetura: arquiteturaGratuita() ? "gratuita" : "paga",
       prazoCurto: agora + 90000, prazoLongo: agora + 360000, dir: WORKDIR,
     }));
   } catch (e) { console.error("[atualiza] recibo:", e && e.message); }
+}
+
+// Rede de segurança do /atualiza GRATUITO. Dois despertadores destacados (sobrevivem
+// ao restart) garantem um veredito: um aos 25s (nem arrancou) e outro aos 4min (não
+// fechou). Se o update deu certo, ambos ficam mudos. No pago não existe systemd-run
+// de usuário: lá quem avisa é o próprio update-pago.sh, e a rede é o update-guard.sh.
+function armarWatchdogUpdate(chatId, threadId) {
+  const script = fs.existsSync(`${WORKDIR}/update-watchdog.sh`)
+    ? `${WORKDIR}/update-watchdog.sh`
+    : `${process.env.HOME}/agente-soft/update-watchdog.sh`;
+  for (const [fase, seg] of [["curto", 25], ["longo", 240]]) {
+    try {
+      spawn("systemd-run", [
+        "--user", "--collect", `--on-active=${seg}`,
+        `--unit=updwd-${fase}-${Date.now()}`,
+        "/usr/bin/env", "bash", script, fase, String(chatId), threadId ? String(threadId) : ""
+      ], { detached: true, stdio: "ignore" }).unref();
+    } catch (e) { console.error("[atualiza] watchdog:", e && e.message); }
+  }
+}
+
+// Dispara o update pelo caminho certo da instalação. Devolve a mensagem que o dono
+// recebe AGORA (o veredito final vem depois, pelo caminho de cada arquitetura).
+function dispararUpdate(chatId, threadId) {
+  gravarReciboUpdate(chatId, threadId);   // PRIMEIRA coisa: a promessa passa a existir fora daqui.
+  if (arquiteturaGratuita()) {
+    try { spawn("systemctl", ["--user", "start", "agente-update.service"], { detached: true, stdio: "ignore" }).unref(); } catch (e) { console.error("[atualiza]", e && e.message); }
+    armarWatchdogUpdate(chatId, threadId);
+    return `🔄 Atualizando pra última versão... o update roda separado e me reinicia sozinho. Volto com o "✅ No ar!" em poucos minutos — e se em 6 minutos eu não tiver voltado, eu mesmo te aviso aqui o que aconteceu. De um jeito ou de outro você vai ter resposta.`;
+  }
+  // Nos dois becos abaixo o dono JÁ recebe o veredito agora, na mesma mensagem.
+  // Rasgar o recibo evita o vigia repetir a má notícia daqui a 6 minutos.
+  const rasgarRecibo = () => { try { fs.unlinkSync(RECIBO_UPDATE); } catch {} };
+  const script = `${WORKDIR}/update-pago.sh`;
+  if (!fs.existsSync(script)) {
+    // Instalação anterior ao atualizador automático. Antes disso, o /atualiza sumia
+    // em silêncio. Agora ao menos diz a verdade e aponta a saída.
+    rasgarRecibo();
+    return `⚠️ Essa instalação é de uma versão anterior ao meu atualizador automático, então não consigo me atualizar sozinho ainda. Continuo no ar normalmente, nada quebrou. Pra destravar é um comando único na tua máquina — chama o suporte: ${PACOTE.suporte}`;
+  }
+  try {
+    spawn("bash", [script, String(chatId || ""), threadId ? String(threadId) : ""],
+      { detached: true, stdio: "ignore", cwd: WORKDIR }).unref();
+  } catch (e) {
+    console.error("[atualiza] pago:", e && e.message);
+    rasgarRecibo();
+    return `⚠️ Não consegui nem começar a atualização. Continuo no ar na versão de antes, nada se perdeu. Tenta de novo daqui a pouco.`;
+  }
+  return `🔄 Atualizando pra última versão... eu baixo, confiro se está boa, guardo uma cópia da atual e me reinicio sozinho. Volto com o "✅ No ar!" em poucos minutos — e se em 6 minutos eu não tiver voltado, eu mesmo te aviso aqui o que aconteceu. De um jeito ou de outro você vai ter resposta.`;
 }
 
 const BRAIN       = process.env.BRAIN_DIR || `${WORKDIR}/brain`;
@@ -216,8 +316,8 @@ const VOICE_PY      = process.env.VOICE_PY || "/usr/bin/python3";
 const VOICE_HANDLER = process.env.VOICE_HANDLER || `${WORKDIR}/workers/voice-handler.py`;
 const VOICE_ENABLED = (() => { try { return fs.existsSync(VOICE_HANDLER); } catch { return false; } })();
 // VOZ DE SAÍDA (TTS): "mirror" = responde em áudio quando o dono manda áudio; "always" = toda resposta; "off" = nunca.
-// Default MIRROR desde 23/07: áudio-in vira áudio-out por padrão (paridade com o padrao da frota, feedback do dono).
-// Provider default é edgetts (Antonio/Francisca pt-BR, grátis), então áudio de volta funciona sem chave paga.
+// Default "mirror" desde 23/07 (paridade com LEON): áudio in vira áudio out via Edge TTS grátis (Antonio/Francisca pt-BR).
+// Cliente pode desligar colocando VOICE_REPLY=off no .env. Pra premium, adiciona ELEVENLABS_API_KEY + TTS_PROVIDER=elevenlabs.
 const VOICE_REPLY = (process.env.VOICE_REPLY || "mirror").toLowerCase();
 const TTS_VOICE   = process.env.TTS_VOICE || "echo";              // OpenAI fallback: echo/onyx/nova/shimmer/alloy/fable/ash/sage/verse
 const TTS_MODEL   = process.env.TTS_MODEL || "gpt-4o-mini-tts";
@@ -664,7 +764,22 @@ function persistSession(key, sid, ctx, model) {
 
 // ---------- Telegram ----------
 function tg(method, body) {
-  if (process.env.TEST_NO_TG) return Promise.resolve({ ok: true, result: { message_id: 1 } });   // seam de teste offline (espelha o lean-bridge)
+  // Saida de teste offline: sem token, sem conta e sem internet. Com TEST_TG_FIXTURE
+  // apontando pra um arquivo, o teste TAMBEM entrega uma mensagem de mentira e GRAVA
+  // o que eu respondi. E assim que se prova que um pacote recem-montado conversa de
+  // verdade, em vez de so "subiu sem erro no log".
+  if (process.env.TEST_NO_TG) {
+    const fix = process.env.TEST_TG_FIXTURE;
+    if (fix) {
+      try { fs.appendFileSync(`${fix}.saida`, JSON.stringify({ method, body }) + "\n"); } catch {}
+      if (method === "getUpdates") {
+        let ups = [];
+        try { ups = JSON.parse(fs.readFileSync(fix, "utf8")); fs.writeFileSync(fix, "[]"); } catch {}
+        return Promise.resolve({ ok: true, result: ups });
+      }
+    }
+    return Promise.resolve({ ok: true, result: { message_id: 1 } });
+  }
   return new Promise((resolve) => {
     const data = JSON.stringify(body);
     const req = https.request({
@@ -1033,12 +1148,16 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       if (isMissao) args.push("--max-budget-usd", String(MISSAO_BUDGET_USD));   // MODO MISSÃO: teto GENEROSO — a tarefa longa não morre por custo no meio
       else if (TURN_BUDGET_USD > 0) args.push("--max-budget-usd", String(TURN_BUDGET_USD));   // teto de USD por turno (antes só o TEMPO parava um loop caro)
       if (resumeSid) args.push("--resume", resumeSid);
-      // identidade: doutrina-base FORTE (do repo agente-soft, auto-atualiza → cai em todos os clientes)
-      // + a persona específica do dono (nome/tom). A base vem PRIMEIRO pra cravar "você é o agente
-      // que JÁ roda aqui, não o Claude genérico" antes de qualquer coisa.
+      // identidade: doutrina-base FORTE + a persona específica do dono (nome/tom). A base vem
+      // PRIMEIRO pra cravar "você é o agente que JÁ roda aqui, não o Claude genérico".
+      // A doutrina mora na PRÓPRIA pasta do agente. Antes ela era lida da pasta do outro pacote
+      // (~/agente-soft) e, quando essa pasta não existia, o agente subia SEM doutrina nenhuma e
+      // sem avisar: virava um assistente genérico e ninguém percebia. Agora o caminho de casa vem
+      // primeiro, o caminho antigo fica só como socorro pra instalação velha, e a falta dos dois
+      // é registrada pra o aviso de saúde do boot contar pro dono em vez de morrer calada.
       const pf = `${PERSONA_DIR}/${cfg.persona}`;
       let sysPrompt = "";
-      try { const bd = `${process.env.HOME}/agente-soft/AGENT-BASE.md`; if (fs.existsSync(bd)) sysPrompt += fs.readFileSync(bd, "utf8") + "\n\n"; } catch {}
+      { const base = doutrinaBase(); if (base) sysPrompt += base + "\n\n"; }
       if (cfg.persona && fs.existsSync(pf)) { try { sysPrompt += fs.readFileSync(pf, "utf8"); } catch {} }
       // ONDE VOCÊ ESTÁ: o agente sempre sabe o chat/tópico atual → reporta o id, se auto-configura, e não precisa de getUpdates/@userinfobot
       const loc = `## ONDE VOCÊ ESTÁ AGORA\nVocê está respondendo no chat_id=${chatId}` + (threadId ? `, dentro do tópico topic_id=${threadId}` : ` (sem tópico — DM ou chat principal)`) + (cfg.label ? `, sala "${cfg.label}"` : "") + `. Se pedirem o id deste grupo/tópico, é ESTE — você JÁ sabe, não use getUpdates nem @userinfobot. Pra te configurar nesta sala, grave este chat_id/topic_id no seu .env (GROUP_CHAT_ID) ou no topics.json e reinicie.`;
@@ -1553,16 +1672,20 @@ function processOne(msg, chatId, threadId, key, cfg, mission) {
         `Pode mandar áudio, print, PDF. E não precisa acertar a palavra certa: fala do teu jeito que eu entendo.`
       ].join("\n"), threadId);
     }
-    // comando /atualiza — o agente se atualiza sozinho: dispara o agente-update.service (roda
-    // num cgroup separado, sobrevive ao restart, valida e reverte sozinho se quebrar). Sem cota.
+    // comando /atualiza — o agente se atualiza sozinho pelo caminho da própria
+    // instalação (gratuita = serviço separado; paga = update-pago.sh). Sem cota.
     if (/^\/atualiza/i.test(text.trim())) {
-      gravarReciboUpdate(chatId, threadId);   // VOCÊ pediu → alguém está esperando resposta. Update agendado NÃO cria recibo = silencioso.
-      try { spawn("systemctl", ["--user", "start", "agente-update.service"], { detached: true, stdio: "ignore" }).unref(); } catch {}
-      return send(chatId, `🔄 Atualizando pra última versão do método... o update roda separado e me reinicia sozinho. Volto com o "✅ No ar!" em poucos minutos — e se em 6 minutos eu não tiver voltado, eu mesmo te aviso aqui o que aconteceu. De um jeito ou de outro você vai ter resposta.`, threadId);
+      return send(chatId, dispararUpdate(chatId, threadId), threadId);
     }
     // comando /audio — liga a transcrição de áudio (instala faster-whisper local, SEM root, num cgroup separado)
     if (/^\/(audio|áudio|voz)\b/i.test(text.trim())) {
-      try { spawn("systemd-run", ["--user", "--collect", "bash", `${process.env.HOME}/agente-soft/enable-voice.sh`], { detached: true, stdio: "ignore" }).unref(); }
+      // Mesma armadilha do /atualiza: no pago não existe cópia do repositório em
+      // ~/agente-soft nem systemd-run de usuário. Resolve o caminho e o modo certo.
+      const _voz = fs.existsSync(`${WORKDIR}/enable-voice.sh`) ? `${WORKDIR}/enable-voice.sh` : `${process.env.HOME}/agente-soft/enable-voice.sh`;
+      try {
+        if (arquiteturaGratuita()) spawn("systemd-run", ["--user", "--collect", "bash", _voz], { detached: true, stdio: "ignore" }).unref();
+        else spawn("bash", [_voz], { detached: true, stdio: "ignore", cwd: WORKDIR }).unref();
+      }
       catch (e) { console.error("[ponte] /audio:", e && e.message);
         return send(chatId, `⚠️ Não consegui iniciar a instalação do áudio. Tenta de novo daqui a pouco.`, threadId); }
       return send(chatId, `🎤 Ligando o áudio (transcrição local, sem chave)... baixo o modelo e me reinicio — leva uns minutos. Te aviso com o "✅ No ar!".`, threadId);
@@ -1988,6 +2111,7 @@ async function poll() {
     for (const u of r.result) {
       try {
         offset = u.update_id + 1;
+
         // ONBOARDING sem comando: o Telegram avisa aqui quando o bot é adicionado ou
         // promovido num grupo. É o gatilho pra criar as salas sozinho — antes disso o
         // dono precisava digitar /prontos, o que virou fricção real com cliente novo.
@@ -2003,6 +2127,7 @@ async function poll() {
           }
           continue;
         }
+
         const msg = u.message; if (!msg) continue;
         const chatId   = String(msg.chat.id);
         const threadId = msg.message_thread_id ? String(msg.message_thread_id) : null;
@@ -2017,6 +2142,17 @@ async function poll() {
         if (isGroup && !isOwner && !_allow.has("*") && !_allow.has(senderId)) {
           console.log(`[ponte] grupo: remetente ${senderId} fora da allowlist — ignorado`);
           continue;
+        }
+        // Trava de acesso. So existe quando o pacote traz o modulo de licenca; no pacote
+        // gratuito o modulo nao vem junto e este bloco inteiro fica inerte. O TEXTO da
+        // mensagem mora dentro do modulo de proposito: aqui ele viraria material do produto
+        // pago escrito dentro de um arquivo que tambem viaja no pacote publico.
+        if (license && license.isBlocked()) {
+          const _txt = (msg.text || msg.caption || "").trim();
+          if (!/^\/atualiza|^\/status/i.test(_txt)) {
+            send(chatId, license.blockedMessage(), threadId).catch(() => {});
+            continue;
+          }
         }
         // ONBOARDING de fábrica — primeira msg do dono na conversa privada abre uma pergunta
         // sobre o negócio, devolve a sugestão de salas e apresenta as 2 formas de trabalhar
@@ -2121,9 +2257,7 @@ async function poll() {
         // /atualiza FURA A FILA — funciona MESMO travado: dispara o update separado (que reinicia e mata a trava).
         // Sem isto, /atualiza ficava ENFILEIRADO atrás da sessão presa → o cliente só destravava pela VPS (errado).
         if (/^\/atualiza/i.test((msg.text || msg.caption || "").trim())) {
-          gravarReciboUpdate(chatId, threadId);
-          try { spawn("systemctl", ["--user", "start", "agente-update.service"], { detached: true, stdio: "ignore" }).unref(); } catch {}
-          send(chatId, `🔄 Atualizando pra última versão... o update roda separado e me reinicio sozinho (mato qualquer trava). Volto com o "✅ No ar!" em poucos minutos — e se em 6 minutos eu não tiver voltado, eu mesmo te aviso aqui o que aconteceu. De um jeito ou de outro você vai ter resposta.`, threadId).catch(() => {});
+          send(chatId, dispararUpdate(chatId, threadId), threadId).catch(() => {});
           continue;
         }
         // /status → saúde do agente SEM sair do Telegram: uptime, ocupado/fila, promessas, últimas
@@ -2235,7 +2369,7 @@ async function poll() {
           (async () => {
             try {
               if (!hostToken || !hostVmId) {
-                await send(chatId, "⚠️ Falta configurar /vps.\n\nCola no teu .env (raiz do agente-soft):\n· `HOSTINGER_API_TOKEN=<teu token da Hostinger>`\n· `HOSTINGER_VM_ID=<id da tua VPS>`\n\nPega os dois no painel: hpanel.hostinger.com → Developer API + a URL do teu VPS.", threadId);
+                await send(chatId, "⚠️ Falta configurar /vps.\n\nCola no teu .env (na raiz da pasta do agente):\n· `HOSTINGER_API_TOKEN=<teu token da Hostinger>`\n· `HOSTINGER_VM_ID=<id da tua VPS>`\n\nPega os dois no painel: hpanel.hostinger.com → Developer API + a URL do teu VPS.", threadId);
                 return;
               }
               if (!sub || sub === "status") {
@@ -2323,6 +2457,9 @@ async function poll() {
 function depsCheck() {
   const probs = [];
   try { fs.accessSync(CLAUDE_BIN, fs.constants.X_OK); } catch { probs.push(`claude não-executável (${CLAUDE_BIN})`); }
+  // Doutrina ausente NÃO pode ser silenciosa: sem ela eu respondo como assistente genérico,
+  // e por fora ninguém nota. Este é o aviso que faltava quando a doutrina morava na pasta de outro pacote.
+  if (!doutrinaOrigem()) probs.push(`doutrina-base ausente (AGENT-BASE.md não encontrado em ${WORKDIR}) — estou respondendo sem a minha identidade`);
   // ffmpeg de sistema NÃO é necessário: o voice-handler.py usa faster-whisper/PyAV, que decodifica
   // ogg/opus/m4a/mp3 direto (10/jul: removido o falso-positivo "ffmpeg ausente" que assustava à toa).
   return probs;
@@ -2330,7 +2467,23 @@ function depsCheck() {
 
 if (require.main === module) {
   acquireLock();   // FIX H — garante instância única antes de abrir o long-poll (evita 409 + sessions.json corrompido)
+  // Diz em voz alta o modo e DE ONDE veio a doutrina. Vir de fora de casa nao e erro
+  // (instalacao antiga usa isso como socorro), mas tem que aparecer: doutrina lida da
+  // pasta de outro pacote foi a dependencia escondida que ninguem via.
+  { const _d = doutrinaOrigem();
+    if (!_d) console.error(`[ponte] modo=${PACOTE.modo} · doutrina AUSENTE — estou respondendo sem a minha identidade`);
+    else if (_d.startsWith(WORKDIR)) console.log(`[ponte] modo=${PACOTE.modo} · doutrina=${_d}`);
+    else console.error(`[ponte] modo=${PACOTE.modo} · doutrina veio de FORA de casa (${_d}) — deveria estar em ${WORKDIR}/AGENT-BASE.md`); }
   console.log(`[ponte-fina] no ar · ${Object.keys(topics).length} tópicos roteados · owner=${OWNER} grupo=${GROUP} · ctx redondo: SOFT=${SOFT_FRAC} HARD=${HARD_FRAC} floor=${STATIC_FLOOR}`);
+  // Ativa a licenca no boot (idempotente) e liga o heartbeat. So roda no pacote que traz o modulo.
+  // Fora da janela dos 15 dias, licenca vira permanente: heartbeat vira no-op.
+  if (license && license.KEY_PRESENT) {
+    license.activate().then(r => {
+      if (!r.ok && !r.already) console.error(`[license] ativacao falhou: ${r.reason}`, r.detail || "");
+      else console.log(`[license] ativa${r.already ? " (ja registrada localmente)" : ""}`);
+      license.startHeartbeat();
+    }).catch(e => console.error("[license] erro:", e && e.message));
+  }
   poll();
   rotateMemViva(); setInterval(rotateMemViva, 21600000).unref();   // faxina da memória viva: no boot + a cada 6h, silenciosa (nunca deixa o arquivo crescer até o E2BIG)
   guardTmp(); setInterval(guardTmp, 300000);   // blindagem /tmp (tmpfs pequeno enche com whisper/vídeo e trava): limpa regenerável + avisa cedo, a cada 5min (08/jul)
@@ -2339,33 +2492,63 @@ if (require.main === module) {
   setTimeout(sweepMissions, 15000); setInterval(sweepMissions, 21600000);   // FAXINA: apaga missão fechada (done/failed) há +MISSAO_RETAIN_DAYS dias — no boot (após o dreno assentar) + a cada 6h. running fica intacta
   // SELF-CHECK do boot: fala SÓ se algo estiver quebrado (o "no ar" cego anunciava saúde sem checar nada)
   setTimeout(() => { const probs = depsCheck(); if (probs.length) send(OWNER, `⚠️ Subi com pendência(s):\n· ${probs.join("\n· ")}\nManda /status pra acompanhar.`).catch(() => {}); }, 3000);
-  // SAUDAÇÃO PÓS-UPDATE. O recibo guarda quem pediu (conversa e tópico), então a
-  // resposta volta no mesmo lugar da pergunta. Consumir aqui é o que faz o vigia
-  // ficar calado — sem isso o dono ouviria a mesma boa notícia duas vezes. O flag
-  // antigo sai junto, pelo mesmo motivo (quem saúda por ele é o ExecStartPost).
+  // SAUDAÇÃO PÓS-UPDATE da instalação PAGA. Lá não existe ExecStartPost pra saudar:
+  // quem fecha o ciclo é este motor ao subir. O marcador guarda quem pediu (chat e
+  // tópico), então a resposta volta no mesmo lugar da pergunta. Consome ANTES de
+  // falar: se a mensagem falhar, o marcador já saiu e o verificador periódico não
+  // confunde "Telegram fora do ar" com "motor novo não subiu".
   setTimeout(() => {
+    const MARK = `${WORKDIR}/.pos-update.json`;
     const GREET = `${WORKDIR}/.greet`;
-    let alvo = null, th = null, veioDeUpdate = false;
+    let alvo = null, th = null, veioDeUpdate = false, autoNoturno = false;
+    // 1º o RECIBO: é o mecanismo canônico e vale nas duas instalações. Consumir aqui
+    // é o que faz o vigia ficar calado — sem isso o dono ouviria a mesma boa notícia
+    // duas vezes. Os marcadores antigos saem junto, pelo mesmo motivo.
     try {
       const rc = JSON.parse(fs.readFileSync(RECIBO_UPDATE, "utf8"));
       alvo = rc.chatId || OWNER; th = rc.threadId || null; veioDeUpdate = true;
       fs.unlinkSync(RECIBO_UPDATE);
+      try { fs.unlinkSync(MARK); } catch {}
       try { fs.unlinkSync(GREET); } catch {}
     } catch {}
-    if (veioDeUpdate && alvo) send(alvo, `✅ No ar! Já estou na última versão. Nada da nossa conversa se perdeu.`, th).catch(() => {});
+    // 2º o marcador antigo da instalação paga (compatibilidade com quem atualizou
+    // vindo de uma versão anterior ao recibo).
+    if (!veioDeUpdate) try {
+      const mk = JSON.parse(fs.readFileSync(MARK, "utf8"));
+      alvo = mk.chatId || OWNER; th = mk.threadId || null; veioDeUpdate = true;
+      // Marcador da busca AUTOMÁTICA da madrugada: ninguém pediu nada e são 4h da
+      // manhã. A boa notícia espera o dia nascer (scripts/aviso-manha.sh entrega às 9h).
+      autoNoturno = String(mk.auto || "0") === "1";
+      fs.unlinkSync(MARK);
+    } catch {}
+    if (!veioDeUpdate) {
+      // .greet órfão: alguém pediu /atualiza numa versão antiga que não sabia atualizar.
+      try { if (fs.existsSync(GREET)) { fs.unlinkSync(GREET); alvo = OWNER; veioDeUpdate = true; } } catch {}
+    }
+    if (veioDeUpdate && autoNoturno) {
+      try { fs.appendFileSync(`${WORKDIR}/.aviso-manha.txt`, "✅ Me atualizei sozinho de madrugada. Já estou na última versão e nada da nossa conversa se perdeu.\n"); } catch {}
+    } else if (veioDeUpdate && alvo) send(alvo, `✅ No ar! Já estou na última versão. Nada da nossa conversa se perdeu.`, th).catch(() => {});
   }, 4000);
-  // ROBUSTEZ: instala crons de backup diário (3h AM) + health check (a cada 5min) +
-  // o vigia do /atualiza (de minuto em minuto: a pessoa está esperando resposta agora,
-  // não daqui a 5). Idempotente: só adiciona linha que ainda não existe. Os scripts
-  // moram na cópia do repositório, que nem sempre é a pasta do motor — procura nos
-  // dois, senão vira linha de cron apontando pro vazio.
+  // ROBUSTEZ: instala crons de backup diário (3h AM) + health check (a cada 5min). Idempotente: só adiciona linha que ainda não existe.
   setTimeout(() => {
     try {
+      // guard   = se o motor novo não subir, volta o antigo sozinho.
+      // verdict = o vigia do /atualiza: garante que o dono SEMPRE recebe um veredito,
+      //           mesmo quando a atualização morre no meio. De minuto em minuto porque
+      //           a pessoa está esperando resposta agora, não daqui a 5.
+      // Os scripts moram junto do motor na instalação paga e na cópia do repositório
+      // na gratuita — resolve os dois, senão vira linha de cron apontando pro vazio.
       const acha = (nome) => [`${__dirname}/scripts/${nome}`, `${process.env.HOME}/agente-soft/scripts/${nome}`].find(p => { try { return fs.existsSync(p); } catch { return false; } });
       const rotinas = [
-        [acha("backup-diario.sh"),  "0 3 * * *"],
-        [acha("health-check.sh"),   "*/5 * * * *"],
-        [acha("update-verdict.sh"), "* * * * *"],
+        [acha("backup-diario.sh"),   "0 3 * * *"],
+        [acha("health-check.sh"),    "*/5 * * * *"],
+        [acha("update-guard.sh"),    "*/5 * * * *"],
+        [acha("update-verdict.sh"),  "* * * * *"],
+        // auto = busca atualização sozinho de madrugada (só existe no pacote pago;
+        // na instalação gratuita quem faz isso é o systemd, de hora em hora).
+        // Roda de hora em hora e o próprio script decide se é a hora dele.
+        [acha("update-auto.sh"),     "13 * * * *"],
+        [acha("aviso-manha.sh"),     "21 * * * *"],
       ].filter(([p]) => !!p);
       if (!rotinas.length) return;
       const cur = (spawnSync("crontab", ["-l"], { encoding: "utf8", timeout: 3000 }).stdout || "");
@@ -2376,7 +2559,7 @@ if (require.main === module) {
       }
       if (mudou) {
         const r = spawnSync("crontab", ["-"], { input: linhas.join("\n") + "\n", encoding: "utf8", timeout: 3000 });
-        if (r.status === 0) console.log("[ponte] crons de robustez instalados (backup · health · vigia do /atualiza)");
+        if (r.status === 0) console.log("[ponte] crons de robustez instalados");
         else console.error("[ponte] falha ao instalar crons:", (r.stderr || "").slice(0, 200));
       }
     } catch (e) { console.error("[ponte] cron install:", e && e.message || e); }

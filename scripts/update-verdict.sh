@@ -41,7 +41,6 @@ PAI_DIR="$(dirname "$SELF_DIR")"
 if   [ -n "${LEON_BRIDGE_DIR:-}" ];    then BRIDGE_DIR="$LEON_BRIDGE_DIR"
 elif [ -f "$PAI_DIR/.env" ] && [ -f "$PAI_DIR/bridge.cjs" ]; then BRIDGE_DIR="$PAI_DIR"
 elif [ -f "$HOME/lean-bridge/.env" ];  then BRIDGE_DIR="$HOME/lean-bridge"
-elif [ -f "$HOME/socio-ia/.env" ];     then BRIDGE_DIR="$HOME/socio-ia"
 else BRIDGE_DIR="$HOME/lean-bridge"; fi
 
 RECIBO="$BRIDGE_DIR/.update-pending.json"
@@ -171,7 +170,7 @@ if [ "$LOG_RECENTE" -eq 1 ]; then
   BRUTA="$(grep -E '✗|‼️|⚠️|erro|falh|FALH' "$LOG" 2>/dev/null | tail -1)"
   case "$BRUTA" in
     *spa[çc]o*|*disco*|*space*)        PISTA="Faltou espaço em disco na máquina." ;;
-    *403*|*401*)                       PISTA="O servidor de onde eu baixo a versão nova recusou o acesso." ;;
+    *licen[çc]a*|*403*|*401*)          PISTA="O servidor de onde eu baixo a versão nova recusou o acesso." ;;
     *rede*|*curl*|*download*|*000*|*timeout*|*conex*) PISTA="A internet da máquina falhou na hora de baixar a versão nova." ;;
     *sintaxe*|*node*)                  PISTA="A versão nova veio com defeito e eu barrei a troca de propósito." ;;
     *snapshot*|*backup*|*c[óo]pia*)    PISTA="Não consegui guardar uma cópia de segurança, então nem comecei a troca." ;;

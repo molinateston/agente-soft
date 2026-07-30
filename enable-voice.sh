@@ -5,12 +5,20 @@
 # roda local na VPS. O agente pode rodar isto sozinho (o user 'agente' não
 # precisa de sudo). Leva uns minutos (baixa o modelo ~500MB) na 1ª vez.
 # Rode preferencialmente num cgroup separado pra sobreviver ao restart:
-#   systemd-run --user --collect bash ~/agente-soft/enable-voice.sh
+#   systemd-run --user --collect bash <pasta-do-agente>/enable-voice.sh
 # =====================================================================
 set -uo pipefail
 BRIDGE_DIR="$HOME/lean-bridge"
 VENV="$BRIDGE_DIR/venv-voice"
-REPO_DIR="$HOME/agente-soft"
+# De onde vem o handler de voz. Casa propria primeiro: o pacote ja traz workers/
+# dentro dele. A copia do repositorio publico fica so como socorro pra instalacao
+# do proprio pacote. Ate 30/07 isto apontava DIRETO pra copia do repositorio publico,
+# entao no cliente pago (que nao tem essa pasta) o comando /audio falhava com "falha
+# ao copiar o handler de voz" e ninguem sabia por que.
+SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if   [ -f "$SELF_DIR/workers/voice-handler.py" ];       then REPO_DIR="$SELF_DIR"
+elif [ -f "$BRIDGE_DIR/workers/voice-handler.py" ];     then REPO_DIR="$BRIDGE_DIR"
+else REPO_DIR="$SELF_DIR"; fi   # ultimo caso: falha alto na copia em vez de ir buscar na pasta de outro pacote
 LOG="$BRIDGE_DIR/voice-install.log"
 say(){ echo "[$(date '+%F %H:%M:%S')] $*" >> "$LOG"; }
 

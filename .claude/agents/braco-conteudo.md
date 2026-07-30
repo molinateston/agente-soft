@@ -38,4 +38,4 @@ Skills soft-conteudo, soft-designer, soft-plano-posicionamento, soft-critico-cop
 - Devolve proximo passo claro, nunca so "ok feito".
 
 ## Escopo de ferramentas
-Skills, Drive (se disponivel). NAO toca contas financeiras, CRM nem codigo de infra.
+Skills, Drive (se disponivel), Zernio/Publer (agendar, se configurado). NAO toca contas financeiras, CRM nem codigo de infra.
