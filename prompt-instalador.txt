@@ -24,8 +24,11 @@ Primeiro baixe o agente e leia o manual (o download vem ANTES de precisar do arq
 Não é clone de repositório: é um pacote pronto e versionado.
   V=$(curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/VERSAO | tr -d '[:space:]')
   mkdir -p ~/agente-soft
-  curl -fsSL -o /tmp/agente-soft.tar.gz "https://raw.githubusercontent.com/molinateston/agente-soft/main/pacote/$V/agente-soft.tar.gz"
-  tar -xzf /tmp/agente-soft.tar.gz -C ~/agente-soft && rm -f /tmp/agente-soft.tar.gz
+  B=https://raw.githubusercontent.com/molinateston/agente-soft/main/pacote/$V
+  curl -fsSL -o /tmp/agente-soft.tar.gz "$B/agente-soft.tar.gz"
+  curl -fsSL -o /tmp/agente-soft.sha256 "$B/agente-soft.tar.gz.sha256"
+  (cd /tmp && sha256sum -c agente-soft.sha256) || { echo "PARE: o arquivo baixado nao confere"; exit 1; }
+  tar -xzf /tmp/agente-soft.tar.gz -C ~/agente-soft && rm -f /tmp/agente-soft.tar.gz /tmp/agente-soft.sha256
 Confira que ~/agente-soft/bridge.cjs e ~/agente-soft/SETUP-AGENTE.md existem antes de seguir.
 Se o download falhar, PARE e me explique em português simples — não tente clonar repositório.
 
