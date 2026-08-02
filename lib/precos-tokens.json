@@ -1,0 +1,10 @@
+{
+  "_nota": "Preco de referencia da API Anthropic em USD por 1 milhao de tokens. O Leo paga assinatura Claude Max, entao este valor NAO e gasto: e quanto a mesma operacao custaria se fosse cobrada por token. Editar aqui quando a tabela mudar.",
+  "_atualizado": "2026-07-31",
+  "usd_por_dolar": 5.45,
+  "familias": {
+    "opus":   { "entrada": 15.0, "saida": 75.0, "cache_grava": 18.75, "cache_le": 1.5 },
+    "sonnet": { "entrada": 3.0,  "saida": 15.0, "cache_grava": 3.75,  "cache_le": 0.3 },
+    "haiku":  { "entrada": 1.0,  "saida": 5.0,  "cache_grava": 1.25,  "cache_le": 0.1 }
+  }
+}
