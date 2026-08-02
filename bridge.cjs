@@ -365,6 +365,349 @@ const AVISO_PESADA_MS = Number(process.env.AVISO_PESADA_SEG || 25) * 1000; // pa
 // ---------- CONTEXTO REDONDO: knobs (motor portado do LEON — compactação semeada + continuidade) ----------
 const SOFT_FRAC    = Number(process.env.SOFT_FRAC || 0.80);   // fração da janela de CONVERSA onde COMPACTA (resumo)
 const HARD_FRAC    = Number(process.env.HARD_FRAC || 0.88);   // backstop bruto se a compactação falhar
+
+// ==================== GATE DE SKILLS (portado do LEON em 02/ago) ====================
+// O cliente COMPRA as skills e este bridge nunca as injetava no prompt — o agente respondia de
+// cabeça em vez de seguir o método que ele pagou. Este bloco lê o catálogo, detecta a skill certa
+// pela frase, e injeta o método. Marca-neutro: BRAIN_CRAVADO aponta pro brain DO DONO do agente.
+
+function loadSkillTriggers() {
+  try {
+    const m = fs.statSync(SKILL_TRIGGERS_FILE).mtimeMs;
+    if (m !== _skillTrigMtime) {
+      const j = JSON.parse(fs.readFileSync(SKILL_TRIGGERS_FILE, "utf8"));
+      // remove chave _comment
+      const clean = {}; for (const k in j) if (k !== "_comment") clean[k] = j[k];
+      _skillTriggers = clean; _skillTrigMtime = m;
+    }
+  } catch { _skillTriggers = _skillTriggers || {}; }
+  return _skillTriggers;
+}
+function _deaccent(s) {
+  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+// QUEM DIZ o que a sala faz é a PRÓPRIA SALA, nunca o código. Cada dono organiza os tópicos como
+// quiser e renomeia quando quiser — mapa de nome (ou de número) dentro do código morre calado na
+// primeira renomeação e não serve pra mais ninguém além de uma instalação. Ordem de leitura:
+//   1) campo "skills" da sala no topics.json  (["soft-conteudo"] = base fixa · [] = sala sem gate)
+//   2) linha "SKILLS: a, b" declarada no topo do arquivo de persona da sala
+//   3) nada declarado → vale só o gatilho por palavra-chave, que é genérico
+const _personaSkillsCache = new Map();
+function personaDeclaredSkills(personaFile) {
+  if (!personaFile) return null;
+  const fp = `${PERSONA_DIR}/${personaFile}`;
+  let mt; try { mt = fs.statSync(fp).mtimeMs; } catch { return null; }
+  const c = _personaSkillsCache.get(fp);
+  if (c && c.mt === mt) return c.val;
+  let val = null;
+  try {
+    const head = fs.readFileSync(fp, "utf8").slice(0, 4000);
+    const m = head.match(/^\s*(?:<!--\s*)?SKILLS?\s*:\s*([^\n]*)/im);
+    if (m) {
+      const raw = m[1].replace(/-->/, "").trim();
+      val = /^(nenhuma|none|off|-)$/i.test(raw) ? []
+          : raw.split(/[,;]+/).map(x => x.trim()).filter(Boolean);
+    }
+  } catch {}
+  _personaSkillsCache.set(fp, { mt, val });
+  return val;
+}
+function roomSkills(cfg) {
+  if (!cfg) return null;
+  if (Array.isArray(cfg.skills)) return cfg.skills;
+  if (typeof cfg.skills === "string") {
+    return /^(nenhuma|none|off|-)$/i.test(cfg.skills.trim()) ? [] : cfg.skills.split(/[,;]+/).map(x => x.trim()).filter(Boolean);
+  }
+  return personaDeclaredSkills(cfg.persona);
+}
+function detectSkillsForMessage(text, cfg) {
+  if (!text) return [];
+  const base = roomSkills(cfg);
+  if (Array.isArray(base) && base.length === 0) return [];   // sala declarou que não quer gate
+  const triggers = loadSkillTriggers();
+  const norm = _deaccent(text);
+  const hits = [];
+  for (const skill in triggers) {
+    const kws = triggers[skill] || [];
+    const matched = [];
+    for (const kw of kws) {
+      const nkw = _deaccent(kw);
+      // borda de palavra pra evitar match parcial de sub-palavra ("web" dentro de "webinar")
+      const re = new RegExp(`(^|[^\\p{L}\\p{N}])${nkw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^\\p{L}\\p{N}]|$)`, "u");
+      if (re.test(norm)) matched.push(kw);
+    }
+    if (matched.length) hits.push({ skill, matched });
+  }
+  for (const skill of (base || [])) {
+    if (!hits.some(h => h.skill === skill)) hits.push({ skill, matched: [`sala ${(cfg && cfg.label) || "atual"}`], base: true });
+  }
+  // o crivo de copy é obrigatório antes de entregar linha pública: entra junto, sempre.
+  if (hits.some(h => COPY_SKILLS.has(h.skill)) && !hits.some(h => h.skill === "soft-critico-copy")) {
+    hits.push({ skill: "soft-critico-copy", matched: ["gate obrigatório de copy"], base: true });
+  }
+  return hits;
+}
+// ---- CARREGAMENTO DE MÉTODO (o gate deixa de PEDIR e passa a ENTREGAR) ----
+// Pedir "invoque a skill X" é ignorável. Ler o SKILL.md e colar o método no turno, não é.
+const SKILLS_ROOT = process.env.SKILLS_DIR || `${process.env.HOME || "/home/cloud"}/.claude/skills`;
+const SKILL_BODY_CAP = Number(process.env.SKILL_BODY_CAP || 7000);   // teto por skill
+const SKILL_TOTAL_CAP = Number(process.env.SKILL_TOTAL_CAP || 16000); // teto do turno (cabe método + crivo juntos)
+const SKILL_MAX_LOAD = Number(process.env.SKILL_MAX_LOAD || 3);       // quantas skills de MÉTODO por turno (o gate de saída tem vaga própria, fora deste teto)
+
+// HIERARQUIA BRAIN > SKILL (Léo 02/ago). A regra, na palavra dele: "a skill tira a pessoa do zero,
+// mas depois o brain vale mais. É como contratar um funcionário que tem a skill: no começo ele gera
+// pela cabeça dele; depois que conhece meu negócio, meu tom de voz e minha identidade visual, ele
+// gera do jeito certo". Duas naturezas, tratadas de formas opostas:
+//
+//   SAÍDA  — conferência antes de entregar. SEMPRE entra, em vaga reservada fora do teto. O brain
+//            não substitui: por mais treinado que ele esteja, toda peça pública passa pelo crivo.
+//   CRIAÇÃO— o método de fazer. CEDE ao brain quando o brain já cravou o padrão daquele assunto:
+//            entra RESUMIDA (só o esqueleto), pra não puxar a peça de volta pro genérico.
+const SKILL_SAIDA = new Set(["soft-critico-copy"]);
+// Arquivo do brain que, quando existe, PROVA que o dono já cravou o padrão daquele tema. Enquanto
+// ele existir, a skill de criação correspondente entra resumida — o brain é quem manda.
+const BRAIN_CRAVADO = {
+  // Marca-neutro: aponta pro brain DO DONO DESTE AGENTE, não pro de ninguém específico.
+  // Enquanto o arquivo existir, a skill de criação correspondente entra RESUMIDA e o padrão
+  // já cravado manda. Se não existir, a skill entra inteira (comportamento de antes).
+  "soft-designer": "conteudo/id-visual.md",
+  "soft-voz":      "conteudo/voz.md",
+};
+function brainJaCravou(skill) {
+  const rel = BRAIN_CRAVADO[skill];
+  if (!rel) return null;
+  try { const fp = `${BRAIN}/${rel}`; return fs.existsSync(fp) ? fp : null; } catch { return null; }
+}
+const SKILL_HEAD_CAP = Number(process.env.SKILL_HEAD_CAP || 3000); // cabeca (regra geral) sempre entra
+const _skillRawCache = new Map();
+const _skillMissWarned = new Set();
+function _skNorm(s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
+function _skTokens(s) {
+  return _skNorm(s).split(/[^a-z0-9]+/).filter(w => w.length > 3).map(w => w.replace(/s$/, ""));
+}
+// Um SKILL.md tem 27 mil chars e o teto do turno e 7 mil: cortar os primeiros N chars joga fora
+// justamente o bloco do formato pedido (o "FORMATO-REEL" comeca no char 12.781 do soft-conteudo).
+// Por isso o corte deixou de ser cego: pega a CABECA (regra geral) + as SECOES que casam com o pedido.
+function _skSections(body) {
+  const isTitle = (l) => {
+    const t = l.trim();
+    if (/^#{1,3} \S/.test(t)) return true;
+    if (!t || t.length > 90) return false;
+    const m = t.match(/^[A-Z][A-Z0-9 _.\-\/]{4,}/);   // "FORMATO-REEL (roteiro curto)", "P0. IMPORT..."
+    if (!m) return false;
+    const resto = t.slice(m[0].length).trimStart();
+    return !resto || /^[\(\-]/.test(resto);
+  };
+  const secs = [];
+  let cur = { title: "", lines: [] };
+  for (const l of body.split("\n")) {
+    if (isTitle(l) && cur.lines.length) { secs.push(cur); cur = { title: l.trim(), lines: [l] }; }
+    else { if (!cur.title && isTitle(l)) cur.title = l.trim(); cur.lines.push(l); }
+  }
+  secs.push(cur);
+  return secs.map(x => ({ title: x.title, text: x.lines.join("\n") }));
+}
+function _skPick(raw, msg) {
+  if (raw.length <= SKILL_BODY_CAP) return raw;
+  const secs = _skSections(raw);
+  const alvo = new Set(_skTokens(msg));
+  const chosen = new Set();
+  let usado = 0;
+  const cabe = (t) => usado + t.length + 1 <= SKILL_BODY_CAP;
+  for (let i = 0; i < secs.length; i++) {           // cabeca: a regra que vale pra tudo
+    if (usado + secs[i].text.length > SKILL_HEAD_CAP) break;
+    chosen.add(i); usado += secs[i].text.length + 1;
+  }
+  const scored = secs.map((s, i) => {
+    let sc = 0;
+    for (const t of _skTokens(s.title)) if (alvo.has(t)) sc += 2;
+    return { i, sc, t: s.text };
+  }).filter(x => x.sc > 0 && !chosen.has(x.i)).sort((a, b) => b.sc - a.sc);
+  for (const x of scored) if (cabe(x.t)) { chosen.add(x.i); usado += x.t.length + 1; }
+  for (let i = 0; i < secs.length; i++) {           // sobra do teto: preenche na ordem do arquivo
+    if (chosen.has(i)) continue;
+    if (!cabe(secs[i].text)) continue;
+    chosen.add(i); usado += secs[i].text.length + 1;
+  }
+  const idx = [...chosen].sort((a, b) => a - b);
+  const out = [];
+  let prev = -1;
+  for (const i of idx) { if (prev >= 0 && i !== prev + 1) out.push("[...]"); out.push(secs[i].text); prev = i; }
+  return out.join("\n").trim();
+}
+function loadSkillBody(skill, msg) {
+  const file = `${SKILLS_ROOT}/${skill}/SKILL.md`;
+  let mtime = 0;
+  try { mtime = fs.statSync(file).mtimeMs; } catch {
+    // fusao/renome de skill deixa gatilho apontando pro vazio e o metodo some EM SILENCIO
+    // (foi o que aconteceu na consolidacao de 23/07). Denuncia 1x por nome, pra aparecer no log.
+    if (!_skillMissWarned.has(skill)) { _skillMissWarned.add(skill); console.log(`[skill] declarada mas SEM SKILL.md: ${skill} (nada carregado — conserte o apontamento)`); }
+    return "";
+  }
+  const cached = _skillRawCache.get(skill);
+  let raw;
+  if (cached && cached.mtime === mtime) raw = cached.raw;
+  else {
+    try { raw = fs.readFileSync(file, "utf8"); } catch { return ""; }
+    raw = raw.replace(/^---\n[\s\S]*?\n---\n/, "").trim(); // frontmatter nao e metodo
+    _skillRawCache.set(skill, { mtime, raw });
+  }
+  return _skPick(raw, msg);
+}
+// ---- ESTEIRAS: a CORRENTE, não a pecinha (29/07) ----
+// O problema, na fala do dono: "as skills existem soltas e cada uma faz o seu pedaço. Quem costura
+// sou eu, na conversa, toda vez. Isso não escala." O gate de método acerta UM método por pedido; a
+// esteira acerta a SEQUÊNCIA. Quando o pedido casa com uma esteira, o turno nasce sabendo a corrente
+// inteira, o que passa de um passo pro outro, e onde é legítimo parar e esperar o dono.
+const ESTEIRAS_FILE = `${WORKDIR}/lib/esteiras.json`;
+let _esteiras = null, _esteirasMtime = -1;
+function loadEsteiras() {
+  try {
+    const m = fs.statSync(ESTEIRAS_FILE).mtimeMs;
+    if (m !== _esteirasMtime) {
+      const j = JSON.parse(fs.readFileSync(ESTEIRAS_FILE, "utf8"));
+      _esteiras = Array.isArray(j.esteiras) ? j.esteiras : [];
+      _esteirasMtime = m;
+    }
+  } catch { _esteiras = _esteiras || []; }
+  return _esteiras;
+}
+function detectEsteira(text) {
+  const t = _deaccent(text || "");
+  if (!t) return null;
+  let melhor = null;
+  for (const e of loadEsteiras()) {
+    for (const g of (e.gatilhos || [])) {
+      const gg = _deaccent(g);
+      if (!gg || !t.includes(gg)) continue;
+      if (!melhor || gg.length > melhor.peso) melhor = { esteira: e, peso: gg.length, gatilho: g };
+    }
+  }
+  return melhor;
+}
+function esteiraBlock(text) {
+  const hit = detectEsteira(text);
+  if (!hit) return "";
+  const e = hit.esteira;
+  const passos = (e.passos || []).map((p, i) =>
+    `  ${i + 1}. ${p.metodo}\n     recebe: ${p.entra}\n     entrega: ${p.sai}`).join("\n");
+  return [
+    `[ESTEIRA RECONHECIDA: ${e.nome}`,
+    ``,
+    `Este pedido NÃO é um passo solto, é uma CORRENTE de ${(e.passos || []).length} passos. Execute do primeiro`,
+    `ao último SEM pedir licença entre eles: o que o dono pediu foi a coisa PRONTA no fim, não o começo.`,
+    ``,
+    `A corrente:`,
+    passos,
+    ``,
+    `Regra da corrente: cada passo recebe o que o anterior entregou, no formato escrito acima. Se um`,
+    `passo não entregar naquele formato, ele não terminou: refaça esse passo antes de seguir.`,
+    e.trava ? `\nONDE É LEGÍTIMO PARAR E ESPERAR O DONO: ${e.trava}\nSó pare aí. Parar antes disso é te fazer de carregador de arquivo, que é o que a esteira existe pra matar.` : "",
+    `]`
+  ].filter(Boolean).join("\n");
+}
+function skillGateBlock(text, cfg) {
+  const hits = detectSkillsForMessage(text, cfg);
+  if (!hits.length) return "";
+  // ORDEM (25/07): o MÉTODO da tarefa vem sempre primeiro. O crivo de copy é conferência de saída,
+  // não método — se ele entra na frente, come o teto e a skill que importa fica de fora em silêncio
+  // (era o defeito: sala de conteúdo carregava só o crivo e ignorava o método).
+  const CRIVO = "soft-critico-copy";
+  const base = hits.filter(h => h.base && !SKILL_SAIDA.has(h.skill));
+  const rest = hits.filter(h => !h.base && !SKILL_SAIDA.has(h.skill)).sort((a, b) => b.matched.length - a.matched.length);
+  const crivo = hits.filter(h => SKILL_SAIDA.has(h.skill));
+  const fila = base.concat(rest);   // o gate de saída NÃO disputa o teto: entra depois, em vaga própria
+  const partes = [];
+  const nomes = [];
+  let usado = 0;
+
+  // O BRAIN VEM PRIMEIRO. Se o dono já cravou o padrão do tema (id-visual, voz), esse arquivo entra
+  // INTEIRO e antes de qualquer método — senão a skill recria do zero e erra o padrão que já existe.
+  const cravados = [];
+  for (const h of fila) {
+    const fp = brainJaCravou(h.skill);
+    if (!fp || cravados.includes(fp)) continue;
+    try {
+      const b = fs.readFileSync(fp, "utf8").slice(0, 6000);
+      if (b.trim()) {
+        cravados.push(fp);
+        usado += b.length;
+        partes.push(`### PADRÃO JÁ CRAVADO (${BRAIN_CRAVADO[h.skill]}) — isto é o que VALE. A skill abaixo é referência; onde as duas divergirem, MANDA ESTE ARQUIVO.\n${b}`);
+      }
+    } catch {}
+  }
+
+  for (const h of fila) {
+    if (nomes.length >= SKILL_MAX_LOAD) break;
+    // skill de CRIAÇÃO cujo padrão o brain já cravou entra resumida (teto menor), não em corpo cheio
+    const body = brainJaCravou(h.skill)
+      ? String(loadSkillBody(h.skill, text) || "").slice(0, 2000)
+      : loadSkillBody(h.skill, text);
+    // 29/07: este continue era MUDO e escondeu por semanas que 11 skills (todas as de conteúdo e
+    // webinar) eram stubs vazios no diretório lido — o gate acertava, carregava nada e o agente
+    // respondia de cabeça sem ninguém perceber. Agora grita: peça que degrada em silêncio some do radar.
+    if (!body) { console.error(`[skill] "${h.skill}" bateu o gate mas carregou VAZIO em ${SKILLS_ROOT} — SKILL.md ausente?`); continue; }
+    if (usado + body.length > SKILL_TOTAL_CAP) continue;
+    usado += body.length;
+    nomes.push(h.skill);
+    partes.push(`### MÉTODO: ${h.skill}\n${body}`);
+  }
+
+  // VAGA RESERVADA DO GATE DE SAÍDA: entra SEMPRE que foi detectado, mesmo com o teto de método
+  // estourado. É a conferência antes de entregar — sem ela sai peça pública sem passar pelo crivo.
+  // Era o defeito medido em 02/ago: a sala fixava 4 skills, o teto era 2, e o crivo caía fora calado.
+  for (const h of crivo) {
+    if (nomes.includes(h.skill)) continue;
+    const body = loadSkillBody(h.skill, text);
+    if (!body) { console.error(`[skill] gate de saída "${h.skill}" carregou VAZIO em ${SKILLS_ROOT}`); continue; }
+    nomes.push(h.skill);
+    partes.push(`### GATE DE SAÍDA (obrigatório antes de entregar): ${h.skill}\n${body}`);
+  }
+
+  if (!partes.length) return "";
+  return `[MÉTODO CARREGADO (${nomes.join(", ")}) — o que está abaixo é o método que vale pra esta tarefa. Siga como está escrito, não improvise de cabeça.\n\n${partes.join("\n\n")}\n]`;
+}
+
+// ---- COPY RODA EM SONNET 5 (decisão do Léo, 24/07) ----
+// Escrita de linha pública (headline, carrossel, carta, landing, script, legenda, e-mail) sai
+// melhor no sonnet. Vale em QUALQUER sala: o turno que escreve copy troca de modelo sozinho.
+// Meta-salas ficam de fora (falar SOBRE copy no Motor não é escrever copy).
+// 29/07: nomes atualizados pro catálogo vivo (27 skills). Os antigos "soft-conteudo",
+// "soft-webinario", "soft-vendas-sdr" e "soft-vendas-closer" não existem mais desde a
+// consolidação, então a troca automática pro modelo de copy nunca disparava neles.
+// Os nomes da geração anterior seguem listados no fim: custam nada e cobrem sala que ainda os cite.
+const COPY_SKILLS = new Set([
+  "soft-conteudo-headlines", "soft-conteudo-carrossel", "soft-conteudo-reels",
+  "soft-conteudo-stories", "soft-conteudo-multiplataforma", "soft-conteudo-impulsionar",
+  "soft-funil-carta", "soft-funil-landing", "soft-funil-isca", "soft-funil-miniwebinar",
+  "soft-webinar-chat", "soft-webinar-mensagens", "soft-webinar-paginas",
+  "soft-webinar-script", "soft-webinar-slides",
+  "soft-vendas", "soft-apostila", "soft-proposta-comercial",
+  // geração anterior, ainda presente no diretório do bot:
+  "soft-conteudo", "soft-webinario", "soft-vendas-sdr", "soft-vendas-closer",
+  "soft-voz", "soft-critico-copy",
+]);
+// 29/07: o VERBO tem voto, não só o substantivo. Antes bastava a palavra "carrossel" aparecer pro
+// turno cair no sonnet — então "analisa por que meu carrossel nao converteu e reescreve a tese"
+// (diagnóstico + reestruturação) ia pro modelo simples, e "qual meu saldo" ficava no opus. Era o
+// avesso da doutrina do dono: caro no fácil, barato no difícil.
+// A regra "copy escreve melhor no sonnet" continua valendo — ela só perde quando o pedido é de
+// PENSAR sobre a copy em vez de ESCREVER a copy.
+const PENSAR_KEYWORDS = [
+  "analisa", "analise", "diagnostica", "diagnostico", "por que", "porque nao", "avalia", "avaliacao",
+  "decide", "decida", "estrategia", "reestrutura", "reformula", "repensa", "revisa tudo",
+  "compara", "comparacao", "planeja", "plano de", "arquitetura", "estrutura do", "audita",
+  "auditoria", "critica", "o que ta errado", "nao converteu", "nao funcionou", "melhora o",
+];
+function pedeRaciocinio(text) {
+  const norm = _deaccent(text || "");
+  return PENSAR_KEYWORDS.some(kw => {
+    const nkw = _deaccent(kw).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`(^|[^\\p{L}\\p{N}])${nkw}([^\\p{L}\\p{N}]|$)`, "u").test(norm);
+  });
+}
+
+
 const STATIC_FLOOR = Number(process.env.STATIC_FLOOR || 30000); // piso estático estimado (system+tools+persona); seed do floor por sessão
 // TETO ABSOLUTO da conversa. A fração sozinha é um gatilho que se desarma quando a casa aumenta a
 // janela do modelo: janela maior faz o SOFT subir junto, ninguém compacta mais e a conversa engorda
@@ -373,7 +716,7 @@ const STATIC_FLOOR = Number(process.env.STATIC_FLOOR || 30000); // piso estátic
 // ABSOLUTO (context_token_threshold, padrão 100000), não fração.
 const SOFT_CAP     = Number(process.env.SOFT_CAP || 112000);    // teto de CONVERSA onde compacta, independente da janela
 const HARD_CAP     = Number(process.env.HARD_CAP || 123000);    // teto do backstop bruto
-const FLOOR_CAP    = Number(process.env.FLOOR_CAP || 60000);    // TETO do piso: enxoval real nunca passa disto. Floor acima = turno pesado/fan-out envenenando → trava aqui, senão o SOFT despenca e compacta a cada 1-2 msgs ("esquece o que falávamos")
+const FLOOR_CAP    = Number(process.env.FLOOR_CAP || 18000);    // TETO do piso: enxoval real nunca passa disto. Floor acima = turno pesado/fan-out envenenando → trava aqui, senão o SOFT despenca e compacta a cada 1-2 msgs ("esquece o que falávamos")
 const SNAPSHOT_EVERY = Number(process.env.SNAPSHOT_EVERY || 8); // a cada N turnos guarda um tail-handoff (sobrevive a poda willow)
 const COMPACT_TIMEOUT_MS = Number(process.env.COMPACT_TIMEOUT_SEG || 120) * 1000;
 const MEMVIVA_FILE = process.env.MEMVIVA_FILE || `${BRAIN}/MEMORIA-VIVA.md`;   // memória de trabalho (decisões/projetos/pendências ATIVAS): SEMPRE no contexto (estilo NAIA)
@@ -1149,7 +1492,11 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       ].filter(Boolean).join("\n\n");
       // resumo da conversa também é volátil (muda a cada compactação): vai no INPUT, não no system-prompt.
       const contBlock = cont ? `# A CONVERSA CONTINUA — NÃO recomece do zero\nVocê JÁ vinha conversando com o dono; este trecho é CONTINUAÇÃO da mesma conversa (ela foi compactada pra caber, só isso). Resumo do que já falaram antes deste ponto:\n${cont}\n\nRegra: trate como continuação natural. NUNCA diga "a conversa começou agora", "não tenho histórico desta sessão" nem peça pra ele repetir o que já foi dito. Se perguntarem o que falaram antes, responda a partir DESTE resumo.` : "";
-      const userText = [timeBlock(), contBlock, mbDyn, soConclui || text].filter(Boolean).join("\n\n");
+      // GATE DE SKILLS (02/ago): injeta o MÉTODO da skill que casa com o pedido. Sem isto o agente
+      // responde de cabeça e o dono não recebe o que comprou. Falha em silêncio se não houver skill.
+      let skillGate = "";
+      try { skillGate = skillGateBlock(text, cfg) || ""; } catch (e) { console.error("[skill] gate:", e && e.message); }
+      const userText = [timeBlock(), contBlock, mbDyn, skillGate, soConclui || text].filter(Boolean).join("\n\n");
       // COPY sempre em sonnet 5, mesmo que a sala rode outro modelo.
       const _model = isCopyTask(text) ? COPY_MODEL : cfg.model;
       const args = ["-p", "--model", _model, "--output-format", "stream-json", "--verbose",
