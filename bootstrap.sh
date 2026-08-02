@@ -167,14 +167,23 @@ apt-get install -y -qq ffmpeg >/dev/null 2>&1 || true
 echo "→ Voz local grátis (Piper TTS · pt_BR)..."
 sudo -u agente bash -s <<'PIPER_SETUP' || echo "   (aviso) Piper opcional falhou — LEON cai em nuvem se você ativar voz." >&2
 set -e
-mkdir -p ~/.openclaw/piper-venv ~/.openclaw/voices/piper
-if [ ! -x ~/.openclaw/piper-venv/bin/piper ]; then
-  python3 -m venv ~/.openclaw/piper-venv
-  ~/.openclaw/piper-venv/bin/pip install --quiet piper-tts >/dev/null
+# COMPATIBILIDADE (02/ago/2026): o diretorio do agente passou a se chamar ~/.leon.
+# Instalacao ANTIGA (que ja tem ~/.openclaw com os venvs de voz) continua funcionando:
+# em vez de baixar tudo de novo, renomeia e deixa um link no nome velho.
+if [ -d "$HOME/.openclaw" ] && [ ! -e "$HOME/.leon" ]; then
+  mv "$HOME/.openclaw" "$HOME/.leon" && ln -s "$HOME/.leon" "$HOME/.openclaw"
+  echo "  · diretorio migrado: ~/.openclaw -> ~/.leon (link antigo mantido)"
 fi
-if [ ! -s ~/.openclaw/voices/piper/pt_BR-faber-medium.onnx ]; then
-  curl -sfL -o ~/.openclaw/voices/piper/pt_BR-faber-medium.onnx      https://huggingface.co/rhasspy/piper-voices/resolve/main/pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx
-  curl -sfL -o ~/.openclaw/voices/piper/pt_BR-faber-medium.onnx.json https://huggingface.co/rhasspy/piper-voices/resolve/main/pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx.json
+mkdir -p "$HOME/.leon"
+[ -e "$HOME/.openclaw" ] || ln -s "$HOME/.leon" "$HOME/.openclaw"
+mkdir -p ~/.leon/piper-venv ~/.leon/voices/piper
+if [ ! -x ~/.leon/piper-venv/bin/piper ]; then
+  python3 -m venv ~/.leon/piper-venv
+  ~/.leon/piper-venv/bin/pip install --quiet piper-tts >/dev/null
+fi
+if [ ! -s ~/.leon/voices/piper/pt_BR-faber-medium.onnx ]; then
+  curl -sfL -o ~/.leon/voices/piper/pt_BR-faber-medium.onnx      https://huggingface.co/rhasspy/piper-voices/resolve/main/pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx
+  curl -sfL -o ~/.leon/voices/piper/pt_BR-faber-medium.onnx.json https://huggingface.co/rhasspy/piper-voices/resolve/main/pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx.json
 fi
 PIPER_SETUP
 echo "   Piper pronto (roda offline, custa 0)."
@@ -184,10 +193,10 @@ echo "   Piper pronto (roda offline, custa 0)."
 echo "→ Voz nuvem grátis (Edge TTS · Antonio/Francisca pt-BR)..."
 sudo -u agente bash -s <<'EDGE_SETUP' || echo "   (aviso) Edge TTS opcional falhou — cai em Piper." >&2
 set -e
-mkdir -p ~/.openclaw/edgetts-venv
-if [ ! -x ~/.openclaw/edgetts-venv/bin/edge-tts ]; then
-  python3 -m venv ~/.openclaw/edgetts-venv
-  ~/.openclaw/edgetts-venv/bin/pip install --quiet edge-tts >/dev/null
+mkdir -p ~/.leon/edgetts-venv
+if [ ! -x ~/.leon/edgetts-venv/bin/edge-tts ]; then
+  python3 -m venv ~/.leon/edgetts-venv
+  ~/.leon/edgetts-venv/bin/pip install --quiet edge-tts >/dev/null
 fi
 EDGE_SETUP
 echo "   Edge TTS pronto (Antonio masc / Francisca fem, escolhido por AGENT_GENDER)."
@@ -214,12 +223,12 @@ echo "   Leitor de documento pronto (converte antes de ler, custa 0)."
 echo "→ Transcrição local grátis (faster-whisper · pt-BR)..."
 sudo -u agente bash -s <<'WHISPER_SETUP' || echo "   (aviso) faster-whisper opcional falhou — áudio-in pode não funcionar." >&2
 set -e
-mkdir -p ~/.openclaw/whisper-venv
-if [ ! -x ~/.openclaw/whisper-venv/bin/python3 ]; then
-  python3 -m venv ~/.openclaw/whisper-venv
+mkdir -p ~/.leon/whisper-venv
+if [ ! -x ~/.leon/whisper-venv/bin/python3 ]; then
+  python3 -m venv ~/.leon/whisper-venv
 fi
-if ! ~/.openclaw/whisper-venv/bin/python3 -c "import faster_whisper" 2>/dev/null; then
-  ~/.openclaw/whisper-venv/bin/pip install --quiet faster-whisper >/dev/null
+if ! ~/.leon/whisper-venv/bin/python3 -c "import faster_whisper" 2>/dev/null; then
+  ~/.leon/whisper-venv/bin/pip install --quiet faster-whisper >/dev/null
 fi
 WHISPER_SETUP
 echo "   faster-whisper pronto (roda offline, custa 0)."
