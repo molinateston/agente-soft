@@ -855,6 +855,21 @@ const saveSessions = () => {
 // TEMP em DISCO REAL, NÃO no tmpfs /tmp (pequeno — enche com whisper/download de vídeo e trava TUDO com ENOSPC = "echo dá exit 1"; blindagem 08/jul).
 const WORK_TMP = process.env.LEAN_TMPDIR || `${process.env.HOME || "/tmp"}/.lean-tmp`;
 try { fs.mkdirSync(WORK_TMP, { recursive: true }); } catch {}
+
+// ==================== REFORÇO QUANDO A COTA BATE (02/ago) ====================
+// Sem isto o agente fica MUDO até a cota renovar — o dono manda mensagem e não vem nada.
+// Tudo aqui é OPCIONAL e gated por chave: sem as variáveis no .env, o comportamento é
+// exatamente o de antes. Quem quiser um seguro, preenche uma das duas:
+//   ANTHROPIC_OAUTH_2  → 2ª conta Anthropic (mesmo Claude, mesma qualidade)
+//   ZAI_API_KEY        → motor de reserva compatível
+const isLimitMsg = (s) => { s = String(s || ""); return s.length < 280 && /(hit your limit|usage limit|limit reached|reached your .{0,40}limit|rate.?limit|credit balance|balance is too low|resets?\s+(?:[A-Za-z]{3,9}\s+)?\d{1,2}|too many requests)/i.test(s); };
+const oauth2    = () => (envMap().ANTHROPIC_OAUTH_2 || process.env.ANTHROPIC_OAUTH_2 || "").trim();
+const zaiKey    = () => (envMap().ZAI_API_KEY || process.env.ZAI_API_KEY || "").trim();
+const ZAI_MODEL = process.env.ZAI_FALLBACK_MODEL || "glm-5.2";
+const ZAI_BASE  = process.env.ZAI_BASE_URL || "https://api.z.ai/api/anthropic";
+const conta2Env = () => { const e = childEnv(); e.CLAUDE_CODE_OAUTH_TOKEN = oauth2(); delete e.ANTHROPIC_API_KEY; delete e.ANTHROPIC_AUTH_TOKEN; delete e.ANTHROPIC_BASE_URL; return e; };
+const zaiEnv    = () => { const e = childEnv(); e.ANTHROPIC_BASE_URL = ZAI_BASE; e.ANTHROPIC_AUTH_TOKEN = zaiKey(); delete e.ANTHROPIC_API_KEY; delete e.CLAUDE_CODE_OAUTH_TOKEN; return e; };
+
 const childEnv = () => { const e = { ...process.env, ...envMap(), TZ: process.env.TZ || "America/Sao_Paulo", TMPDIR: WORK_TMP, TMP: WORK_TMP, TEMP: WORK_TMP }; delete e.TELEGRAM_BOT_TOKEN; return e; };
 // GUARD do /tmp: se o tmpfs ficar baixo, limpa só REGENERÁVEL/ANTIGO e avisa o dono CEDO. Nunca toca sessão claude ativa.
 let _lastDiskWarn = 0;
@@ -1478,7 +1493,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
   const { win, floor, ctxConv, SOFT, HARD } = gate(_s, cfg.model);   // CAMADA 1: crescimento da conversa, não janela bruta
 
   // roda o claude uma vez. resumeSid=null força sessão nova; 'cont' é o resumo de continuação a injetar.
-  function runOnce(resumeSid, cont, soConclui) {
+  function runOnce(resumeSid, cont, soConclui, override) {   // override: {env, model} — usado pelo reforço de cota
     return new Promise((resolve) => {
       const isMissao = !!mission;   // MODO MISSÃO: tarefa longa deliberada (budget/tempo soltos + reports de marco + retomada durável)
       // HORÁRIO de Brasília vai no INPUT (não no system-prompt: evita cache-bust). Prepende ao texto do usuário.
@@ -1500,7 +1515,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       try { skillGate = skillGateBlock(text, cfg) || ""; } catch (e) { console.error("[skill] gate:", e && e.message); }
       const userText = [timeBlock(), contBlock, mbDyn, skillGate, soConclui || text].filter(Boolean).join("\n\n");
       // COPY sempre em sonnet 5, mesmo que a sala rode outro modelo.
-      const _model = isCopyTask(text) ? COPY_MODEL : cfg.model;
+      const _model = (override && override.model) || (isCopyTask(text) ? COPY_MODEL : cfg.model);
       const args = ["-p", "--model", _model, "--output-format", "stream-json", "--verbose",
                     "--permission-mode", "bypassPermissions",   // agência total: escreve/edita arquivo + roda Bash (acesso já é só OWNER/allowlist)
                     "--add-dir", WORKDIR, "--add-dir", BRAIN, "--add-dir", TMP_DIR, "--add-dir", projDir()];
@@ -1553,7 +1568,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       }
       // detached: process group próprio → killTree(-pgid) não deixa subagente órfão queimando cota
       // missão injeta MISSAO_PROGRESS no filho → o agente escreve marcos nesse arquivo e a ponte posta como report
-      let _env = childEnv();
+      let _env = (override && override.env) || childEnv();
       if (isMissao) _env = { ..._env, MISSAO_ID: mission.id, MISSAO_PROGRESS: mission.progressFile };
       const proc = trackKid(spawn(CLAUDE_BIN, args, { cwd: WORKDIR, env: _env, detached: true }));
 
@@ -1813,6 +1828,28 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       // ESCALADA: na 3ª falha seguida do MESMO tópico, para de dizer "é passageiro" — mostra a causa
       // e pede o dono (erro permanente tipo login vencido/chave morta não pode virar loop infinito).
       // REINÍCIO PLANEJADO vem ANTES de tudo: não é falha do tópico, não conta streak, não vira jargão.
+      // REFORÇO POR COTA (02/ago): se a cota bateu e existe um seguro configurado, responde por ele
+      // em vez de deixar o dono sem resposta. Sem chave no .env, nada disto roda.
+      {
+        const _sig = String(out.err || "") + "\n" + String(out.result || "");
+        const _cota = isLimitMsg(out.result) || /(hit your limit|usage limit|limit reached|credit balance|over.?quota)/i.test(_sig);
+        if (_cota) {
+          const _seed = cont || _store || (useSid && sidExists(useSid) ? readTail(useSid) : "");
+          if (oauth2()) {
+            console.log("[ponte] cota bateu — respondendo pela CONTA 2 (mesmo Claude)");
+            const r2 = await runOnce(null, _seed, null, { env: conta2Env() });
+            if (r2.result != null && !isLimitMsg(r2.result)) { _failStreak[key] = 0; return { result: r2.result, sid: out.sid, ctx: 0, ok: true }; }
+          }
+          if (zaiKey()) {
+            console.log("[ponte] cota bateu — respondendo pelo motor de reserva");
+            const rz = await runOnce(null, _seed, null, { model: ZAI_MODEL, env: zaiEnv() });
+            if (rz.result != null && !isLimitMsg(rz.result)) {
+              _failStreak[key] = 0;
+              return { result: rz.result + "\n\n_⚙️ respondi pelo reforço: a cota do motor principal bateu. Quando renovar, eu volto._", sid: out.sid, ctx: 0, ok: true };
+            }
+          }
+        }
+      }
       if (String(out.err) === "__REINICIO__" || fs.existsSync("/tmp/lean-cliente.selfupd-active")) {
         return { result: "⚙️ Reiniciei no meio do teu recado (estava aplicando um ajuste). Guardei ele aqui e volto com a resposta em ~1 min — não precisa repetir.", sid: out.sid, ctx: out.ctx || 0, ok: false, retomar: true };
       }
