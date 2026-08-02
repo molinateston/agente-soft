@@ -371,6 +371,8 @@ const HARD_FRAC    = Number(process.env.HARD_FRAC || 0.88);   // backstop bruto 
 // cabeça em vez de seguir o método que ele pagou. Este bloco lê o catálogo, detecta a skill certa
 // pela frase, e injeta o método. Marca-neutro: BRAIN_CRAVADO aponta pro brain DO DONO do agente.
 
+const SKILL_TRIGGERS_FILE = `${WORKDIR}/lib/skill-triggers.json`;
+let _skillTriggers = null, _skillTrigMtime = -1;
 function loadSkillTriggers() {
   try {
     const m = fs.statSync(SKILL_TRIGGERS_FILE).mtimeMs;
@@ -454,7 +456,7 @@ const SKILL_BODY_CAP = Number(process.env.SKILL_BODY_CAP || 7000);   // teto por
 const SKILL_TOTAL_CAP = Number(process.env.SKILL_TOTAL_CAP || 16000); // teto do turno (cabe método + crivo juntos)
 const SKILL_MAX_LOAD = Number(process.env.SKILL_MAX_LOAD || 3);       // quantas skills de MÉTODO por turno (o gate de saída tem vaga própria, fora deste teto)
 
-// HIERARQUIA BRAIN > SKILL (Léo 02/ago). A regra, na palavra dele: "a skill tira a pessoa do zero,
+// HIERARQUIA BRAIN > SKILL. A regra: "a skill tira a pessoa do zero,
 // mas depois o brain vale mais. É como contratar um funcionário que tem a skill: no começo ele gera
 // pela cabeça dele; depois que conhece meu negócio, meu tom de voz e minha identidade visual, ele
 // gera do jeito certo". Duas naturezas, tratadas de formas opostas:
@@ -668,7 +670,7 @@ function skillGateBlock(text, cfg) {
   return `[MÉTODO CARREGADO (${nomes.join(", ")}) — o que está abaixo é o método que vale pra esta tarefa. Siga como está escrito, não improvise de cabeça.\n\n${partes.join("\n\n")}\n]`;
 }
 
-// ---- COPY RODA EM SONNET 5 (decisão do Léo, 24/07) ----
+// ---- COPY RODA EM SONNET 5 ----
 // Escrita de linha pública (headline, carrossel, carta, landing, script, legenda, e-mail) sai
 // melhor no sonnet. Vale em QUALQUER sala: o turno que escreve copy troca de modelo sozinho.
 // Meta-salas ficam de fora (falar SOBRE copy no Motor não é escrever copy).
