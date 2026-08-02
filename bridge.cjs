@@ -1516,6 +1516,10 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       const pf = `${PERSONA_DIR}/${cfg.persona}`;
       let sysPrompt = "";
       { const base = doutrinaBase(); if (base) sysPrompt += base + "\n\n"; }
+      // GERENTE DA SALA (02/ago): toda sala DELEGA em vez de executar tudo, e escala o modelo de
+      // baixo pra cima. Sem isto cada sala fazia tudo sozinha, no modelo caro.
+      { const gp = `${PERSONA_DIR}/_GERENTE-DA-SALA.md`;
+        try { if (fs.existsSync(gp)) sysPrompt += fs.readFileSync(gp, "utf8") + "\n\n"; } catch {} }
       if (cfg.persona && fs.existsSync(pf)) { try { sysPrompt += fs.readFileSync(pf, "utf8"); } catch {} }
       // ONDE VOCÊ ESTÁ: o agente sempre sabe o chat/tópico atual → reporta o id, se auto-configura, e não precisa de getUpdates/@userinfobot
       const loc = `## ONDE VOCÊ ESTÁ AGORA\nVocê está respondendo no chat_id=${chatId}` + (threadId ? `, dentro do tópico topic_id=${threadId}` : ` (sem tópico — DM ou chat principal)`) + (cfg.label ? `, sala "${cfg.label}"` : "") + `. Se pedirem o id deste grupo/tópico, é ESTE — você JÁ sabe, não use getUpdates nem @userinfobot. Pra te configurar nesta sala, grave este chat_id/topic_id no seu .env (GROUP_CHAT_ID) ou no topics.json e reinicie.`;
@@ -2449,18 +2453,46 @@ function checkPromises() {
 // MENU NATIVO DO TELEGRAM (29/07). Sem isto, o cliente digita "/" e nao aparece nada: ele precisa
 // ADIVINHAR que existe /ajuda. O setMyCommands faz o Telegram mostrar a lista sozinho, com
 // descricao, no proprio campo de digitacao. Roda uma vez no boot; falha aqui nunca derruba o bot.
+// TODA SKILL NO MENU "/" (02/ago): o dono digita "/" e vê o método que comprou, em vez de ter de
+// decorar nome de skill. Lê o mesmo diretório que o gate usa. O Telegram rejeita o lote inteiro
+// quando a soma das descrições cresce (medido), por isso a legenda é cortada em 60 chars.
+function skillsDoMenu() {
+  const out = [];
+  let dirs = [];
+  try { dirs = fs.readdirSync(SKILLS_ROOT, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name); } catch { return out; }
+  for (const nome of dirs.sort()) {
+    if (nome.startsWith("_") || nome === "scripts") continue;
+    const fp = `${SKILLS_ROOT}/${nome}/SKILL.md`;
+    if (!fs.existsSync(fp)) continue;
+    const cmd = nome.toLowerCase().replace(/[^a-z0-9_]/g, "_").replace(/_+$/, "").slice(0, 32);
+    if (!cmd) continue;
+    let desc = "";
+    try {
+      const m = fs.readFileSync(fp, "utf8").slice(0, 4000).match(/^description:\s*(.+)$/mi);
+      if (m) desc = m[1].replace(/^["']|["']$/g, "").trim();
+    } catch {}
+    desc = (desc.split(/(?<=[.;])\s/)[0] || nome).replace(/\s+/g, " ")
+             .replace(/^(Use (this skill )?(whenever|when|any time)[^,]*,\s*)/i, "").slice(0, 60);
+    out.push({ command: cmd, description: desc || nome });
+  }
+  return out;
+}
 async function registrarMenu() {
   try {
-    await tg("setMyCommands", { commands: [
+    const fixos = [
       { command: "ajuda",     description: "o que eu faco e como pedir" },
       { command: "status",    description: "como eu estou (conta, versao, saude)" },
       { command: "atualiza",  description: "pego a ultima versao do metodo" },
       { command: "id",        description: "o id deste grupo/topico" },
-    ]});
-    console.log("[ponte] menu de comandos registrado no Telegram");
+    ];
+    const usados = new Set(fixos.map(c => c.command));
+    const extras = skillsDoMenu().filter(s => !usados.has(s.command)).slice(0, 100 - fixos.length);
+    await tg("setMyCommands", { commands: [...fixos, ...extras] });
+    console.log(`[ponte] menu de comandos registrado no Telegram (${fixos.length} fixos + ${extras.length} skills)`);
   } catch (e) { console.error("[ponte] setMyCommands falhou (segue a vida):", e && e.message); }
 }
-registrarMenu();
+// só quando EXECUTADO, nunca quando importado como lib (senão qualquer require dispara rede)
+if (require.main === module) registrarMenu();
 
 async function poll() {
   while (!_shuttingDown) {   // no shutdown: para de pegar mensagem nova; o dreno espera as em voo terminarem
