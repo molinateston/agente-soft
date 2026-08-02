@@ -86,12 +86,15 @@ mkdir -p ~/lean-bridge/persona ~/lean-bridge/brain
 cp ~/agente-soft/bridge.cjs ~/lean-bridge/bridge.cjs
 node --check ~/lean-bridge/bridge.cjs
 
-# ESTA INSTALACAO NAO BAIXA SKILL NENHUMA, DE PROPOSITO.
-# Material de metodo nao faz parte deste pacote: nao existe clone de repo de skill
-# aqui, e nao deve ser adicionado. Se a pasta ~/.claude/skills ja existir nesta
-# maquina, o agente aproveita o que estiver la; se nao existir, ele opera normal
-# sem ela. Nenhuma etapa da instalacao nem do update depende de skill pra concluir.
-mkdir -p ~/.claude
+# AS SKILLS DO METODO VEM NO PACOTE (decisao de 02/ago/2026: produto unico).
+# Antes existiam duas versoes, uma sem metodo. Agora e uma so: o pacote traz a
+# pasta skills/ e a instalacao copia pra ~/.claude/skills, onde o Claude Code le.
+# Se ja existir skill nessa maquina, o que vem no pacote soma sem apagar o resto.
+mkdir -p ~/.claude/skills
+if [ -d ~/agente-soft/skills ]; then
+  cp -an ~/agente-soft/skills/. ~/.claude/skills/ 2>/dev/null || true
+  echo "  skills do metodo instaladas: $(ls -d ~/.claude/skills/*/ 2>/dev/null | wc -l)"
+fi
 
 # Semeia o índice de memória (brain/MAPA.md) pro PROTOCOLO DE RECALL ter o que ler desde
 # o dia 1. Sem isso, em cliente novo o Read do MAPA falha e o recall vira no-op (o agente

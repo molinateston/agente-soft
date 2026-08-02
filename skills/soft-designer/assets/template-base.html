@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Soft Carrossel Preview</title>
+
+<!-- {{FONT_LINKS}} - inserir aqui os <link> do Google Fonts da combinação escolhida -->
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #1a1a1a;
+    padding: 40px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .slide-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .slide-label {
+    color: #888;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .slide {
+    width: 1080px;
+    height: 1350px;
+    /* Display em escala reduzida pra preview no chat, mas dimensões reais 1080x1350 */
+    transform-origin: top center;
+    transform: scale(0.4);
+    margin-bottom: -810px; /* compensar scale (1350 * 0.6 = 810) */
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+
+  /* Tipografia base — substituída por classes específicas no slide */
+  h1, h2, h3, p, span, div { font-family: inherit; }
+
+  /* Utility classes que slides individuais usam */
+  .accent { color: var(--accent, #FF6B1A); }
+  .muted { opacity: 0.6; }
+</style>
+</head>
+
+<body>
+
+<!-- {{SLIDES}} - cada slide é um <div class="slide-wrapper"> contendo label + .slide -->
+
+</body>
+</html>

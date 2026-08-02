@@ -1,0 +1,17 @@
+{
+  "$comment": "Schema da identidade visual de UM cliente. Campo vazio fica null e a skill pergunta so aquele campo, nunca chuta.",
+  "familia_base": "editorial_preto | clinico_branco | manuscrito_cru | livre",
+  "fundo": "#000000",
+  "accent": "#4ade80",
+  "accent_hover": null,
+  "negativo": "#E63946",
+  "fonte_titulo": "Bebas Neue 700",
+  "fonte_corpo": "Inter 400",
+  "fonte_label": "JetBrains Mono 500",
+  "cantos": "retos",
+  "hairlines": true,
+  "logo_path": null,
+  "tag_topo": "@handle",
+  "texto_botao_padrao": "Quero saber mais",
+  "combo_export": "inter_bruto"
+}

@@ -1,0 +1,17 @@
+{
+  "cliente": "Marca Exemplo",
+  "familia_base": "editorial_preto",
+  "fundo": "#0B0B0B",
+  "accent": "#FF6B35",
+  "accent_hover": "#E0552A",
+  "negativo": "#D62828",
+  "fonte_titulo": "Anton 400",
+  "fonte_corpo": "Source Sans 3 400",
+  "fonte_label": "IBM Plex Mono 500",
+  "cantos": "retos",
+  "hairlines": true,
+  "logo_path": null,
+  "tag_topo": "@suamarca",
+  "texto_botao_padrao": "Quero saber mais",
+  "combo_export": "inter_bruto"
+}

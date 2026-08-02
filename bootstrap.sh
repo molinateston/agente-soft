@@ -266,7 +266,7 @@ Vou te dar conforme você pedir: nome do agente, meu nome e o token do bot
 do Telegram (@BotFather). Meu id você captura sozinho (eu mando uma mensagem
 no próprio bot, sem @userinfobot).
 Sobe a ponte, sobe o serviço, valida, e me confirma quando estiver no ar.
-Não baixe nem clone repositório de skill/método: esta instalação não usa isso.
+As skills do método vêm no próprio pacote (pasta skills/). Não precisa clonar nada.
 Se travar, me explica em português simples.
 ----------8<---------- ATÉ AQUI ----------8<----------
 

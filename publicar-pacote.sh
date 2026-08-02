@@ -35,6 +35,7 @@ TMP=$(mktemp -d /tmp/pkg-XXXX); trap 'rm -rf "$TMP"' EXIT
 rsync -a --exclude='.git' --exclude='pacote' --exclude='node_modules' \
       --exclude='*.bak*' --exclude='*.ANTES-*' --exclude='*.CHEIO-*' \
       --exclude='.env' --exclude='sessions.json*' --exclude='topics.json' \
+      --exclude='publicar-pacote.sh' \
       --exclude='brain' --exclude='promises' --exclude='missions' \
       --exclude='*.log' --exclude='.bridge.lock' --exclude='.alive' \
       ./ "$TMP/pkg/"
@@ -42,7 +43,7 @@ rsync -a --exclude='.git' --exclude='pacote' --exclude='node_modules' \
 echo "$V" > "$TMP/pkg/VERSAO"
 cat > "$TMP/pkg/.pacote.json" <<EOF
 {
-  "modo": "gratuito",
+  "modo": "completo",   # 02/ago: produto unico — o pacote traz as skills do metodo
   "versao": "$V",
   "instalador": "sudo bash -c \\"\$(curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/bootstrap.sh)\\"",
   "usuario": "agente",
