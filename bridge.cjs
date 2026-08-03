@@ -608,6 +608,40 @@ function esteiraBlock(text) {
     `]`
   ].filter(Boolean).join("\n");
 }
+// CORREÇÃO DO DONO VIRA ARQUIVO (03/08) — o segundo pedido dele: "quero ir ajustando o agente
+// falando direto com ele". A doutrina do AGENT-BASE já mandava gravar em brain/MEMORIA-VIVA.md,
+// mas era só doutrina: dependia do modelo lembrar no meio de um turno cheio. No LEON existe
+// gatilho mecânico pra isso e a diferença apareceu na prática — lá as correções viram arquivo,
+// aqui evaporavam com a conversa.
+// Isto NÃO grava nada sozinho: injeta a ORDEM de gravar quando o dono corrige/ensina, no mesmo
+// lugar onde o gate de skills já entra. Se a regex não casar, devolve "" e o turno segue igual.
+const CORRIGE_RE = /\b(?:nao (?:manda|mande|escreve|escreva|fala|fale|faz|faca|usa|use|pode|era|e assim)|nunca (?:manda|mande|escreve|escreva|fala|fale|usa|use)|tira isso|tire isso|tira essa|para de|pare de|refaz|refaca|refaça|ta errado|esta errado|nao e (?:isso|assim)|corrige|corrija)\b/;
+const ENSINA_RE  = /\b(?:faz(?:er)? assim|faca assim|escreve(?:r)? assim|fala(?:r)? assim|manda(?:r)? assim|era pra (?:ser|escrever|falar|fazer)|o certo (?:e|seria)|assim (?:ta|fica) (?:bom|certo|melhor)|(?:esse|este|isso) (?:molde|jeito|tom|formato) (?:ta|esta) (?:bom|certo|otimo)|pode (?:usar|mandar|fazer) assim|de agora em diante|daqui pra frente|sempre que|toda vez que|aprovado|ficou bom|isso sim|agora sim|perfeito assim)\b/;
+
+function correcaoDoDonoBlock(text) {
+  try {
+    if (!text) return "";
+    const t = _deaccent(String(text)).toLowerCase();
+    const corrige = CORRIGE_RE.test(t);
+    const ensina  = ENSINA_RE.test(t);
+    if (!corrige && !ensina) return "";
+    return [
+      "[O DONO ACABOU DE TE CORRIGIR/ENSINAR — GRAVE ANTES DE ENCERRAR O TURNO.",
+      "Correção que fica só na conversa evapora quando o histórico comprime, e ele repete a mesma",
+      "coisa semana que vem. Antes de responder, escreva no arquivo (ferramenta Write/Edit):",
+      "",
+      `  ${BRAIN}/MEMORIA-VIVA.md`,
+      "",
+      "Uma entrada curta com: a data, a FALA LITERAL dele (não parafraseie — o tom é dele), o que",
+      "muda na prática, e o molde aprovado se ele tiver dado um exemplo.",
+      corrige && !ensina
+        ? "Ele disse o que NÃO quer. Se você não souber qual é o jeito certo, pergunte numa linha e grave depois."
+        : "Ele disse como QUER. Essa é a parte que mais se perde: grave o exemplo, não só a regra.",
+      "Depois responda normalmente. Não anuncie que gravou — só grave.]"
+    ].join("\n");
+  } catch { return ""; }
+}
+
 function skillGateBlock(text, cfg) {
   const hits = detectSkillsForMessage(text, cfg);
   if (!hits.length) return "";
@@ -1513,7 +1547,10 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       // responde de cabeça e o dono não recebe o que comprou. Falha em silêncio se não houver skill.
       let skillGate = "";
       try { skillGate = skillGateBlock(text, cfg) || ""; } catch (e) { console.error("[skill] gate:", e && e.message); }
-      const userText = [timeBlock(), contBlock, mbDyn, skillGate, soConclui || text].filter(Boolean).join("\n\n");
+      // 03/08: correção do dono vira arquivo em vez de evaporar com a conversa (ver a função).
+      let correcao = "";
+      try { correcao = correcaoDoDonoBlock(text) || ""; } catch (e) { console.error("[correcao] bloco:", e && e.message); }
+      const userText = [timeBlock(), contBlock, mbDyn, skillGate, correcao, soConclui || text].filter(Boolean).join("\n\n");
       // COPY sempre em sonnet 5, mesmo que a sala rode outro modelo.
       const _model = (override && override.model) || (isCopyTask(text) ? COPY_MODEL : cfg.model);
       const args = ["-p", "--model", _model, "--output-format", "stream-json", "--verbose",
