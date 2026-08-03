@@ -58,17 +58,12 @@ on_exit(){
   local rc=$?
   if [ -f "$RECIBO" ]; then
     if [ "$rc" -eq 0 ]; then tg "✅ Conferi: você já estava na última versão, não precisou trocar nada. Segui no ar o tempo todo."
-    else
-      # Lê a marca deixada pelo bloco de rollback (ver o comentário lá embaixo): sem ela, o
-      # aviso afirmava "continuo na versão de antes" mesmo quando o rollback tinha falhado e o
-      # cliente ESTAVA na versão nova.
-      _rb="$(cat "$REPO_DIR/.ultimo-rollback" 2>/dev/null || echo desconhecido)"
-      rm -f "$REPO_DIR/.ultimo-rollback" 2>/dev/null || true
-      case "$_rb" in
-        sim) tg "⚠️ Tentei atualizar, algo não passou na conferência e eu voltei sozinho pra versão de antes. Sigo no ar e nada da nossa conversa se perdeu. Tento de novo no automático." ;;
-        falhou|sem-script) tg "⚠️ Atenção: a atualização foi aplicada mas não passou na conferência final, e eu NÃO consegui voltar sozinho. Estou no ar, mas na versão NOVA — não na de antes. Nada da conversa se perdeu. Me manda /status pra você ver como estou, ou /atualiza de novo." ;;
-        *) tg "⚠️ Tentei atualizar e não consegui agora — sigo no ar e nada da nossa conversa se perdeu. Se eu tiver ficado com o motor novo pela metade, um /atualiza resolve. Tento de novo no automático." ;;
-      esac
+    # Falha ANTES do ponto de rollback (rede, disco, pacote corrompido): aqui o cliente segue
+    # mesmo na versão de antes, então este texto é verdadeiro. O caso "aplicou mas não passou na
+    # conferência" NÃO cai aqui — quem avisa nele é o próprio bloco de rollback, lá embaixo, que
+    # é o único que sabe se a reversão completou. (O trap já está desarmado quando aquele bloco
+    # roda, por isso o aviso mora lá e não aqui.)
+    else tg "⚠️ Tentei atualizar e não consegui agora — continuo no ar na versão de antes e nada da nossa conversa se perdeu. Tento de novo no automático."
     fi
     rm -f "$RECIBO" 2>/dev/null || true
   fi
@@ -212,6 +207,25 @@ if [ -d "$REPO_DIR/skills" ] && [ ! -d "$SKILLS_DIR/.git" ]; then
   else
     say "⚠️ não consegui sincronizar as skills do método (veja $LOG). A ponte atualizou; o método não."
   fi
+fi
+
+# ---- BRAÇOS: os subagentes precisam chegar onde o motor OLHA -----------
+# 03/08: os 5 braços viajam no pacote em ~/agente-soft/.claude/agents/, mas o Claude roda com
+# cwd = WORK_DIR (~/lean-bridge) — ele procura os agentes em ~/.claude/agents e no cwd, nunca
+# na pasta do pacote. Resultado no gratuito: os braços chegavam no disco e o motor não via
+# nenhum. No pago funciona por acidente (lá o cwd É a pasta de instalação).
+# Sem isto, versionar os braços resolveu metade do problema: certo no git, inerte na ponta.
+# Vão pros DOIS lugares que o Claude Code consulta: a pasta do cwd (WORK_DIR, que é de onde o
+# motor spawna) e a global do usuário. O LEON funciona pela primeira; a segunda cobre o caso de
+# WORK_DIR mudar de lugar amanhã.
+if [ -d "$REPO_DIR/.claude/agents" ]; then
+  for DEST_AGENTES in "$BRIDGE_DIR/.claude/agents" "$HOME/.claude/agents"; do
+    [ -n "$DEST_AGENTES" ] || continue
+    mkdir -p "$DEST_AGENTES" 2>/dev/null || continue
+    cp -a "$REPO_DIR/.claude/agents/." "$DEST_AGENTES/" 2>>"$LOG" \
+      && say "   braços sincronizados: $(ls "$DEST_AGENTES"/*.md 2>/dev/null | wc -l) em $DEST_AGENTES." \
+      || say "⚠️ não consegui sincronizar os braços em $DEST_AGENTES (veja $LOG)."
+  done
 fi
 
 # ---- Codex CLI (imagem grátis pela assinatura ChatGPT do dono) --------
@@ -473,5 +487,16 @@ else
   say "‼️  rollback.sh ausente — não consegui reverter sozinho."
   REVERTEU="sem-script"
 fi
-printf '%s\n' "$REVERTEU" > "$REPO_DIR/.ultimo-rollback" 2>/dev/null || true
+# O aviso sai AQUI, e não pelo trap: o trap já foi desarmado lá em cima (antes do restart), então
+# a marca nunca chegava a ser lida — o texto certo existia num caminho morto. Quem sabe o que
+# aconteceu é este bloco, então é ele que fala. Só avisa se havia recibo (pedido manual de
+# /atualiza); update agendado segue silencioso, como sempre foi.
+if [ -f "$RECIBO" ]; then
+  case "$REVERTEU" in
+    sim) tg "⚠️ Tentei atualizar, algo não passou na conferência e eu voltei sozinho pra versão de antes. Sigo no ar e nada da nossa conversa se perdeu. Tento de novo no automático." ;;
+    falhou|sem-script) tg "⚠️ Atenção: a atualização foi aplicada mas não passou na conferência final, e eu NÃO consegui voltar sozinho. Estou no ar, mas na versão NOVA — não na de antes. Nada da conversa se perdeu. Me manda /status pra ver como estou, ou /atualiza de novo." ;;
+    *) tg "⚠️ Tentei atualizar e não consegui agora — sigo no ar e nada da nossa conversa se perdeu. Tento de novo no automático." ;;
+  esac
+  rm -f "$RECIBO" 2>/dev/null || true
+fi
 exit 1
