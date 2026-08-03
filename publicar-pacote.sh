@@ -45,7 +45,13 @@ fi
 # próprio produto. Os dois casos eram justamente a rede de segurança do update.
 # Aqui a publicação PARA se um arquivo que vai viajar não estiver versionado. Estado de runtime
 # (.pacote.json, .gender-asked, .claude/) é esperado fora do git e está na lista de ignorados.
-IGNORAR_UNTRACKED='^(\.pacote\.json|\.gender-asked|\.claude/|\.onboarding-state\.json|data/|VERSAO$)'
+# A allowlist é ANCORADA nos dois lados de propósito. Na 1ª versão ela casava por prefixo, e
+# `.gender-asked-backup` (ou `.pacote.json.old`) passava pela guarda E pelo rsync — untracked,
+# direto pro cliente. E `.claude/` estava aqui como "runtime" sendo que guarda os 5 braços, que
+# são PRODUTO: iam no tarball do gratuito e nunca no do pago (que baixa do git). A guarda estava
+# legitimando exatamente a divergência que existe pra matar. Agora os braços são versionados e
+# só entra aqui o que é mesmo estado desta máquina.
+IGNORAR_UNTRACKED='^(\.pacote\.json|\.gender-asked|\.onboarding-state\.json|\.pos-update\.json|\.update-auto-ultima|VERSAO)$|^data/'
 NOVOS="$(git status --porcelain 2>/dev/null | grep '^??' | awk '{print $2}' \
          | grep -vE '\.bak|\.ANTES-|\.CHEIO-|^pacote/' | grep -vE "$IGNORAR_UNTRACKED" || true)"
 if [ -n "$NOVOS" ]; then

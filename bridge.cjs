@@ -626,11 +626,25 @@ function correcaoDoDonoBlock(text) {
     // o video?") e em RELATO DE TERCEIRO ("o cliente disse que ta errado"). Nos dois casos o
     // dono não ensinou nada, e o agente ia gravar uma "lição" que ele nunca deu. Não derruba o
     // turno — mas suja a memória, que é justamente o que este bloco existe pra manter limpa.
-    if (/\?\s*$/.test(String(text).trim())) return "";                      // pergunta, não ordem
-    if (/\b(?:o |a )?(?:cliente|lead|ele|ela|pessoal|time|editor|fulano)\s+(?:disse|falou|reclamou|achou|acha|comentou)\b/.test(t)) return "";
     const corrige = CORRIGE_RE.test(t);
     const ensina  = ENSINA_RE.test(t);
     if (!corrige && !ensina) return "";
+    // Os 2 filtros abaixo rodam DEPOIS de saber que houve verbo de correção — a 1ª versão rodava
+    // antes e engolia o jeito mais natural do dono falar: "não faz assim, entendeu?" e "para de
+    // mandar áudio, tá?" viravam "pergunta" e não gravavam nada. Em WhatsApp, "tá?"/"ok?" fecham
+    // ORDEM o tempo todo. Mesma coisa com relato+ordem na mesma frase ("o cliente reclamou, então
+    // para de mandar às 7h"): o filtro de terceiro descartava a ordem junto com o relato.
+    // Agora só descarta quando NÃO há verbo de correção do dono — pergunta pura e relato puro.
+    const soPergunta = /\?\s*$/.test(String(text).trim())
+      && !/\b(?:nao|nunca|para de|pare de|tira|tire|refaz|refaca|refaça|corrige|corrija|faz assim|faca assim|de agora em diante|daqui pra frente)\b/.test(t);
+    if (soPergunta) return "";
+    // "o cliente disse que ta errado" é relato: o verbo de correção vem DEPOIS do "disse que",
+    // descrevendo a fala do terceiro. Já "o cliente reclamou, entao para de mandar" tem ordem
+    // própria do dono — o "então/portanto" (ou um imperativo solto) marca a virada.
+    const soRelato = /\b(?:o |a )?(?:cliente|lead|ele|ela|pessoal|time|editor|fulano)\s+(?:disse|falou|reclamou|achou|acha|comentou)\b/.test(t)
+      && !/\b(?:entao|portanto|por isso|logo)\b/.test(t)
+      && !/,\s*(?:nao|nunca|para de|pare de|tira|tire|refaz|refaca|refaça|corrige|corrija|faz|faca|manda|escreve)\b/.test(t);
+    if (soRelato) return "";
     return [
       "[O DONO ACABOU DE TE CORRIGIR/ENSINAR — GRAVE ANTES DE ENCERRAR O TURNO.",
       "Correção que fica só na conversa evapora quando o histórico comprime, e ele repete a mesma",
