@@ -96,6 +96,16 @@ if [ -d ~/agente-soft/skills ]; then
   echo "  skills do metodo instaladas: $(ls -d ~/.claude/skills/*/ 2>/dev/null | wc -l)"
 fi
 
+# BRACOS (subagentes) — 03/08: o update.sh ja sincroniza isto, mas o SETUP nao copiava, entao
+# CLIENTE NOVO ficava sem braco nenhum ate o primeiro ciclo de atualizacao. Eles precisam morar
+# onde o Claude Code procura: a pasta do cwd do motor (~/lean-bridge) e a global do usuario.
+mkdir -p ~/lean-bridge/.claude/agents ~/.claude/agents
+if [ -d ~/agente-soft/.claude/agents ]; then
+  cp -a ~/agente-soft/.claude/agents/. ~/lean-bridge/.claude/agents/ 2>/dev/null || true
+  cp -a ~/agente-soft/.claude/agents/. ~/.claude/agents/ 2>/dev/null || true
+  echo "  bracos instalados: $(ls ~/.claude/agents/*.md 2>/dev/null | wc -l)"
+fi
+
 # Semeia o índice de memória (brain/MAPA.md) pro PROTOCOLO DE RECALL ter o que ler desde
 # o dia 1. Sem isso, em cliente novo o Read do MAPA falha e o recall vira no-op (o agente
 # não acha as notas que vai criando). Só cria se não existir (não sobrescreve memória).
