@@ -1,0 +1,11 @@
+[Unit]
+Description=Vigia o Agente Soft a cada 15min (alerta de queda)
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=15min
+RandomizedDelaySec=2min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
