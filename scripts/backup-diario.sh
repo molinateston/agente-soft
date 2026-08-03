@@ -23,7 +23,7 @@ log "início — bridge=$BRIDGE_DIR out=$OUT"
 cd "$BRIDGE_DIR"
 
 INCLUIDOS=()
-for alvo in .env sessions.json topics.json recent-senders.json promises missions; do
+for alvo in .env sessions.json topics.json recent-senders.json promises missions brain; do
   [[ -e "$alvo" ]] && INCLUIDOS+=("$alvo")
 done
 
