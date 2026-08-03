@@ -36,7 +36,7 @@ Cria um subagente novo, do zero, com:
 Antes de tudo, identificar a plataforma do dono. Pergunta direta se nao estiver claro:
 
 - **Claude Code CLI**: arquivo em `~/.claude/agents/<nome>.md`
-- **OpenClaw**: edita `~/.openclaw/openclaw.json` + cria workspace dedicado
+- **OpenClaw** (raro — só se o dono JÁ tiver essa infra; a instalação padrão do agente não tem): edita `~/.openclaw/openclaw.json` + cria workspace dedicado
 
 Se o dono tiver os dois, perguntar onde quer adicionar. Default sugerido: Claude Code (mais simples).
 

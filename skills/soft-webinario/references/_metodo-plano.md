@@ -511,7 +511,7 @@ Comando pronto (roda no shell, não é código dentro da skill):
 
 ```
 mkdir -p ~/entregas
-set -a && source ~/.openclaw/.env && set +a
+set -a && source ~/lean-bridge/.env && set +a
 ~/agente-soft/workers/ensure-bom-utf8.sh ~/entregas/webinar-plano-<slug>.md
 gog drive upload ~/entregas/webinar-plano-<slug>.md --convert --title "Plano Webinar · <slug>"
 ```

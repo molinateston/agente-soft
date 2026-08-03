@@ -46,6 +46,8 @@ rsync -a --exclude='.git' --exclude='pacote' --exclude='node_modules' \
       --exclude='publicar-pacote.sh' \
       --exclude='brain' --exclude='promises' --exclude='missions' \
       --exclude='*.log' --exclude='.bridge.lock' --exclude='.alive' \
+      --exclude='.gender-asked' --exclude='.pos-update.json' --exclude='.update-auto-ultima' \
+      --exclude='.onboarding-state.json' --exclude='.root-blocked' --exclude='data' \
       ./ "$TMP/pkg/"
 
 echo "$V" > "$TMP/pkg/VERSAO"
