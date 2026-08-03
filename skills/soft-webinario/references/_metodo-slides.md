@@ -172,7 +172,7 @@ Slide pronto ≠ webinar gravado. Escolhe UM dos 3 modos abaixo antes de gravar:
 
 ## RÉGUA DE DIAGRAMAÇÃO obrigatória (18/07/2026)
 
-Todo doc/entregável que essa skill produz DEVE seguir `/home/cloud/.openclaw/brain/REGUA-DIAGRAMACAO-DOCS.md`:
+Todo doc/entregável que essa skill produz DEVE seguir `skills/shared-references/REGUA-DIAGRAMACAO-DOCS.md`:
 
 - Topo: rótulo pequeno + título grande + subtítulo + metadata `chave: valor`
 - Números ANTES da narrativa (seção "0" com tabela/KPI ancora tudo)

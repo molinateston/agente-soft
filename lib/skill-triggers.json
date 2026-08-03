@@ -213,6 +213,7 @@
   ],
   "soft-plano-posicionamento": [
     "big idea",
+    "banco de argumento",
     "como me posicionar",
     "grande domino",
     "mecanismo do problema",
@@ -220,6 +221,7 @@
     "nao sei o que vender",
     "o que eu vendo",
     "plano de marca",
+    "tom soft",
     "posicionamento",
     "pra quem eu vendo",
     "puv",
@@ -364,8 +366,13 @@
     "limpar carrosseis prontos",
     "checklist pos-lote"
   ],
-  "soft-voz": [
-    "tom soft",
-    "banco de argumento"
+  "soft-criar-subagente": [
+    "adiciona um agente",
+    "agente especialista",
+    "cria um subagente",
+    "expande a equipe",
+    "monta um subagente",
+    "novo agente no time",
+    "subagente novo"
   ]
 }

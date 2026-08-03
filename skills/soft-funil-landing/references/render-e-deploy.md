@@ -254,7 +254,7 @@ Troca pelo link real (Cakto/checkout) antes de subir pra produção de verdade.
 
 ## Passo R4 · publicar em Cloudflare Pages (runbook, NUNCA Vercel)
 
-O deploy é **Cloudflare Pages via wrangler**. Não usamos Vercel: o token, a conta e todas as páginas do ecossistema já vivem em Cloudflare. As credenciais estão no `.env` principal (`/home/cloud/.openclaw/.env`: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`).
+O deploy é **Cloudflare Pages via wrangler**. Não usamos Vercel: o token, a conta e todas as páginas do ecossistema já vivem em Cloudflare. As credenciais estão no `.env` principal (`~/agente-soft/.env`: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`).
 
 Estrutura mínima da pasta da página:
 
@@ -271,7 +271,7 @@ Sem `package.json`, sem `wrangler.toml` obrigatório, sem build. Cloudflare Page
 Comando de deploy (produção):
 
 ```bash
-set -a; source /home/cloud/.openclaw/.env; set +a   # carrega CLOUDFLARE_API_TOKEN + ACCOUNT_ID
+set -a; source ~/agente-soft/.env; set +a   # carrega CLOUDFLARE_API_TOKEN + ACCOUNT_ID
 cd /caminho/da/pasta-da-landing
 npx --yes wrangler@latest pages deploy . \
   --project-name=NOME-DO-PROJETO \

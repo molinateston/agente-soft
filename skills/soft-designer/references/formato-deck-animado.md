@@ -362,11 +362,11 @@ O nosso padrão de hospedagem é **Cloudflare Pages** (`reference_site-deploy`).
 **No Claude Code (VPS):**
 ```bash
 cd /home/cloud/decks/<nome-do-deck>              # pasta com index.html + assets/
-set -a; source /home/cloud/.openclaw/.env; set +a  # CLOUDFLARE_API_TOKEN + ACCOUNT_ID
+set -a; source ~/agente-soft/.env; set +a  # CLOUDFLARE_API_TOKEN + ACCOUNT_ID
 npx --yes wrangler@4 pages deploy . \
   --project-name=<nome-do-projeto> --branch=main --commit-dirty=true
 ```
-- O token fica no `/home/cloud/.openclaw/.env` (chaves `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`), nunca hard-coded no HTML.
+- O token fica no `~/agente-soft/.env` (chaves `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`), nunca hard-coded no HTML.
 - A URL sai como `<nome-do-projeto>.pages.dev`. Se o cliente tem domínio próprio, o custom domain se aponta no painel Pages (fora do escopo desta skill; entrega o `.pages.dev` e sinaliza que o domínio é passo do cliente).
 - **Reveal/GSAP por CDN funcionam no Pages** (só o artifact do claude.ai é que bloqueia CDN; o Pages serve tudo normalmente).
 

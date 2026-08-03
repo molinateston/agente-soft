@@ -133,7 +133,7 @@ MEMVIVAEOF
 
 mkdir -p ~/.claude
 ```
-> Este pacote **não instala skill de método nenhuma** — nem baixa, nem clona repositório de skill. A pasta `~/.claude/skills` pode ficar vazia: isso é o esperado aqui, não é erro, e não bloqueia nem a instalação nem a atualização automática.
+> Este pacote **traz as 30 skills do método dentro dele** e a etapa acima copia todas para `~/.claude/skills`, que é onde o Claude Code as lê. Não clona repositório nenhum: as skills vêm no próprio pacote e são atualizadas junto com a ponte, a cada `update.sh`. Se `~/.claude/skills` estiver vazia depois desta etapa, é erro — confira a saída do comando acima.
 
 ## ETAPA 3 — Configurar (.env, persona, roteamento)
 > Note: **NÃO existe token Claude no .env.** O runtime usa o login nativo que está
