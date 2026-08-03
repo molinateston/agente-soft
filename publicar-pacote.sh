@@ -38,6 +38,27 @@ if [ -x "$CHK" ]; then
   echo "  · sem identidade do dono"
 fi
 
+# 2.5) GUARDA CONTRA DIVERGÊNCIA GIT ↔ PACOTE (03/08).
+# Aconteceu duas vezes em dois dias, com dois arquivos diferentes (update.sh e update-pago.sh):
+# o arquivo entra no tarball pelo rsync, mas fica UNTRACKED no git. Quem instala por pacote
+# recebe; quem atualiza por CLONE (git pull) nunca recebe — e a fonte passa a mentir sobre o
+# próprio produto. Os dois casos eram justamente a rede de segurança do update.
+# Aqui a publicação PARA se um arquivo que vai viajar não estiver versionado. Estado de runtime
+# (.pacote.json, .gender-asked, .claude/) é esperado fora do git e está na lista de ignorados.
+IGNORAR_UNTRACKED='^(\.pacote\.json|\.gender-asked|\.claude/|\.onboarding-state\.json|data/|VERSAO$)'
+NOVOS="$(git status --porcelain 2>/dev/null | grep '^??' | awk '{print $2}' \
+         | grep -vE '\.bak|\.ANTES-|\.CHEIO-|^pacote/' | grep -vE "$IGNORAR_UNTRACKED" || true)"
+if [ -n "$NOVOS" ]; then
+  echo "PARE: estes arquivos entrariam no pacote mas NÃO estão no git:"
+  echo "$NOVOS" | sed 's/^/    /'
+  echo
+  echo "  Quem instala por pacote receberia; quem atualiza por clone (git pull) NÃO."
+  echo "  Versione antes de publicar:  git add <arquivo>"
+  echo "  Se for estado local desta máquina, some na lista de excluídos do rsync abaixo."
+  exit 1
+fi
+echo "  · nada fora do git"
+
 # 3) monta o pacote a partir de uma cópia limpa (sem backup, sem git, sem segredo)
 TMP=$(mktemp -d /tmp/pkg-XXXX); trap 'rm -rf "$TMP"' EXIT
 rsync -a --exclude='.git' --exclude='pacote' --exclude='node_modules' \

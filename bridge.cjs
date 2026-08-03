@@ -622,6 +622,12 @@ function correcaoDoDonoBlock(text) {
   try {
     if (!text) return "";
     const t = _deaccent(String(text)).toLowerCase();
+    // 03/08, achado do avaliador: sem estes 2 filtros o bloco disparava em PERGUNTA ("ficou bom
+    // o video?") e em RELATO DE TERCEIRO ("o cliente disse que ta errado"). Nos dois casos o
+    // dono não ensinou nada, e o agente ia gravar uma "lição" que ele nunca deu. Não derruba o
+    // turno — mas suja a memória, que é justamente o que este bloco existe pra manter limpa.
+    if (/\?\s*$/.test(String(text).trim())) return "";                      // pergunta, não ordem
+    if (/\b(?:o |a )?(?:cliente|lead|ele|ela|pessoal|time|editor|fulano)\s+(?:disse|falou|reclamou|achou|acha|comentou)\b/.test(t)) return "";
     const corrige = CORRIGE_RE.test(t);
     const ensina  = ENSINA_RE.test(t);
     if (!corrige && !ensina) return "";
