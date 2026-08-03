@@ -615,7 +615,7 @@ function esteiraBlock(text) {
 // aqui evaporavam com a conversa.
 // Isto NÃO grava nada sozinho: injeta a ORDEM de gravar quando o dono corrige/ensina, no mesmo
 // lugar onde o gate de skills já entra. Se a regex não casar, devolve "" e o turno segue igual.
-const CORRIGE_RE = /\b(?:nao (?:manda|mande|escreve|escreva|fala|fale|faz|faca|usa|use|pode|era|e assim)|nunca (?:manda|mande|escreve|escreva|fala|fale|usa|use)|tira isso|tire isso|tira essa|para de|pare de|refaz|refaca|refaça|ta errado|esta errado|nao e (?:isso|assim)|corrige|corrija)\b/;
+const CORRIGE_RE = /\b(?:nao (?:manda|mande|escreve|escreva|fala|fale|faz|faca|usa|use|pode|era|e assim)|nunca (?:manda|mande|escreve|escreva|fala|fale|usa|use)|tira isso|tire isso|tira essa|para de|pare de|refaz|refaca|refaça|ta errado|esta errado|nao e (?:isso|assim)|corrige|corrija|muda (?:o tom|o jeito|a forma|esse tom|esse jeito)|troca (?:o tom|o jeito|essa palavra|esse termo))\b/;
 const ENSINA_RE  = /\b(?:faz(?:er)? assim|faca assim|escreve(?:r)? assim|fala(?:r)? assim|manda(?:r)? assim|era pra (?:ser|escrever|falar|fazer)|o certo (?:e|seria)|assim (?:ta|fica) (?:bom|certo|melhor)|(?:esse|este|isso) (?:molde|jeito|tom|formato) (?:ta|esta) (?:bom|certo|otimo)|pode (?:usar|mandar|fazer) assim|de agora em diante|daqui pra frente|sempre que|toda vez que|aprovado|ficou bom|isso sim|agora sim|perfeito assim)\b/;
 
 function correcaoDoDonoBlock(text) {
@@ -643,7 +643,10 @@ function correcaoDoDonoBlock(text) {
     // própria do dono — o "então/portanto" (ou um imperativo solto) marca a virada.
     const soRelato = /\b(?:o |a )?(?:cliente|lead|ele|ela|pessoal|time|editor|fulano)\s+(?:disse|falou|reclamou|achou|acha|comentou)\b/.test(t)
       && !/\b(?:entao|portanto|por isso|logo)\b/.test(t)
-      && !/,\s*(?:nao|nunca|para de|pare de|tira|tire|refaz|refaca|refaça|corrige|corrija|faz|faca|manda|escreve)\b/.test(t);
+      // Qualquer pontuação separa o relato da ordem — vírgula, ponto, ponto-e-vírgula, dois-pontos
+      // ou traço. A 1ª versão só reconhecia vírgula, então "o cliente reclamou. para de mandar às
+      // 7h" era engolido inteiro: o dono deu uma ordem clara e nada era gravado.
+      && !/[,.;:—-]\s*(?:nao|nunca|para de|pare de|tira|tire|refaz|refaca|refaça|corrige|corrija|faz|faca|manda|escreve|muda|troca)\b/.test(t);
     if (soRelato) return "";
     return [
       "[O DONO ACABOU DE TE CORRIGIR/ENSINAR — GRAVE ANTES DE ENCERRAR O TURNO.",
