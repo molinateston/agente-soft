@@ -1,6 +1,6 @@
 ---
 name: soft-webinar-script
-description: "Gera o ROTEIRO APSD (copy FALADA nas NOTAS de cada slide) + o DECK VARIÁVEL de 140-180 slides do webinário Soft, a partir do PLANO já preenchido pela skill soft-webinar-plano. LÊ o campo `modo` do plano e ramifica em 2 caminhos: `canonico` (vende no checkout, esqueleto original) ou `high_ticket` (vende a CALL/APLICAÇÃO com SDR/Closer, os 13 beats D reescritos pra ancoragem sem preço, filtro anti-time-waster e formulário no lugar do checkout; fonte da variação em brain/conteudo/aula-webinar-AAA-HIGH-TICKET.md §1e). Esqueleto FIXO de 82 slides âncora (na ordem APSD); o deck real cresce pra 140-180 porque os blocos PROBLEMA e SOLUÇÃO expandem conforme o número de crenças, peças do mecanismo, provas e depoimentos que o dono definiu no plano, cada compra tem deck diferente. Dependência DURA: se /home/cloud/entregas/webinar-plano-<slug>.md não existir, aborta e manda rodar soft-webinar-plano primeiro. Output: /home/cloud/entregas/webinar-script-<slug>.md no formato UMA-TELA-POR-BLOCO (TELA/IMAGEM/NOTA/RITMO), seguindo a DOUTRINA-MD-TELEGRAM. Use quando o pedido for roteiro, script, aula, deck, slides, conteúdo, notas, oferta dentro da aula do webinar; NÃO use pro pptx (soft-webinar-slides), páginas (soft-webinar-paginas), mensagens (soft-webinar-mensagens), arte (soft-designer), carta/VSL/landing (soft-funil-carta/-landing), headline (soft-conteudo-headlines)."
+description: "Gera o ROTEIRO APSD (copy FALADA nas NOTAS de cada slide) + o DECK VARIÁVEL de 140-180 slides do webinário Soft, a partir do PLANO já preenchido pela skill soft-webinar-plano. LÊ o campo `modo` do plano e ramifica em 2 caminhos: `canonico` (vende no checkout, esqueleto original) ou `high_ticket` (vende a CALL/APLICAÇÃO com SDR/Closer, os 13 beats D reescritos pra ancoragem sem preço, filtro anti-time-waster e formulário no lugar do checkout; fonte da variação em brain/conteudo/aula-webinar-AAA-HIGH-TICKET.md §1e). Esqueleto FIXO de 82 slides âncora (na ordem APSD); o deck real cresce pra 140-180 porque os blocos PROBLEMA e SOLUÇÃO expandem conforme o número de crenças, peças do mecanismo, provas e depoimentos que o dono definiu no plano, cada compra tem deck diferente. Dependência DURA: se ~/entregas/webinar-plano-<slug>.md não existir, aborta e manda rodar soft-webinar-plano primeiro. Output: ~/entregas/webinar-script-<slug>.md no formato UMA-TELA-POR-BLOCO (TELA/IMAGEM/NOTA/RITMO), seguindo a DOUTRINA-MD-TELEGRAM. Use quando o pedido for roteiro, script, aula, deck, slides, conteúdo, notas, oferta dentro da aula do webinar; NÃO use pro pptx (soft-webinar-slides), páginas (soft-webinar-paginas), mensagens (soft-webinar-mensagens), arte (soft-designer), carta/VSL/landing (soft-funil-carta/-landing), headline (soft-conteudo-headlines)."
 ---
 
 # soft-webinar-script · Roteiro APSD + Deck variável 140-180
@@ -20,14 +20,14 @@ O deck é VARIÁVEL: cada compra sai com um número diferente de slides, entre 1
 
 Antes de qualquer coisa, roda:
 
-    test -f /home/cloud/entregas/webinar-plano-<slug>.md
+    test -f ~/entregas/webinar-plano-<slug>.md
 
 Se o arquivo NÃO existe, para tudo e responde exatamente:
 
     "Preciso do plano do webinário antes de escrever o roteiro.
      Roda a skill soft-webinar-plano primeiro, ela te faz o Q&A
      guiado bloco a bloco (Atenção · Problema · Solução · Decisão)
-     e salva em /home/cloud/entregas/webinar-plano-<slug>.md.
+     e salva em ~/entregas/webinar-plano-<slug>.md.
      Quando esse arquivo existir, volta aqui."
 
 Sem plano, sem roteiro. Não improvisa, não pergunta o conteúdo, não inventa crença/peça/prova.
@@ -36,14 +36,14 @@ Sem plano, sem roteiro. Não improvisa, não pergunta o conteúdo, não inventa 
 
 ## Como opera (fluxo interno)
 
-1. Pergunta o SLUG do webinário (ou detecta o mais recente em /home/cloud/entregas/webinar-plano-*.md por mtime).
+1. Pergunta o SLUG do webinário (ou detecta o mais recente em ~/entregas/webinar-plano-*.md por mtime).
 2. Lê o plano preenchido inteiro E extrai o campo `modo` (canonico ou high_ticket). Se `modo=high_ticket`, aplica os overrides da seção MODO HIGH TICKET abaixo.
 3. Aplica o esqueleto de 82 slides âncora (a espinha, na ordem APSD).
 4. Expande o bloco P (Problema) conforme o número de crenças a quebrar no plano (regra abaixo).
 5. Expande o bloco S (Solução) conforme o número de peças do mecanismo no plano (regra abaixo).
 6. Expande o bloco D (13 beats do PITCH) conforme a densidade de cada beat (número de depoimentos, tamanho do stack, etc).
 7. Numera todos os slides em ordem final (SLIDE 001 até SLIDE NNN).
-8. Escreve o output em /home/cloud/entregas/webinar-script-<slug>.md no formato UMA-TELA-POR-BLOCO.
+8. Escreve o output em ~/entregas/webinar-script-<slug>.md no formato UMA-TELA-POR-BLOCO.
 9. Reporta contagem final de slides. Se cair fora do range 140-180, expande ou comprime P/S (nunca corta o esqueleto 82).
 10. Roda ensure-bom-utf8.sh no arquivo final.
 11. Opcional: gera Google Doc via gog drive upload --convert e devolve URL crua.
@@ -452,7 +452,7 @@ Se `modo=high_ticket`, todas as regras abaixo VALEM, MAIS as "Regras duras extra
 
 ## Output final (o que sai no disco)
 
-Arquivo: /home/cloud/entregas/webinar-script-<slug>.md
+Arquivo: ~/entregas/webinar-script-<slug>.md
 
 Estrutura interna:
 
@@ -509,7 +509,7 @@ Nenhuma dessas foi tocada por esta skill; continuam funcionando como estavam.
 
 ## Fontes que esta skill lê antes de gerar
 
-- /home/cloud/entregas/webinar-plano-<slug>.md (o plano do dono, obrigatório; contem o campo `modo`)
+- ~/entregas/webinar-plano-<slug>.md (o plano do dono, obrigatório; contem o campo `modo`)
 - ~/agente-soft/brain/conteudo/aula-webinar-AAA-HIGH-TICKET.md (variação high_ticket - §1e reescreve os 13 D beats; carregar SÓ se `modo=high_ticket`)
 - ~/agente-soft/brain/conteudo/WEBINARIOS-PERPETUOS-OFICIAL-mapa-mental.md (mapa canônico APSD + 13 beats)
 - ~/agente-soft/brain/DOUTRINA-MD-TELEGRAM.md (formato do output)

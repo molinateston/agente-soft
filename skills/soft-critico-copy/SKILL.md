@@ -328,13 +328,13 @@ REGRAS TRANSVERSAIS
 FONTES CANONICAS DO METODO SOFT (REFERENCIAS DA SKILL)
 ============================================================
 
-- /home/cloud/.claude/skills/_plugin/guia/GUIA-COPY-APLICACAO.md
+- ~/.claude/skills/_plugin/guia/GUIA-COPY-APLICACAO.md
   (fonte da verdade do metodo de copy Soft, CUB + estrutura-
   mae + 8 leis + revisao em camadas + peca por peca +
   checklist final)
-- /home/cloud/.claude/skills/_plugin/guia/CODIGO-DE-ESCRITA.md
+- ~/.claude/skills/_plugin/guia/CODIGO-DE-ESCRITA.md
   (a lei, o codigo por tras do guia)
-- /home/cloud/.claude/skills/_plugin/guia/03-identidade-voz.md
+- ~/.claude/skills/_plugin/guia/03-identidade-voz.md
   (elementos de voz Soft)
 - ~/agente-soft/brain/conteudo/aula-webinar-AAA-gravada.md
   (verbatim canonico do dono, fonte 1 do Verbatim filtro)

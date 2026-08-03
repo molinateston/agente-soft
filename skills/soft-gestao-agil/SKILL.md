@@ -189,7 +189,7 @@ Se aprovado: exporta em Google Doc via `gog drive upload --convert` e devolve a 
 
 Antes de fechar QUALQUER output pro dono:
 ```
-python3 /home/cloud/.claude/skills/soft-critico-copy/scripts/lint_copy.py <arquivo>
+python3 ~/.claude/skills/soft-critico-copy/scripts/lint_copy.py <arquivo>
 ```
 Se falhar hard (exit 1), reescreve e roda de novo. Vale pra .md do plano, brief exportado, tudo.
 

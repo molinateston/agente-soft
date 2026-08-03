@@ -215,7 +215,7 @@ tirar o hype, o alto-astral e a postura de guru; falar clínico, de quem já fez
 4. **Validação de terceiro** (o que outra pessoa de peso disse depois).
 5. **A generalização** (e se eu sistematizasse isso?, e o produto nasce da história).
 
-A força do arco: a oferta é o desfecho NATURAL da história, não um pitch colado no fim. *Soft:* a história do dono (fracasso, virada, método) já tem esse arco; a oferta tem que nascer dela. Este arco é o que ALIMENTA o `motor-3-viradas.md`: o passo 5 (generalização) é onde a primeira virada de crença se planta, e o reframe do mecanismo 5 é o combustível das três viradas. A engenharia de persuasão são estes 8 mecanismos; a estrutura é o slide-modelo mais a APSD mais o motor de 3 viradas; o recheio é a imersão do dono (`/home/cloud/imersao-analise` e o corpus de voz); o tom é clínico, de quem já fez.
+A força do arco: a oferta é o desfecho NATURAL da história, não um pitch colado no fim. *Soft:* a história do dono (fracasso, virada, método) já tem esse arco; a oferta tem que nascer dela. Este arco é o que ALIMENTA o `motor-3-viradas.md`: o passo 5 (generalização) é onde a primeira virada de crença se planta, e o reframe do mecanismo 5 é o combustível das três viradas. A engenharia de persuasão são estes 8 mecanismos; a estrutura é o slide-modelo mais a APSD mais o motor de 3 viradas; o recheio é a imersão do dono (`~/entregas` e o corpus de voz); o tom é clínico, de quem já fez.
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: soft-webinar-plano
-description: "Q&A GUIADO que constrói o PLANO do webinário Soft (mapa mental preenchido) perguntando ao usuário UMA pergunta por vez, bloco por bloco na ordem canônica APSD (Atenção · Problema · Solução · Decisão com os 13 beats do PITCH). Retomável: salva estado em /tmp a cada resposta; se o usuário chamar de novo, oferece retomar de onde parou. Aceita resposta em texto OU áudio (o Telegram transcreve antes; a skill só recebe texto). Output final: /home/cloud/entregas/webinar-plano-<slug>.md convertido pra Google Doc via gog. É o PASSO 1 do pipeline: alimenta soft-webinar-script (roteiro/deck). Suporta 2 MODOS: canônico (fecha no checkout, ticket ate ~R$3k) e high_ticket (fecha em call/aplicação, ticket 3k+, modelo André Menezes; fonte da variação em brain/conteudo/aula-webinar-AAA-HIGH-TICKET.md). Pergunta o modo na PRIMEIRA pergunta (M0) e ramifica o roteiro. Âncora: planejar o webinar = plano (esta skill); escrever roteiro/deck = soft-webinar-script; páginas/anúncios = soft-webinar-paginas; carta/VSL = soft-funil-carta."
+description: "Q&A GUIADO que constrói o PLANO do webinário Soft (mapa mental preenchido) perguntando ao usuário UMA pergunta por vez, bloco por bloco na ordem canônica APSD (Atenção · Problema · Solução · Decisão com os 13 beats do PITCH). Retomável: salva estado em /tmp a cada resposta; se o usuário chamar de novo, oferece retomar de onde parou. Aceita resposta em texto OU áudio (o Telegram transcreve antes; a skill só recebe texto). Output final: ~/entregas/webinar-plano-<slug>.md convertido pra Google Doc via gog. É o PASSO 1 do pipeline: alimenta soft-webinar-script (roteiro/deck). Suporta 2 MODOS: canônico (fecha no checkout, ticket ate ~R$3k) e high_ticket (fecha em call/aplicação, ticket 3k+, modelo André Menezes; fonte da variação em brain/conteudo/aula-webinar-AAA-HIGH-TICKET.md). Pergunta o modo na PRIMEIRA pergunta (M0) e ramifica o roteiro. Âncora: planejar o webinar = plano (esta skill); escrever roteiro/deck = soft-webinar-script; páginas/anúncios = soft-webinar-paginas; carta/VSL = soft-funil-carta."
 ---
 
 # soft-webinar-plano · Q&A guiado retomável
@@ -12,7 +12,7 @@ Segue a espinha canônica APSD + os 13 beats do PITCH (fonte: `~/agente-soft/bra
 
 Salva estado em `/tmp/webinar-plano-<slug>-<epoch>.json` a cada resposta. Se o usuário chamar a skill de novo com o mesmo slug, DETECTA o arquivo mais recente e oferece retomar.
 
-Output final: `/home/cloud/entregas/webinar-plano-<slug>.md` + Google Doc via `gog drive upload --convert`.
+Output final: `~/entregas/webinar-plano-<slug>.md` + Google Doc via `gog drive upload --convert`.
 
 ## Quando usar
 - Usuário quer estruturar o webinário dele do zero.
@@ -54,7 +54,7 @@ Output final: `/home/cloud/entregas/webinar-plano-<slug>.md` + Google Doc via `g
 
 7. No FIM do roteiro:
    - Preenche o TEMPLATE do output (seção abaixo) com as respostas.
-   - Salva em `/home/cloud/entregas/webinar-plano-<slug>.md` (cria a pasta se não existir).
+   - Salva em `~/entregas/webinar-plano-<slug>.md` (cria a pasta se não existir).
    - Roda o upload pro Drive (comando pronto abaixo).
    - Devolve pro usuário: URL do Doc (crua, sem markdown) + 1 linha `pronto, plano em N perguntas, agora chama soft-webinar-script pra virar roteiro`.
 
@@ -281,7 +281,7 @@ Regras:
 
 ## Template do output final
 
-Path: `/home/cloud/entregas/webinar-plano-<slug>.md`
+Path: `~/entregas/webinar-plano-<slug>.md`
 
 Segue a ESPINHA do `brain/conteudo/WEBINARIOS-PERPETUOS-OFICIAL-mapa-mental.md`, preenchida com as respostas. Formato (linha 70 chars max, sem `##`, sem `**bold**`, sem pipe, sem travessão longo - segue `DOUTRINA-MD-TELEGRAM.md`):
 
@@ -510,10 +510,10 @@ Regras do template:
 Comando pronto (roda no shell, não é código dentro da skill):
 
 ```
-mkdir -p /home/cloud/entregas
+mkdir -p ~/entregas
 set -a && source ~/.openclaw/.env && set +a
-~/agente-soft/workers/ensure-bom-utf8.sh /home/cloud/entregas/webinar-plano-<slug>.md
-gog drive upload /home/cloud/entregas/webinar-plano-<slug>.md --convert --title "Plano Webinar · <slug>"
+~/agente-soft/workers/ensure-bom-utf8.sh ~/entregas/webinar-plano-<slug>.md
+gog drive upload ~/entregas/webinar-plano-<slug>.md --convert --title "Plano Webinar · <slug>"
 ```
 
 O `gog` devolve a URL do Doc. Manda pro usuário CRUA, uma URL por linha, sem `[texto](url)`:
@@ -534,7 +534,7 @@ Próximo passo: chama soft-webinar-script com esse plano.
 - Zero travessão longo. Zero jargão IA. Zero "empurra pra frente/aprofundar".
 - Estado salvo a cada resposta em `/tmp/webinar-plano-<slug>-<epoch>.json`.
 - Retomada: detecta arquivo mais recente do slug, oferece retomar OU começar do zero.
-- Output final SEMPRE em `/home/cloud/entregas/webinar-plano-<slug>.md` + Google Doc via `gog`.
+- Output final SEMPRE em `~/entregas/webinar-plano-<slug>.md` + Google Doc via `gog`.
 - Copy que vai pro público (dentro do plano) passa depois pela `soft-anti-ia`; esta skill só coleta.
 - Formato do .md segue `DOUTRINA-MD-TELEGRAM.md` (moldura ====, subseção ------, bullets ·, quebra 70 chars, BOM UTF-8).
 

@@ -284,12 +284,12 @@ SEM TEXTO, SEM PALAVRAS ESCRITAS, SEM LEGENDAS, SEM LOGOS GRANDES.
 - **Claude Code (tem Bash + imagegen):** o motor default é o **`imagegen` local** (gpt-image-1.5). Roda:
   ```bash
   export OPENAI_API_KEY="$OPENAI_API_KEY"
-  /home/cloud/.venvs/imagegen/bin/python \
-    /home/cloud/.codex/skills/.system/imagegen/scripts/image_gen.py generate \
+  ~/.venvs/imagegen/bin/python \
+    ~/.codex/skills/.system/imagegen/scripts/image_gen.py generate \
     --prompt "$(cat prompt.txt)" --size 1024x1536 --quality high --out out.png
   ```
   (tamanhos válidos: 1024x1024, 1536x1024, 1024x1536; use `edit` quando houver foto de referência). Depois compõe o texto por overlay em HTML e exporta.
-- **Agente / Telegram (tem Bash):** roda o pipeline do Code; a entrega é **ARQUIVO** cujo **path completo vai na resposta** (ex: `/home/cloud/pecas/lousa-estoque/final.png`), mensagens sem markdown pesado.
+- **Agente / Telegram (tem Bash):** roda o pipeline do Code; a entrega é **ARQUIVO** cujo **path completo vai na resposta** (ex: `~/entregas/pecas/lousa-estoque/final.png`), mensagens sem markdown pesado.
 
 Dependência anotada: não temos Gemini/nano-banana acoplado ao ecossistema; temos o `imagegen`. O branch emite prompt neutro (o cliente cola no gerador dele) e, no Code, chama o nosso `imagegen`. Nunca amarrar em Gemini.
 

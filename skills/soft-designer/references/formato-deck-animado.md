@@ -42,7 +42,7 @@ O deck animado usa Reveal.js e GSAP carregados por CDN, e o produto final é um 
 
 - **App / chat (claude.ai, sem Bash):** o artifact do claude.ai **bloqueia CDN externo** (a CSP não deixa carregar Reveal/GSAP de fora). Então aqui você **NÃO renderiza o deck animado no chat**. O que você entrega é o **arquivo `.html` single-file pronto pra hospedar** (como artifact de código ou bloco pra copiar), avisando com clareza: *"este é o deck completo; a animação e a navegação só ligam quando ele estiver hospedado. A publicação num link é o passo do Claude Code."* Você entrega o HTML certo e honesto sobre a fronteira, nunca finge que animou na tela.
 - **Claude Code (tem Bash, tem imagegen, tem wrangler):** pipeline completo. Gera as imagens de fundo pelo `imagegen`, monta o `index.html`, testa local, **publica em Cloudflare Pages** e devolve a URL no ar. É o ambiente onde o deck vira link de verdade.
-- **Agente / Telegram (tem Bash):** roda o pipeline do Code, mas a entrega é **ARQUIVO** cujo **path completo vai na resposta** (ex: `/home/cloud/decks/aula-1/index.html`) mais a **URL publicada**, e as mensagens saem **sem markdown pesado** (sem tabela, sem bloco de código gigante no chat do Telegram; manda o link e o caminho, o conteúdo mora no arquivo).
+- **Agente / Telegram (tem Bash):** roda o pipeline do Code, mas a entrega é **ARQUIVO** cujo **path completo vai na resposta** (ex: `~/entregas/decks/aula-1/index.html`) mais a **URL publicada**, e as mensagens saem **sem markdown pesado** (sem tabela, sem bloco de código gigante no chat do Telegram; manda o link e o caminho, o conteúdo mora no arquivo).
 
 ---
 
@@ -82,8 +82,8 @@ O motor default é o **`imagegen` local do Code** (gpt-image-1.5), não um gerad
 **Comando no Code (VPS):**
 ```bash
 export OPENAI_API_KEY="$OPENAI_API_KEY"   # já no ambiente do LEON
-/home/cloud/.venvs/imagegen/bin/python \
-  /home/cloud/.codex/skills/.system/imagegen/scripts/image_gen.py generate \
+~/.venvs/imagegen/bin/python \
+  ~/.codex/skills/.system/imagegen/scripts/image_gen.py generate \
   --prompt "$(cat prompts/slide-01.txt)" \
   --size 1536x1024 --quality high \
   --out assets/slide-01.png
@@ -361,7 +361,7 @@ O nosso padrão de hospedagem é **Cloudflare Pages** (`reference_site-deploy`).
 
 **No Claude Code (VPS):**
 ```bash
-cd /home/cloud/decks/<nome-do-deck>              # pasta com index.html + assets/
+cd ~/entregas/decks/<nome-do-deck>              # pasta com index.html + assets/
 set -a; source ~/agente-soft/.env; set +a  # CLOUDFLARE_API_TOKEN + ACCOUNT_ID
 npx --yes wrangler@4 pages deploy . \
   --project-name=<nome-do-projeto> --branch=main --commit-dirty=true
