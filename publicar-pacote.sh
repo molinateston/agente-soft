@@ -51,7 +51,7 @@ fi
 # são PRODUTO: iam no tarball do gratuito e nunca no do pago (que baixa do git). A guarda estava
 # legitimando exatamente a divergência que existe pra matar. Agora os braços são versionados e
 # só entra aqui o que é mesmo estado desta máquina.
-IGNORAR_UNTRACKED='^(\.pacote\.json|\.gender-asked|\.onboarding-state\.json|\.pos-update\.json|\.update-auto-ultima|VERSAO)$|^data/'
+IGNORAR_UNTRACKED='^(\.ultimo-rollback|\.pacote\.json|\.gender-asked|\.onboarding-state\.json|\.pos-update\.json|\.update-auto-ultima|VERSAO)$|^data/'
 NOVOS="$(git status --porcelain 2>/dev/null | grep '^??' | awk '{print $2}' \
          | grep -vE '\.bak|\.ANTES-|\.CHEIO-|^pacote/' | grep -vE "$IGNORAR_UNTRACKED" || true)"
 if [ -n "$NOVOS" ]; then
@@ -73,7 +73,7 @@ rsync -a --exclude='.git' --exclude='pacote' --exclude='node_modules' \
       --exclude='publicar-pacote.sh' \
       --exclude='brain' --exclude='promises' --exclude='missions' \
       --exclude='*.log' --exclude='.bridge.lock' --exclude='.alive' \
-      --exclude='.gender-asked' --exclude='.pos-update.json' --exclude='.update-auto-ultima' \
+      --exclude='.gender-asked' --exclude='.ultimo-rollback' --exclude='.pos-update.json' --exclude='.update-auto-ultima' \
       --exclude='.onboarding-state.json' --exclude='.root-blocked' --exclude='data' \
       ./ "$TMP/pkg/"
 

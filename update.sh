@@ -58,7 +58,18 @@ on_exit(){
   local rc=$?
   if [ -f "$RECIBO" ]; then
     if [ "$rc" -eq 0 ]; then tg "✅ Conferi: você já estava na última versão, não precisou trocar nada. Segui no ar o tempo todo."
-    else tg "⚠️ Tentei atualizar e não consegui agora — continuo no ar na versão de antes e nada da nossa conversa se perdeu. Tento de novo no automático."; fi
+    else
+      # Lê a marca deixada pelo bloco de rollback (ver o comentário lá embaixo): sem ela, o
+      # aviso afirmava "continuo na versão de antes" mesmo quando o rollback tinha falhado e o
+      # cliente ESTAVA na versão nova.
+      _rb="$(cat "$REPO_DIR/.ultimo-rollback" 2>/dev/null || echo desconhecido)"
+      rm -f "$REPO_DIR/.ultimo-rollback" 2>/dev/null || true
+      case "$_rb" in
+        sim) tg "⚠️ Tentei atualizar, algo não passou na conferência e eu voltei sozinho pra versão de antes. Sigo no ar e nada da nossa conversa se perdeu. Tento de novo no automático." ;;
+        falhou|sem-script) tg "⚠️ Atenção: a atualização foi aplicada mas não passou na conferência final, e eu NÃO consegui voltar sozinho. Estou no ar, mas na versão NOVA — não na de antes. Nada da conversa se perdeu. Me manda /status pra você ver como estou, ou /atualiza de novo." ;;
+        *) tg "⚠️ Tentei atualizar e não consegui agora — sigo no ar e nada da nossa conversa se perdeu. Se eu tiver ficado com o motor novo pela metade, um /atualiza resolve. Tento de novo no automático." ;;
+      esac
+    fi
     rm -f "$RECIBO" 2>/dev/null || true
   fi
   rm -f "$GREET" 2>/dev/null || true
@@ -443,13 +454,24 @@ if [ "$FAIL" -eq 0 ]; then
 fi
 
 say "✗ Validação falhou — REVERTENDO SOZINHO pro estado anterior..."
+# 03/08 — A MENSAGEM PRECISA DIZER A VERDADE DE CADA CASO.
+# Os 3 desfechos abaixo caíam no mesmo aviso genérico ("continuo na versão de antes"), e num
+# deles isso é FALSO: quando o rollback não completa, o cliente FICA na versão nova. Aconteceu
+# com um agente real — o dono leu "não consegui atualizar", concluiu que nada tinha chegado, e o
+# agente já estava atualizado. Diagnóstico errado a partir de mensagem errada.
+# O REVERTEU marca qual dos três foi, e o aviso do trap lê essa marca.
+REVERTEU="nao-tentou"
 if [ -x "$REPO_DIR/rollback.sh" ]; then
   if bash "$REPO_DIR/rollback.sh" >>"$LOG" 2>&1; then
     say "↩️  Revertido. Cliente segue no ar na versão anterior."
+    REVERTEU="sim"
   else
     say "‼️  Rollback automático falhou — precisa olhar manual: tail -40 $LOG"
+    REVERTEU="falhou"
   fi
 else
   say "‼️  rollback.sh ausente — não consegui reverter sozinho."
+  REVERTEU="sem-script"
 fi
+printf '%s\n' "$REVERTEU" > "$REPO_DIR/.ultimo-rollback" 2>/dev/null || true
 exit 1
