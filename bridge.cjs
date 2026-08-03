@@ -2890,9 +2890,40 @@ async function poll() {
 // no modo SERVIÇO: garante instância única e sobe o poll. No modo TESTE (require): só exporta o miolo puro.
 // SELF-CHECK de dependências (boot + /status): pega claude não-executável.
 // No boot AVISA o dono SÓ se algo estiver quebrado (silêncio = saudável; sem spam a cada restart).
+// O X_OK sozinho não pega o motor que morre DEPOIS do boot (foi o incidente de 02/ago: symlink
+// apontando pro binário apagado numa faxina). Agora o binário tem que RESPONDER --version.
+function claudeVivo() {
+  try { fs.accessSync(CLAUDE_BIN, fs.constants.X_OK); } catch { return "claude não-executável (" + CLAUDE_BIN + ")"; }
+  try {
+    const r = spawnSync(CLAUDE_BIN, ["--version"], { timeout: 15000, encoding: "utf8" });
+    if (r.error) return "claude não responde --version (" + (r.error.code || r.error.message) + ")";
+    if (r.status !== 0) return "claude --version saiu " + r.status;
+    if (!/\d+\.\d+/.test(String(r.stdout || ""))) return "claude --version sem versão na saída";
+  } catch (e) { return "claude --version falhou (" + e.message + ")"; }
+  return null;
+}
+
+// VIGIA DO MOTOR: motor morto = agente MUDO, e o aviso de boot é uma bala só. Insiste a cada 10min
+// enquanto estiver quebrado e confirma quando volta, pro silêncio nunca ser lido como saúde.
+let _motorQuebrado = false;
+function vigiaDoMotor() {
+  try {
+    const prob = claudeVivo();
+    if (prob && !_motorQuebrado) {
+      _motorQuebrado = true;
+      send(OWNER, "🚨 MOTOR FORA DO AR\n· " + prob + "\n\nO agente não responde nada enquanto isso.\nConfere: ls -l " + CLAUDE_BIN).catch(function () {});
+    } else if (prob && _motorQuebrado) {
+      send(OWNER, "🚨 motor ainda fora: " + prob).catch(function () {});
+    } else if (!prob && _motorQuebrado) {
+      _motorQuebrado = false;
+      send(OWNER, "✅ motor de volta (" + CLAUDE_BIN + " responde).").catch(function () {});
+    }
+  } catch (e) {}
+}
+
 function depsCheck() {
   const probs = [];
-  try { fs.accessSync(CLAUDE_BIN, fs.constants.X_OK); } catch { probs.push(`claude não-executável (${CLAUDE_BIN})`); }
+  const claudeProb = claudeVivo(); if (claudeProb) probs.push(claudeProb);
   // Doutrina ausente NÃO pode ser silenciosa: sem ela eu respondo como assistente genérico,
   // e por fora ninguém nota. Este é o aviso que faltava quando a doutrina morava na pasta de outro pacote.
   if (!doutrinaOrigem()) probs.push(`doutrina-base ausente (AGENT-BASE.md não encontrado em ${WORKDIR}) — estou respondendo sem a minha identidade`);
@@ -2928,6 +2959,7 @@ if (require.main === module) {
   setTimeout(sweepMissions, 15000); setInterval(sweepMissions, 21600000);   // FAXINA: apaga missão fechada (done/failed) há +MISSAO_RETAIN_DAYS dias — no boot (após o dreno assentar) + a cada 6h. running fica intacta
   // SELF-CHECK do boot: fala SÓ se algo estiver quebrado (o "no ar" cego anunciava saúde sem checar nada)
   setTimeout(() => { const probs = depsCheck(); if (probs.length) send(OWNER, `⚠️ Subi com pendência(s):\n· ${probs.join("\n· ")}\nManda /status pra acompanhar.`).catch(() => {}); }, 3000);
+  setTimeout(vigiaDoMotor, 60000); setInterval(vigiaDoMotor, 600000);   // VIGIA: motor morto = agente mudo. Avisa a cada 10min ATÉ voltar
   // SAUDAÇÃO PÓS-UPDATE da instalação PAGA. Lá não existe ExecStartPost pra saudar:
   // quem fecha o ciclo é este motor ao subir. O marcador guarda quem pediu (chat e
   // tópico), então a resposta volta no mesmo lugar da pergunta. Consome ANTES de
