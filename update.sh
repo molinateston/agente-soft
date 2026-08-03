@@ -416,6 +416,20 @@ fi
 # auto-update da frota EM SILÊNCIO — aqui isso vira FAIL e dispara o rollback.
 # Só vale onde existe systemd de usuário: sem ele, não há timer nenhum pra checar.
 if [ "$BUS_OK" = "1" ] && { [ "$UNITS_CHANGED" -eq 1 ] || [ "$NEED_RELOAD" -eq 1 ]; }; then
+  # 03/08 — SEGUNDA CHANCE ANTES DE REPROVAR. Achado num cliente real: máquina com timer ANTIGO
+  # apontando pra caminho que a estrutura nova não usa. O update instala o unit certo, mas o
+  # `enable` esbarra no estado velho ainda carregado, o timer não sobe, a validação reprova e o
+  # rollback desfaz justamente o conserto do timer. Cão mordendo o rabo: o cliente fica preso
+  # pra sempre, e cada tentativa termina em "tentei atualizar e não consegui agora".
+  # Aqui NÃO se afrouxa o critério: se depois do reload+enable o timer continuar fora, ainda é
+  # FAIL e o rollback roda igual. Só se dá ao sistema a chance de recarregar o unit novo.
+  if ! systemctl --user is-active --quiet agente-update.timer; then
+    say "   timer não subiu de primeira; recarregando os units e tentando de novo..."
+    systemctl --user daemon-reload 2>>"$LOG" || true
+    systemctl --user reset-failed agente-update.timer 2>/dev/null || true
+    systemctl --user enable --now agente-update.timer 2>>"$LOG" || true
+    sleep 2
+  fi
   systemctl --user is-active --quiet agente-update.timer || { say "⚠️ agente-update.timer não ficou ativo após o update."; FAIL=1; }
 fi
 if [ "$FAIL" -eq 0 ]; then
