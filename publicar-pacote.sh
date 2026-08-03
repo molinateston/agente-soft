@@ -26,7 +26,15 @@ echo "  · bridge.cjs válido"
 # 2) trava de identidade — regra dura da casa: nada do dono vai pro cliente
 CHK=/home/cloud/.claude/skills/scripts/check-vazamento-cliente.sh
 if [ -x "$CHK" ]; then
-  bash "$CHK" >/tmp/.chk-vaz.out 2>&1 || { echo "PARE: vazamento de identidade detectado"; cat /tmp/.chk-vaz.out; exit 1; }
+  # 03/08: o caminho fixo /tmp/.chk-vaz.out era compartilhado entre usuários. Bastou o dono rodar
+  # o checker como root uma vez pra o arquivo virar root:root e TODA publicação como 'cloud'
+  # abortar com "PARE: vazamento" — sendo que o checker passava. Falso positivo que travou o
+  # release inteiro. Agora cada rodada usa arquivo próprio, e a saída do checker vale por si.
+  SAIDA_CHK=$(mktemp -t chk-vaz-XXXXXX) || { echo "PARE: não consegui criar arquivo temporário"; exit 1; }
+  if ! bash "$CHK" >"$SAIDA_CHK" 2>&1; then
+    echo "PARE: vazamento de identidade detectado"; cat "$SAIDA_CHK"; rm -f "$SAIDA_CHK"; exit 1
+  fi
+  rm -f "$SAIDA_CHK"
   echo "  · sem identidade do dono"
 fi
 
@@ -41,9 +49,18 @@ rsync -a --exclude='.git' --exclude='pacote' --exclude='node_modules' \
       ./ "$TMP/pkg/"
 
 echo "$V" > "$TMP/pkg/VERSAO"
+# O "modo" NAO e rotulo comercial: e a CHAVE que o motor le pra escolher como se atualizar
+# (bridge.cjs, const PACOTE). O parser so aceita "pago" ou "gratuito", e valor fora disso cai
+# no catch e volta pro padrao em silencio. Este pacote se atualiza pelo agente-update.service
+# baixando o pacote publicado, que e exatamente a arquitetura "gratuito" — logo, "gratuito".
+# O fato de o produto ser unico e trazer as skills do metodo e OUTRA coisa, e mora no campo
+# "skills" abaixo. Ja custou caro misturar os dois: em 02/ago o publicador gravava
+# "modo": "completo" com um comentario # dentro do JSON, e os DOIS JSON.parse do bridge
+# falhavam calados — o pacote inteiro perdia instalador e usuario.
 cat > "$TMP/pkg/.pacote.json" <<EOF
 {
-  "modo": "completo",   # 02/ago: produto unico — o pacote traz as skills do metodo
+  "modo": "gratuito",
+  "skills": "completo",
   "versao": "$V",
   "instalador": "sudo bash -c \\"\$(curl -fsSL https://raw.githubusercontent.com/molinateston/agente-soft/main/bootstrap.sh)\\"",
   "usuario": "agente",
