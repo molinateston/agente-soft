@@ -185,10 +185,10 @@ Fontes canonicas obrigatorias, na ordem:
 
 1. aula-webinar-AAA-gravada.md (verbatim real do dono na
    aula do webinar, ~1h49, com transcricao literal). Path:
-   ~/agente-soft/brain/conteudo/aula-webinar-AAA-gravada.md
+   ~/lean-bridge/brain/conteudo/aula-webinar-AAA-gravada.md
    (ou o path equivalente no cliente)
 2. NARRATIVA-CANONICA.md (a fonte da verdade da tese-mae).
-   Path: ~/agente-soft/brain/NARRATIVA-CANONICA.md
+   Path: ~/lean-bridge/brain/NARRATIVA-CANONICA.md
 3. CANONICO.md, ARSENAL-DE-DESEJOS.md, PROMESSA-MAXIMA.md,
    BANCO-DE-MATERIA-PRIMA.md (camadas)
 4. plano-de-posicionamento do dono (se ja existe, path
@@ -336,9 +336,9 @@ FONTES CANONICAS DO METODO SOFT (REFERENCIAS DA SKILL)
   (a lei, o codigo por tras do guia)
 - ~/.claude/skills/_plugin/guia/03-identidade-voz.md
   (elementos de voz Soft)
-- ~/agente-soft/brain/conteudo/aula-webinar-AAA-gravada.md
+- ~/lean-bridge/brain/conteudo/aula-webinar-AAA-gravada.md
   (verbatim canonico do dono, fonte 1 do Verbatim filtro)
-- ~/agente-soft/brain/NARRATIVA-CANONICA.md
+- ~/lean-bridge/brain/NARRATIVA-CANONICA.md
   (fonte da tese-mae)
 
 Este SKILL.md sintetiza. Detalhe operacional dos filtros em

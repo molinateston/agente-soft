@@ -52,7 +52,7 @@ Sem plano, sem roteiro. Não improvisa, não pergunta o conteúdo, não inventa 
 
 ## O ESQUELETO 82 (marcos-âncora, sempre presentes, sempre nessa ordem)
 
-Derivado de ~/agente-soft/brain/conteudo/WEBINARIOS-PERPETUOS-OFICIAL-mapa-mental.md (o mapa canônico APSD com os 13 beats do PITCH dentro do D).
+Derivado de ~/lean-bridge/brain/conteudo/WEBINARIOS-PERPETUOS-OFICIAL-mapa-mental.md (o mapa canônico APSD com os 13 beats do PITCH dentro do D).
 
 Distribuição: A=10 · P=15 · S=15 · D=40 · Fecho=2 · Total=82.
 
@@ -204,7 +204,7 @@ Total esqueleto: 10 + 15 + 15 + 40 + 2 = 82.
 
 ## MODO HIGH TICKET (só ativa se `modo=high_ticket` no plano)
 
-Se o plano trouxer `modo: high_ticket`, o esqueleto 82 MUDA nos blocos A, S e D. Fonte-mãe: `~/agente-soft/brain/conteudo/aula-webinar-AAA-HIGH-TICKET.md` §1b, §1d, §1e.
+Se o plano trouxer `modo: high_ticket`, o esqueleto 82 MUDA nos blocos A, S e D. Fonte-mãe: `~/lean-bridge/brain/conteudo/aula-webinar-AAA-HIGH-TICKET.md` §1b, §1d, §1e.
 
 ### Deltas do bloco A (2 slides extras)
 
@@ -510,9 +510,9 @@ Nenhuma dessas foi tocada por esta skill; continuam funcionando como estavam.
 ## Fontes que esta skill lê antes de gerar
 
 - ~/entregas/webinar-plano-<slug>.md (o plano do dono, obrigatório; contem o campo `modo`)
-- ~/agente-soft/brain/conteudo/aula-webinar-AAA-HIGH-TICKET.md (variação high_ticket - §1e reescreve os 13 D beats; carregar SÓ se `modo=high_ticket`)
-- ~/agente-soft/brain/conteudo/WEBINARIOS-PERPETUOS-OFICIAL-mapa-mental.md (mapa canônico APSD + 13 beats)
-- ~/agente-soft/brain/DOUTRINA-MD-TELEGRAM.md (formato do output)
+- ~/lean-bridge/brain/conteudo/aula-webinar-AAA-HIGH-TICKET.md (variação high_ticket - §1e reescreve os 13 D beats; carregar SÓ se `modo=high_ticket`)
+- ~/lean-bridge/brain/conteudo/WEBINARIOS-PERPETUOS-OFICIAL-mapa-mental.md (mapa canônico APSD + 13 beats)
+- ~/lean-bridge/brain/DOUTRINA-MD-TELEGRAM.md (formato do output)
 - references/SLIDE-MODELO-SCRIPT.md (o slide-modelo do autor, o "slide cru")
 - references/slides-estrategicos-canonicos.md (os 4 deltas: re-ancoragem, condição×visão, armadilha 1-por-slide, contas em projeção)
 - references/estrutura-real-webinar.md (fonte fundo da estrutura, quando precisar de detalhe de beat)

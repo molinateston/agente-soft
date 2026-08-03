@@ -8,7 +8,7 @@ description: "Q&A GUIADO que constrói o PLANO do webinário Soft (mapa mental p
 ## O que esta skill faz
 Constrói o PLANO do webinário Soft do usuário como um mapa mental preenchido, feito por CONVERSA: uma pergunta por vez, respondida por texto ou áudio (o Telegram já transcreve o áudio antes de chegar aqui, então você só lida com texto).
 
-Segue a espinha canônica APSD + os 13 beats do PITCH (fonte: `~/agente-soft/brain/conteudo/WEBINARIOS-PERPETUOS-OFICIAL-mapa-mental.md`). Cada nó folha do mapa vira uma pergunta.
+Segue a espinha canônica APSD + os 13 beats do PITCH (fonte: `~/lean-bridge/brain/conteudo/WEBINARIOS-PERPETUOS-OFICIAL-mapa-mental.md`). Cada nó folha do mapa vira uma pergunta.
 
 Salva estado em `/tmp/webinar-plano-<slug>-<epoch>.json` a cada resposta. Se o usuário chamar a skill de novo com o mesmo slug, DETECTA o arquivo mais recente e oferece retomar.
 
