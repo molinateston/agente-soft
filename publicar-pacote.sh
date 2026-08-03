@@ -81,5 +81,25 @@ echo "$V" > VERSAO
 
 echo "  · pacote: $(du -h "$DEST/agente-soft.tar.gz" | cut -f1) · $(tar tzf "$DEST/agente-soft.tar.gz" | wc -l) arquivos"
 echo
-echo "PRONTO. Falta enviar pro GitHub pra frota receber:"
-echo "  git add VERSAO $DEST && git commit -m 'publica $V' && git push"
+
+# 03/08 — O DEGRAU QUE FALTAVA. Publicar sem push aconteceu 3x em 2 dias: o pacote fica pronto no
+# disco, a VERSAO local sobe, e o GitHub continua anunciando a antiga. O cliente pergunta "tem
+# versao nova?", ouve "nao", e a melhoria nunca sai daqui. Pior: nada avisa — o publicador
+# imprimia a instrucao e dava por encerrado, entao a frota parecia atualizada.
+# Aqui o script CONFERE o que o GitHub esta anunciando e grita se estiver atrasado. Nao dá push
+# sozinho de proposito (decisao do dono: o push é dele), mas a partir de agora ninguem descobre
+# a divergencia por acaso, dias depois.
+PUB_REMOTA="$(curl -s --max-time 20 https://raw.githubusercontent.com/molinateston/agente-soft/main/VERSAO 2>/dev/null | tr -d '[:space:]')"
+if [ "$PUB_REMOTA" = "$V" ]; then
+  echo "✅ O GitHub já anuncia $V — a frota recebe no próximo ciclo (de hora em hora)."
+else
+  echo "⚠️  ATENÇÃO: o GitHub ainda anuncia ${PUB_REMOTA:-<não consegui ler>}, e você acabou de gerar $V."
+  echo "   ENQUANTO O PUSH NÃO SAIR, NENHUM CLIENTE RECEBE ESTA VERSÃO — o update deles compara"
+  echo "   a VERSAO do GitHub e conclui que já estão atualizados."
+  echo
+  echo "   Rode:"
+  echo "     git add VERSAO $DEST && git commit -m 'publica $V' && git push"
+  echo
+  echo "   E confira depois com:"
+  echo "     curl -s https://raw.githubusercontent.com/molinateston/agente-soft/main/VERSAO"
+fi
