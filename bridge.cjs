@@ -1662,7 +1662,17 @@ function ask(key, text, cfg, chatId, threadId, mission) {
             if (c === "cp" || c === "mv" || c === "mkdir" || c === "rm" || c === "chmod") return "Organizando arquivo";
             return "Rodando comando";
           }
-          case "Task":       return "Chamando um ajudante";
+          // A tool de subagente virou "Agent" no CLI 2.1.220 — o case "Task" ficou órfão e o painel
+          // mostrava "Pensando" toda vez que um ajudante abria. Pior: como o texto do painel nunca
+          // passa por console.log, o log dava ZERO chamadas de ajudante e a leitura virava "a
+          // delegação não funciona". Os dois nomes ficam, porque CLI antigo ainda manda "Task".
+          // O console.log existe pra o log passar a medir de verdade.
+          case "Agent":
+          case "Task": {
+            const _aj = (inp && (inp.subagent_type || inp.subagentType)) || "";
+            if (_aj) { try { console.log(`[ponte] ajudante aberto: ${_aj}`); } catch {} }
+            return _aj ? `Chamando o ajudante ${_aj}` : "Chamando um ajudante";
+          }
           case "WebFetch":   return "Consultando um site";
           case "WebSearch":  return "Pesquisando na internet";
           case "TodoWrite":  return "Anotando o plano";
@@ -2329,7 +2339,22 @@ async function flushPending(key) {
     const parts = [];
     for (const m of msgs) { try { const r = await resolveInput(m); if (r.text) parts.push(r.text); } catch (e) { console.error("[ponte] resolve(batch):", e && e.message); } }
     console.log(`[ponte] 🧩 ${msgs.length} mensagens juntadas em 1 prompt (${key})`);
-    return { text: parts.join("\n\n").trim(), ...(threadId ? { message_thread_id: Number(threadId) } : {}) };
+    // A RAJADA CHEGA MARCADA, E QUEM DECIDE É O AGENTE. Antes as mensagens vinham só coladas uma
+    // na outra: o turno lia um texto comprido e fazia tudo em série, tratando três pedidos
+    // independentes como se fossem um. A tentativa de resolver isso com um triador que decidia
+    // junta-ou-separa ANTES do agente ver foi medida e reprovada — ele julgava duas linhas de
+    // texto solto, sem histórico da conversa, sem persona, sem memória, e errava a maioria dos
+    // casos. Quem tem o contexto é o agente. Aqui a rajada só chega numerada, com a instrução do
+    // que fazer com ela; a decisão fica com quem sabe do que a conversa trata.
+    const _limpas = parts.filter(Boolean);
+    const _num = _limpas.map((p, i) => `[mensagem ${i + 1}]\n${p}`).join("\n\n");
+    const _txt = _limpas.length > 1
+      ? `O dono mandou ${_limpas.length} mensagens seguidas, em rajada:\n\n${_num}\n\n` +
+        `— Decida você o que elas são. Se forem partes do MESMO pedido (uma corrige, completa ou dá contexto à outra), trate como um pedido só. ` +
+        `Se forem trabalhos INDEPENDENTES, que dá pra tocar ao mesmo tempo sem um esperar o outro, toque em paralelo (respeitando o teto de ajudantes) e responda cada um no seu próprio bloco, dizendo o que ficou pronto. ` +
+        `Nenhuma das mensagens pode ficar sem resposta: se você não for atender alguma agora, diga qual e por quê.`
+      : _num.replace(/^\[mensagem 1\]\n/, "");
+    return { text: _txt.trim(), ...(threadId ? { message_thread_id: Number(threadId) } : {}) };
   }));
   dispatchResolved(dispatchMsg, chatId, threadId, key, cfg);
 }
@@ -2539,7 +2564,19 @@ function checkPromises() {
     const wRaw = (typeof job.when === "number" ? job.when : Date.parse(job.when)) || 0;
     const agendadaPraFrente = wRaw > Date.now() + 60000;
     let when = (job.mission && !agendadaPraFrente) ? Date.now() : wRaw;
-    if (job.done || !job.prompt || !job.chatId) continue;
+    // PROMESSA MALFORMADA NÃO MORRE CALADA. O filtro abaixo é o certo (sem prompt ou sem chatId não
+    // dá pra executar nem pra responder), mas até aqui ele descartava EM SILÊNCIO: o arquivo ficava
+    // pra sempre no disco, o dono esperava uma entrega que nunca ia sair, e não havia uma linha de
+    // log dizendo por quê. Isso já custou caro — motor de tarefa que nunca dispara e ninguém
+    // descobre, porque o gatilho morre sem ruído. Agora reclama uma vez por arquivo.
+    if (job.done) continue;
+    if (!job.prompt || !job.chatId) {
+      if (!job._avisado) {
+        job._avisado = true; try { fs.writeFileSync(fp, JSON.stringify(job)); } catch {}
+        console.error(`[ponte] promessa ${f} IGNORADA: falta ${!job.prompt ? "prompt" : "chatId"} — nada a executar. Arquivo: ${fp}`);
+      }
+      continue;
+    }
     if (!when) { when = Date.now(); console.log(`[ponte] promessa ${f} sem hora válida → disparando AGORA (nunca deixar promessa morrer calada)`); }
     if (when > Date.now()) continue;                                  // ainda não venceu (vale pra promessa E pra missão agendada)
     job.done = true; job.firedAt = Date.now();                        // NÃO sobrescreve job.when: apagar a data original apagava a prova nas autópsias

@@ -75,7 +75,38 @@ rsync -a --exclude='.git' --exclude='pacote' --exclude='node_modules' \
       --exclude='*.log' --exclude='.bridge.lock' --exclude='.alive' \
       --exclude='.gender-asked' --exclude='.ultimo-rollback' --exclude='.pos-update.json' --exclude='.update-auto-ultima' \
       --exclude='.onboarding-state.json' --exclude='.root-blocked' --exclude='data' \
+      --exclude='lib/license.js' --exclude='update-pago.sh' \
       ./ "$TMP/pkg/"
+
+# 3.5) A SEPARACAO PAGO x GRATUITO, QUE ESTE PUBLICADOR NUNCA TEVE (04/08/2026).
+# Achado do dia: as versoes v2026.08.02-3 em diante sairam daqui carregando lib/license.js
+# e update-pago.sh — o modulo de licenca e o atualizador do produto PAGO — e foram parar no
+# GitHub publico dentro do .tar.gz. Ninguem viu porque o tarball e binario: nenhuma
+# varredura de texto enxerga dentro dele, e este script so procurava CREDENCIAL, nunca
+# PRODUTO PAGO. As duas exclusoes do rsync acima e a varredura abaixo fecham isso.
+#
+# lib/license.js e o caso mais grave dos dois, e nao so por ser material do produto pago:
+# o motor decide o proprio modo pela PRESENCA dele (bridge.cjs, "if existsSync
+# lib/license.js -> modo pago"). Dentro do pacote gratuito ele fazia cada cliente de graca
+# se declarar cliente pago. Vazamento e defeito de funcionamento na mesma linha.
+#
+# O que NAO e excluido, de proposito, e por que: lib/runtime.js, scripts/runtime-detect.sh,
+# scripts/restart-solto.sh, scripts/aviso-manha.sh, scripts/update-auto.sh e
+# scripts/update-guard.sh estao na lista so-pago.txt do gerador antigo, mas a lista
+# envelheceu: hoje o update.sh e o proprio motor deste pacote CHAMAM esses arquivos. Tirar
+# eles nao protegeria nada (nao ha licenca nem nome do dono dentro) e quebraria a rede de
+# seguranca do update do cliente gratuito.
+MARCAS_PAGO='LEON_LICENSE|licen[cç]a\.leonardomolina|socio-ia|projeto leon|leomolina|le[oô][ ._-]+molina|molina(?!teston)|wa\.me/55[0-9]'
+if grep -rinP "$MARCAS_PAGO" "$TMP/pkg" >/dev/null 2>&1; then
+  echo "PARE: material do produto PAGO dentro do pacote que o cliente gratuito baixa."
+  grep -rinP "$MARCAS_PAGO" "$TMP/pkg" | sed "s|$TMP/pkg|…|" | head -25 | sed 's/^/    /'
+  echo
+  echo "  Conserte na origem (o arquivo aqui na pasta), nao no pacote."
+  echo "  Se for texto legitimo que so PARECE do pago, o ajuste vai na regra, com comentario:"
+  echo "    /home/cloud/scripts/check-frota.sh  (a lista MARCAS)"
+  exit 1
+fi
+echo "  · nada do produto pago"
 
 echo "$V" > "$TMP/pkg/VERSAO"
 # O "modo" NAO e rotulo comercial: e a CHAVE que o motor le pra escolher como se atualizar
