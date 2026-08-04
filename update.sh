@@ -161,12 +161,51 @@ baixar_pacote() {
     say "⚠️ o pacote $pub veio incompleto ou com motor inválido. NÃO apliquei. Sigo na atual."
     rm -rf "$tmp"; PULL_FAIL=1; return 0
   fi
+  # AUTOMACAO DO DONO NUNCA MORRE NO UPDATE (04/08/2026).
+  # A troca de pasta abaixo faz sumir da versao viva QUALQUER arquivo que o dono tenha criado
+  # dentro do REPO_DIR. Foi assim que um cliente perdeu uma automacao: o cron continuou
+  # apontando pra um script que deixou de existir, e o .anterior morre no update seguinte
+  # (2 updates = perda definitiva). Regra do dono, verbatim: "as automacoes sao do brain, do
+  # usuario. Ela nunca e do proprio motor. Eu nao posso atualizar o meu agente e perder minhas
+  # automacoes. Isso nao existe."
+  # COMO SE SABE O QUE E DO DONO: o pacote deixa um MANIFESTO (.manifesto-pacote) com a lista
+  # do que veio dentro dele. Arquivo que esta no REPO_DIR e NAO esta no manifesto = do dono,
+  # e volta pra versao nova. Sem isso (primeiro update depois desta versao), NAO se restaura
+  # nada as cegas: apenas se AVISA a lista, porque arquivo removido de proposito do pacote
+  # (ja aconteceu: instalador pago tirado do pacote gratuito) nao pode ressuscitar sozinho.
+  # manifesto do que veio NESTE pacote — gravado ANTES de preservar nada, senao arquivo do
+  # dono entraria na lista do produto e no update seguinte seria tratado como "removido de
+  # proposito" (e morreria em silencio, que e exatamente o bug que este bloco existe pra matar).
+  ( cd "$tmp/novo" && find . -type f 2>/dev/null | sed 's#^\./##' | grep -v '^\.git/' | sort > .manifesto-pacote ) 2>/dev/null || true
+  PRESERVADOS=""; ORFAOS=""
+  if [ -d "$REPO_DIR" ]; then
+    MANI="$REPO_DIR/.manifesto-pacote"
+    while IFS= read -r rel; do
+      rel="${rel#./}"
+      case "$rel" in .git/*|.manifesto-pacote) continue;; esac
+      [ -e "$tmp/novo/$rel" ] && continue                      # veio no pacote novo: a versao nova manda
+      if [ -f "$MANI" ] && grep -qxF "$rel" "$MANI"; then
+        ORFAOS="$ORFAOS $rel"                                   # era do pacote e saiu de proposito: NAO volta
+        continue
+      fi
+      if [ -f "$MANI" ]; then
+        mkdir -p "$tmp/novo/$(dirname "$rel")" 2>/dev/null
+        cp -p "$REPO_DIR/$rel" "$tmp/novo/$rel" 2>/dev/null && PRESERVADOS="$PRESERVADOS $rel"
+      else
+        ORFAOS="$ORFAOS $rel"                                   # sem manifesto ainda: so avisa, nao adivinha
+      fi
+    done <<EOF
+$(cd "$REPO_DIR" && find . -type f 2>/dev/null)
+EOF
+  fi
   # troca a pasta inteira (assim arquivo que saiu da versao nova some de verdade),
   # guardando a anterior do lado pra dar pra voltar na mao.
   rm -rf "$REPO_DIR.anterior"
   [ -d "$REPO_DIR" ] && mv "$REPO_DIR" "$REPO_DIR.anterior"
   mv "$tmp/novo" "$REPO_DIR"
   rm -rf "$tmp"
+  [ -n "$PRESERVADOS" ] && say "   mantive o que e teu dentro da pasta:$PRESERVADOS"
+  [ -n "$ORFAOS" ] && say "   estes arquivos nao vieram na versao nova e ficaram so no backup ($REPO_DIR.anterior):$ORFAOS — se algum for teu, me fala que eu trago de volta."
   # Grava a versão que foi PEDIDA, não a que veio escrita dentro do pacote. Se as duas
   # divergirem (empacotamento errado), sem isto o cliente acha que continua na antiga e
   # rebaixa o mesmo pacote de hora em hora, pra sempre. Apareceu no teste de 30/07.
@@ -294,6 +333,20 @@ cp -p "$HOME/.config/systemd/user/agente.service" "$BACKUP_DIR/agente.service" 2
 for u in agente-update.service agente-update.timer agente-health.service agente-health.timer; do
   [ -f "$HOME/.config/systemd/user/$u" ] && { cp -p "$HOME/.config/systemd/user/$u" "$BACKUP_DIR/$u" || snap_fail "$u"; }
 done
+# AUTOMACAO DO DONO NO SNAPSHOT (04/08/2026). Antes o snapshot guardava so 6 coisas do
+# proprio sistema (.env, topics, sessions, bridge, persona e 4 units nossos) — nunca o
+# crontab do usuario nem os agendamentos que o DONO criou. Se algo desligasse no update,
+# nao havia nem como saber o que existia antes. Agora tem: e a foto que a conferencia
+# pos-update compara pra avisar se alguma automacao caiu.
+crontab -l > "$BACKUP_DIR/crontab.txt" 2>/dev/null || true
+systemctl --user list-units --type=service --type=timer --state=running,active --no-legend 2>/dev/null \
+  | awk '{print $1}' | sort > "$BACKUP_DIR/units-ativos.txt" 2>/dev/null || true
+mkdir -p "$BACKUP_DIR/units-do-dono" 2>/dev/null
+for u in "$HOME"/.config/systemd/user/*.service "$HOME"/.config/systemd/user/*.timer; do
+  [ -f "$u" ] && cp -p "$u" "$BACKUP_DIR/units-do-dono/$(basename "$u")" 2>/dev/null
+done
+true
+
 # .last-backup só DEPOIS do snapshot inteiro ok (senão rollback apontaria pra lixo).
 echo "$BACKUP_DIR" > "$BRIDGE_DIR/.last-backup"
 
@@ -457,6 +510,35 @@ if [ "$BUS_OK" = "1" ] && { [ "$UNITS_CHANGED" -eq 1 ] || [ "$NEED_RELOAD" -eq 1
   fi
   systemctl --user is-active --quiet agente-update.timer || { say "⚠️ agente-update.timer não ficou ativo após o update."; FAIL=1; }
 fi
+# ---- CONFERENCIA DA AUTOMACAO DO DONO (04/08/2026) ------------------
+# Nao basta preservar: tem que CONFERIR e AVISAR. Aqui se compara o crontab e os servicos
+# ativos com a foto tirada antes de mexer. Cron que sumiu volta na hora (e reversivel e e do
+# dono). Servico que caiu vira aviso — religar sozinho poderia subir algo que o dono desligou
+# de proposito no meio do update.
+if [ -f "$BACKUP_DIR/crontab.txt" ] && command -v crontab >/dev/null 2>&1; then
+  CRON_DEPOIS="$(crontab -l 2>/dev/null || true)"
+  CRON_SUMIU=""
+  while IFS= read -r linha; do
+    case "$linha" in ""|\#*) continue;; esac
+    printf %s "$CRON_DEPOIS" | grep -qxF "$linha" || CRON_SUMIU="$CRON_SUMIU
+$linha"
+  done < "$BACKUP_DIR/crontab.txt"
+  if [ -n "$CRON_SUMIU" ]; then
+    { printf '%s\n' "$CRON_DEPOIS"; printf '%s\n' "$CRON_SUMIU"; } | crontab - 2>>"$LOG" \
+      && tg "Percebi que uma automacao tua tinha saido do ar na atualizacao e ja coloquei de volta:$CRON_SUMIU" \
+      || tg "⚠️ Uma automacao tua saiu do ar na atualizacao e eu nao consegui recolocar sozinho:$CRON_SUMIU"
+  fi
+fi
+if [ -f "$BACKUP_DIR/units-ativos.txt" ] && [ "$BUS_OK" = "1" ]; then
+  UNITS_CAIRAM=""
+  while IFS= read -r u; do
+    [ -z "$u" ] && continue
+    case "$u" in agente.service|agente-update.*|agente-health.*) continue;; esac
+    systemctl --user is-active --quiet "$u" || UNITS_CAIRAM="$UNITS_CAIRAM $u"
+  done < "$BACKUP_DIR/units-ativos.txt"
+  [ -n "$UNITS_CAIRAM" ] && tg "⚠️ Estas automacoes tuas estavam rodando antes da atualizacao e nao estao mais:$UNITS_CAIRAM — quer que eu religue?"
+fi
+
 if [ "$FAIL" -eq 0 ]; then
   say "✅ UPDATE OK (skills em $NEW_SHA)."
   # Se o bridge novo veio quebrado mas o resto (skills, units) foi aplicado ok,
