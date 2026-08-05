@@ -786,7 +786,11 @@ function tg(method, body) {
       if (method === "getUpdates") {
         let ups = [];
         try { ups = JSON.parse(fs.readFileSync(fix, "utf8")); fs.writeFileSync(fix, "[]"); } catch {}
-        return Promise.resolve({ ok: true, result: ups });
+        // Resolve via TIMER (nao Promise.resolve): poll com promessa ja-resolvida vira spin de
+        // microtarefa e NUNCA deixa setTimeout rodar -- o debounce morre de fome e mensagem de
+        // conversa normal some no teste (provado 05/08, rodadas 3-4 do cliente-fantasma).
+        // No real o getUpdates e rede (macrotask), entao isso e SO do harness offline.
+        return new Promise((r) => setTimeout(() => r({ ok: true, result: ups }), 100));
       }
     }
     return Promise.resolve({ ok: true, result: { message_id: 1 } });
@@ -1627,7 +1631,13 @@ function ask(key, text, cfg, chatId, threadId, mission) {
     const _mKey = `${chatId}:${threadId || "main"}`;
     const _mManual = codexMode[_mKey] === true ? "codex" : (grokMode[_mKey] === true ? "grok" : null);
     const _mNativo = (cfg && cfg.engine && MOTORES[cfg.engine] && MOTORES[cfg.engine].modo()[_mKey] !== false) ? cfg.engine : null;
-    const _motor = _mManual || _mNativo;
+    // MOTOR PADRÃO DA CASA (05/ago): ENGINE_DEFAULT=codex no .env = instalação Codex-puro
+    // (dono que só tem ChatGPT, sem conta Claude — bootstrap-codex.sh grava a variável).
+    // Vale pra TODA sala que não tem engine próprio; /claude pausa por sala igual à nativa.
+    // Sem a variável nada muda: o padrão da casa continua Claude.
+    const _engCasa = String(envMap().ENGINE_DEFAULT || process.env.ENGINE_DEFAULT || "").trim().toLowerCase();
+    const _mPadrao = (!_mManual && !_mNativo && _engCasa && MOTORES[_engCasa] && MOTORES[_engCasa].modo()[_mKey] !== false) ? _engCasa : null;
+    const _motor = _mManual || _mNativo || _mPadrao;
     if (_motor) {
       const M = MOTORES[_motor];
       // binário ausente = o cliente ainda não instalou/logou a assinatura DELE: resposta honesta com o passo
@@ -1923,8 +1933,15 @@ function processOne(msg, chatId, threadId, key, cfg, mission) {
       const _cmd = text.trim().toLowerCase().split(/[@\s]/)[0];
       const gk = `${chatId}:${threadId || "main"}`;
       if (_cmd === "/claude") {
+        const _engCasaCmd = String(envMap().ENGINE_DEFAULT || process.env.ENGINE_DEFAULT || "").trim().toLowerCase();
+        // instalação Codex-puro SEM Claude no disco: "voltar pro Claude" não existe — honesto, sem pausar nada
+        if (_engCasaCmd && MOTORES[_engCasaCmd]) {
+          let _temClaude = true; try { fs.accessSync(CLAUDE_BIN, fs.constants.X_OK); } catch { _temClaude = false; }
+          if (!_temClaude) return send(chatId, `⚙️ Esta instalação roda inteira no ${MOTORES[_engCasaCmd].nome} (não tem Claude aqui). Pra usar Claude seria preciso instalar e logar o Claude Code nesta VPS — aí o /claude passa a funcionar.`, threadId);
+        }
         delete grokMode[gk]; delete codexMode[gk];
-        const _nat = (cfg && cfg.engine && MOTORES[cfg.engine]) ? cfg.engine : null;
+        // pausa também o motor padrão da casa (ENGINE_DEFAULT, instalação Codex-puro) — mesmo gesto da sala nativa
+        const _nat = (cfg && cfg.engine && MOTORES[cfg.engine]) ? cfg.engine : (MOTORES[_engCasaCmd] ? _engCasaCmd : null);
         if (_nat) MOTORES[_nat].modo()[gk] = false;
         saveGrokMode(); saveCodexMode();
         return send(chatId, _nat
@@ -2698,6 +2715,18 @@ async function poll() {
               send(chatId, ativas.length ? `🎯 Missões rodando agora:\n${ativas.join("\n")}` : `Nenhuma missão rodando.\n\nAbre uma com \`/missao <a tarefa longa>\` — eu trabalho até o entregável (budget alto, teto 4h), te reporto cada marco, e retomo sozinho se cair. Você pode ir pedindo outras coisas em paralelo.`, threadId).catch(() => {});
               continue;
             }
+            // Instalação Codex-puro (sem Claude): missão em segundo plano roda no Claude — sem ele,
+            // honesto: faz como pedido normal no motor da casa, em vez de abrir missão que nasce morta.
+            {
+              const _engMi = String(envMap().ENGINE_DEFAULT || process.env.ENGINE_DEFAULT || "").trim().toLowerCase();
+              let _temClaudeMi = true; try { fs.accessSync(CLAUDE_BIN, fs.constants.X_OK); } catch { _temClaudeMi = false; }
+              if (_engMi && MOTORES[_engMi] && !_temClaudeMi) {
+                send(chatId, `⚙️ Nesta instalação (motor ${MOTORES[_engMi].nome}) ainda não existe missão em segundo plano — eu faço o pedido AGORA, direto. Se for muito grande, me manda em partes.`, threadId).catch(() => {});
+                msg.text = tarefa;
+                bufferMsg(msg, chatId, threadId, key, cfg);
+                continue;
+              }
+            }
             const mid = startMission(chatId, threadId, tarefa, cfg);
             send(chatId, `🎯 Missão aberta (id \`${mid}\`). Vou até o entregável, te reportando cada marco. Pode ir pedindo outras coisas — eu sigo nessa em paralelo, e se eu cair, retomo do ponto.`, threadId).catch(() => {});
             continue;
@@ -2716,7 +2745,14 @@ async function poll() {
 // No boot AVISA o dono SÓ se algo estiver quebrado (silêncio = saudável; sem spam a cada restart).
 function depsCheck() {
   const probs = [];
-  try { fs.accessSync(CLAUDE_BIN, fs.constants.X_OK); } catch { probs.push(`claude não-executável (${CLAUDE_BIN})`); }
+  // Instalação Codex-puro (ENGINE_DEFAULT no .env com o motor presente): Claude é OPCIONAL —
+  // checa o motor da casa no lugar dele, senão todo boot assusta o dono com aviso de algo que ele não usa.
+  const _engDeps = String(envMap().ENGINE_DEFAULT || process.env.ENGINE_DEFAULT || "").trim().toLowerCase();
+  if (_engDeps && MOTORES[_engDeps]) {
+    if (!MOTORES[_engDeps].bin()) probs.push(`${MOTORES[_engDeps].nome} não instalado/logado (motor padrão desta casa)`);
+  } else {
+    try { fs.accessSync(CLAUDE_BIN, fs.constants.X_OK); } catch { probs.push(`claude não-executável (${CLAUDE_BIN})`); }
+  }
   // Doutrina ausente NÃO pode ser silenciosa: sem ela eu respondo como assistente genérico,
   // e por fora ninguém nota. Este é o aviso que faltava quando a doutrina morava na pasta de outro pacote.
   if (!doutrinaOrigem()) probs.push(`doutrina-base ausente (AGENT-BASE.md não encontrado em ${WORKDIR}) — estou respondendo sem a minha identidade`);
