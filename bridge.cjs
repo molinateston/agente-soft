@@ -1635,7 +1635,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
     // (dono que só tem ChatGPT, sem conta Claude — bootstrap-codex.sh grava a variável).
     // Vale pra TODA sala que não tem engine próprio; /claude pausa por sala igual à nativa.
     // Sem a variável nada muda: o padrão da casa continua Claude.
-    const _engCasa = String(envMap().ENGINE_DEFAULT || process.env.ENGINE_DEFAULT || "").trim().toLowerCase();
+    const _engCasa = String(envMap().ENGINE_DEFAULT || envMap().ENGINE || process.env.ENGINE_DEFAULT || process.env.ENGINE || "").trim().toLowerCase();
     const _mPadrao = (!_mManual && !_mNativo && _engCasa && MOTORES[_engCasa] && MOTORES[_engCasa].modo()[_mKey] !== false) ? _engCasa : null;
     const _motor = _mManual || _mNativo || _mPadrao;
     if (_motor) {
@@ -1933,7 +1933,7 @@ function processOne(msg, chatId, threadId, key, cfg, mission) {
       const _cmd = text.trim().toLowerCase().split(/[@\s]/)[0];
       const gk = `${chatId}:${threadId || "main"}`;
       if (_cmd === "/claude") {
-        const _engCasaCmd = String(envMap().ENGINE_DEFAULT || process.env.ENGINE_DEFAULT || "").trim().toLowerCase();
+        const _engCasaCmd = String(envMap().ENGINE_DEFAULT || envMap().ENGINE || process.env.ENGINE_DEFAULT || process.env.ENGINE || "").trim().toLowerCase();
         // instalação Codex-puro SEM Claude no disco: "voltar pro Claude" não existe — honesto, sem pausar nada
         if (_engCasaCmd && MOTORES[_engCasaCmd]) {
           let _temClaude = true; try { fs.accessSync(CLAUDE_BIN, fs.constants.X_OK); } catch { _temClaude = false; }
@@ -2718,7 +2718,7 @@ async function poll() {
             // Instalação Codex-puro (sem Claude): missão em segundo plano roda no Claude — sem ele,
             // honesto: faz como pedido normal no motor da casa, em vez de abrir missão que nasce morta.
             {
-              const _engMi = String(envMap().ENGINE_DEFAULT || process.env.ENGINE_DEFAULT || "").trim().toLowerCase();
+              const _engMi = String(envMap().ENGINE_DEFAULT || envMap().ENGINE || process.env.ENGINE_DEFAULT || process.env.ENGINE || "").trim().toLowerCase();
               let _temClaudeMi = true; try { fs.accessSync(CLAUDE_BIN, fs.constants.X_OK); } catch { _temClaudeMi = false; }
               if (_engMi && MOTORES[_engMi] && !_temClaudeMi) {
                 send(chatId, `⚙️ Nesta instalação (motor ${MOTORES[_engMi].nome}) ainda não existe missão em segundo plano — eu faço o pedido AGORA, direto. Se for muito grande, me manda em partes.`, threadId).catch(() => {});
@@ -2747,7 +2747,7 @@ function depsCheck() {
   const probs = [];
   // Instalação Codex-puro (ENGINE_DEFAULT no .env com o motor presente): Claude é OPCIONAL —
   // checa o motor da casa no lugar dele, senão todo boot assusta o dono com aviso de algo que ele não usa.
-  const _engDeps = String(envMap().ENGINE_DEFAULT || process.env.ENGINE_DEFAULT || "").trim().toLowerCase();
+  const _engDeps = String(envMap().ENGINE_DEFAULT || envMap().ENGINE || process.env.ENGINE_DEFAULT || process.env.ENGINE || "").trim().toLowerCase();
   if (_engDeps && MOTORES[_engDeps]) {
     if (!MOTORES[_engDeps].bin()) probs.push(`${MOTORES[_engDeps].nome} não instalado/logado (motor padrão desta casa)`);
   } else {
