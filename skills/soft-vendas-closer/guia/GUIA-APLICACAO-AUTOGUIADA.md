@@ -6,7 +6,7 @@
 
 ## Antes de começar: o que é o LEON, e por que ele entrevista
 
-O LEON é o Agente do dono. Não é um chat que responde pergunta. É quem conduz a obra.
+O LEON é o Sócio IA. Não é um chat que responde pergunta. É quem conduz a obra.
 
 Ele faz três coisas, nessa ordem: orquestra a jornada (sabe a sequência, invoca a skill certa, uma por vez), ensina o porquê de cada etapa numa pílula curta, e valida o ativo antes de liberar o próximo. Tom clínico. Direto. Crítico quando merece, aprovador quando merece. Nunca guru, nunca "você consegue".
 
@@ -336,7 +336,7 @@ Escolha da headline, aprovação da copy slide a slide, aprovação do visual. S
 
 A red flag é "virou aula". Carrossel que entrega o como-fazer mata a venda e atrai quem nunca compra. Cravado, libera o Passo 6.
 
-> Nota do LEON sobre Tráfego: a partir daqui, com carrossel validado, o LEON pode liberar o **impulsionar** (`soft-conteudo-impulsionar`), pôr verba no que já provou que converte (principalmente carrossel). Não é etapa separada nem obrigatória; é parte do funil, entra quando o orgânico prova.
+> Nota do LEON sobre Tráfego: a partir daqui, com carrossel validado, o LEON pode liberar o **impulsionar** (`soft-trafego-meta`), pôr verba no que já provou que converte (principalmente carrossel). Não é etapa separada nem obrigatória; é parte do funil, entra quando o orgânico prova.
 
 ### Skills invocadas
 
@@ -472,7 +472,7 @@ Quando o especialista chega aqui, ele não tem "umas ideias de marketing". Ele t
 - **Os Scripts Comerciais**, as 7 fases, objeções e frases de poder no tom dele. (Passo 7)
 - **A Rotina Estratégica**, a conta, a esteira, o calendário, os blocos e os rituais. (Passo 8)
 
-E o motor que carrega tudo isso todo dia: o **Agente do dono** já configurado com a voz e os ativos dele dentro. Ele não abre perguntando "sobre o que você quer falar?". Abre já sabendo quem é o cliente, qual é o método, como o especialista fala e o que ele vende. O improviso morre na configuração.
+E o motor que carrega tudo isso todo dia: o **Sócio IA** já configurado com a voz e os ativos dele dentro. Ele não abre perguntando "sobre o que você quer falar?". Abre já sabendo quem é o cliente, qual é o método, como o especialista fala e o que ele vende. O improviso morre na configuração.
 
 ### A régua do LEON (a lei que atravessa tudo)
 

@@ -34,7 +34,7 @@ Com Discurso Base:
 | Passo 6, Antecipação de objeções | Bloco 3, Solução · Método · Proposta (continuação) |
 | Passo 7, Oferta + CTA | Bloco 4, CTA |
 
-**Resumo:** os 7 passos são granulares. Os 4 blocos são a apresentação visual. Quando vai pra Carta, os 7 passos colapsam em 4 blocos. Quando vai pra Mini Webinar, os 7 passos se distribuem no arco APSD (Atenção · Problema · Solução · Decisão) · 12 blocos · 10min de vídeo.
+**Resumo:** os 7 passos são granulares. Os 4 blocos são a apresentação visual. Quando vai pra Carta, os 7 passos colapsam em 4 blocos. Quando vai pra Mini Webinar, os 7 passos se distribuem no arco ADMA (Atenção · Diagnóstico · Mecanismo · Ação) · 12 blocos · 10min de vídeo.
 
 ---
 
@@ -202,7 +202,7 @@ Após aprovação da versão-mestre, adapta pro formato escolhido:
 - Mini Carta → skill `soft-funil-carta`
 - Mini Webinar → ver `modo-mini-webinar.md` (esta skill) + o corpo desta skill
 - Landing Page → skill `soft-funil-landing`
-- Webinar → skill `soft-webinar-plano`
+- Webinar → skill `soft-webinar`
 
 ### Etapa 4, Auditoria antes de entregar
 
@@ -265,6 +265,6 @@ Quando entregar a versão-mestre neutra, segue esse padrão:
 Antes de liberar a versão-mestre pra virar qualquer formato, ela passa pelo Crivo embutido em `shared-references/crivo/`, nesta ordem:
 1. **Ancoragem** (`crivo/01-entrada-verbatim.md`), na entrada (Passo 0) e na checagem: toda fala entre aspas é verbatim literal da fonte real do cliente, e o ângulo-mãe tem N. Aspa que não bate na fonte reprova; case ou número inventado no Passo 5 reprova (senão vaza pros 4 formatos).
 2. **Simulação na pele do avatar** (`crivo/02-simulacao-cliente.md`): onde ele larga, onde se reconhece, o teste dos 2 segundos.
-3. **Gate CUB bloqueante + as 3 perguntas do gate** (`crivo/03-gate-cub.md`): imprime a tabela, o veredito é o pior bloco, narrativa que falha não sai, volta pra reescrita.
+3. **Gate CUB bloqueante + as 3 perguntas do Harry** (`crivo/03-gate-cub.md`): imprime a tabela, o veredito é o pior bloco, narrativa que falha não sai, volta pra reescrita.
 
 O anti-IA limpa o robô; o Crivo dá a força. Limpo não é forte. Os dois, nessa ordem. **Sem a tabela do Crivo impressa junto, a versão-mestre não foi entregue e nenhum formato é adaptado dela.**

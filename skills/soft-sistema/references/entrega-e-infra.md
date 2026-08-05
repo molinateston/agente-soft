@@ -16,7 +16,7 @@ gh repo create <org-do-dono>/<nome> --private --source=. --remote=origin
 - **Commit por agente**: cada subagente do Build commita seu escopo (mensagem clara do que fez). Facilita o review e o rollback por peça.
 - **Repo = produção**: a sincronização final (Fase 5) garante que o que está no ar é o que está no `main`. Nada de "ajuste rápido direto no servidor" que o repo não vê.
 - **Editando sistema existente sem repo?** Cria o repo na hora e **commita o estado atual ANTES de mexer** (Pergunta Zero, SKILL.md). É o ponto de retorno.
-- Token: `GITHUB_PAT` no cofre do dono (`~/agente-soft/.env`). `gh` autentica por ele.
+- Token: `GITHUB_PAT` no cofre do dono (`/home/cloud/.openclaw/.env`). `gh` autentica por ele.
 
 ## Deploy do WAR ROOM → Cloudflare Pages
 
@@ -60,7 +60,7 @@ Todo infográfico/imagem rica é gerado pelo **pipeline imagegen local (gpt-imag
 
 ## Cofre de credenciais
 
-- Segredo **nunca** em texto puro no repo. Por ora, o cofre é o **`.env` cifrado na VPS** (`~/agente-soft/.env` pro operador; `/srv/<nome>/.env` fora do repo pro serviço). Upgrade pra gerenciador de senha depois.
+- Segredo **nunca** em texto puro no repo. Por ora, o cofre é o **`.env` cifrado na VPS** (`/home/cloud/.openclaw/.env` pro operador; `/srv/<nome>/.env` fora do repo pro serviço). Upgrade pra gerenciador de senha depois.
 - **Caça segredo antes de CADA push** (ação obrigatória, não opcional):
 
 ```bash

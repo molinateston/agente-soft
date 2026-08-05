@@ -74,9 +74,9 @@ NUNCA criar 7 hierarquias diferentes. Cabeça do leitor não acompanha.
 - Hook: Inter 800
 - Body: Inter 400
 
-**Display + Sans (impactante, padrão Soft preto)**
-- Hook: Bebas Neue 400
-- Body: Inter 400
+**Display + Sans (impactante, alto contraste)**
+- Hook: a fonte display do ID do dono (via config; ex. de categoria: display condensada 400)
+- Body: a sans de corpo do ID do dono (via config)
 
 **Slab + Sans (técnico)**
 - Hook: Roboto Slab 700
@@ -132,7 +132,7 @@ Letter-spacing 0 ou levemente negativo (-0.5px). Mais nítido.
 ### Pra títulos grandes (60px+)
 Letter-spacing levemente negativo (-1px a -2px). Tipografia condensada visualmente.
 
-### Pra display gigante (Bebas Neue 200px+)
+### Pra display gigante (fonte display 200px+)
 Letter-spacing 0 ou positivo (+1 a +2px). Respeita o desenho da letra.
 
 ### Pra corpo de texto
@@ -166,7 +166,7 @@ Underline pra ênfase em texto = ruído visual. Use bold ou cor.
 
 ### Quando usa
 - CTAs ("QUERO MINHA VAGA")
-- Display extremo (Bebas Neue gigante)
+- Display extremo (fonte display gigante)
 - Tag pequena ("NOVO", "PREMIUM")
 
 ### Quando NÃO usa

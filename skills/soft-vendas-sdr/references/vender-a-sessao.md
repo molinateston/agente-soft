@@ -76,8 +76,8 @@ Se responde baixo (abaixo de 7) → **não agenda ainda**. Volta pra Implicaçã
 ---
 
 ## O limiar manda no desfecho
-- **Produto acima de R$2.000:** o SDR vende a sessão, qualifica, agenda, faz o handoff. **Nunca fecha a venda** (é do closer).
-- **Produto até R$2.000:** o SDR pode conduzir até o fechamento no mesmo atendimento (com preço/link da tabela aprovada), sem separar a etapa do closer. Mas o padrão high-ticket é vender a sessão.
+- **Produto acima de ~R$3.000:** o SDR vende a sessão, qualifica, agenda, faz o handoff. **Nunca fecha a venda** (é do closer).
+- **Produto até ~R$3.000:** o SDR pode conduzir até o fechamento no mesmo atendimento (com preço/link da tabela aprovada), sem separar a etapa do closer. Mas o padrão high-ticket é vender a sessão.
 - **Régua de subida:** se no atendimento o lead se revela maior (ticket, complexidade), sobe pro caminho completo (vende a sessão em vez de fechar direto).
 
 ## Erros que quebram o vender-a-sessão

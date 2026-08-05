@@ -5,7 +5,7 @@ Termos próprios do método Soft Business v12. Definições de uma linha, a expl
 ## Fundação e tese
 - **Soft Business**: método que faz o cliente certo te encontrar e pagar o que você merece. *Soft = Sólido, Simples, Sustentável.* (Cap 1)
 - **C + Im = In**: Complexidade + Improviso = Invisibilidade: a equação que prende o Especialista. (Cap 1)
-- **2 Pilares + 1 Motor = 10X$**: Posicionamento Incomum + Funil Minimalista + Agente do dono, gerando 10x mais simples, leve e previsível. (Cap 1)
+- **2 Pilares + 1 Motor = 10X$**: Posicionamento Incomum + Funil Minimalista + Sócio IA, gerando 10x mais simples, leve e previsível. (Cap 1)
 - **Verdadeiro Especialista**: estado de ser bom no que faz E ser pago como merece. (Cap 1)
 - **1:1:1:1**: 1 público · 1 problema · 1 produto · 1 canal; a fonte da previsibilidade. (Cap 1)
 - **Régua da percepção**: o teste único de toda peça: "isso faz o cliente certo entender e confiar mais rápido?" (Cap 1)
@@ -24,7 +24,7 @@ Termos próprios do método Soft Business v12. Definições de uma linha, a expl
 - **Fundação Destilada de Headlines**: as 4 frases-fonte (Problema Avançado, Inimigo, Promessa, Big Idea) de que toda headline futura é variação. (Cap 2)
 - **Mecanismo**: o método com nome próprio; cada etapa quebra uma objeção E resolve uma dor. (Cap 2)
 - **As 3 ofertas**: uma promessa, três ofertas: Principal (a que sempre ofereço) · Secundária (downsell / sem qualificação) · Super (âncora / ultra-qualificado). (Cap 2)
-- **Identidade de Voz**: o COMO da marca (tom, narrativa, bastidor, valores, pilares); parte do PMP, alimenta o Agente do dono. (Cap 3)
+- **Identidade de Voz**: o COMO da marca (tom, narrativa, bastidor, valores, pilares); parte do PMP, alimenta o Sócio IA. (Cap 3)
 
 ## Pilar 2, Funil e conteúdo
 - **Funil Minimalista**: Feed (orgânico **e** pago) → Carta/Vídeo → WhatsApp; o caminho simples do conteúdo ao fechamento. (Cap 4)
@@ -63,7 +63,7 @@ Termos próprios do método Soft Business v12. Definições de uma linha, a expl
 - **Isolamento**: confirmar valor, entrega e ajuste ANTES de revelar o preço. (Cap 10)
 
 ## Motor e operação
-- **Agente do dono**: copiloto de criação (Claude.ai + Claude Code) que carrega copy, roteiro e tecnologia com sistema, não com ânimo do dia. (Cap 11)
-- **LEON**: o Agente do dono empacotado com a voz e os ativos do especialista, rodando na conta dele, abrindo já sabendo quem ele é. (Cap 11)
+- **Sócio IA**: copiloto de criação (Claude.ai + Claude Code) que carrega copy, roteiro e tecnologia com sistema, não com ânimo do dia. (Cap 11)
+- **LEON**: o Sócio IA empacotado com a voz e os ativos do especialista, rodando na conta dele, abrindo já sabendo quem ele é. (Cap 11)
 - **Mesa-sentado test**: "a frase soa como conversa sincera tomando um café? Se não, refaz." (todos)
 - **Tocar / Analisar / Melhorar**: os 3 movimentos da rotina semanal. (Cap 12)

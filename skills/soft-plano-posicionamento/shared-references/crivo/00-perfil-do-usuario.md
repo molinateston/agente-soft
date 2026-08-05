@@ -19,7 +19,7 @@ Um gerador de copy só é tão bom quanto a matéria-prima do usuário. Se o pro
 - O processo universal SEMPRE lê o perfil do usuário da vez pra esses 5 slots. Nunca assume os valores do perfil de exemplo: eles são um exemplo de perfil preenchido, não o default.
 - Slot vazio não para a skill, mas marca o limite: sem VoC, a peça sai "rascunho genérico"; sem banco de provas, sai `RASCUNHO-COM-PENDÊNCIA` (a estrutura converte, falta o insumo). Honestidade sobre o que falta, no nome do usuário.
 - Usuário novo, sem perfil (cold start): a skill ROTEIA pro onboarding (gera o Plano via `soft-plano-posicionamento` e minera o VoC inicial via `01-entrada-verbatim.md`), em vez de empacar ou de assumir os dados do perfil de exemplo.
-- Melhoria do processo (qualquer arquivo de `shared-references/`) entra na FONTE canônica (`_fonte/shared-references/`, na raiz do repo de skills) e o `scripts/sync-crivo.py` propaga pra todas as skills de todos os usuários. Melhora uma vez, vale pra todos. O perfil de cada um fica intacto. Editar a cópia dentro de uma skill não adianta: o próximo sync reverte.
+- Melhoria do processo (qualquer arquivo de `shared-references/`) entra na FONTE canônica (`_fonte/shared-references/`, na raiz do repo de skills) e o sync do deploy do dono propaga pra todas as skills de todos os usuários (o script de sync vive na infra do dono, fora deste bundle). Melhora uma vez, vale pra todos. O perfil de cada um fica intacto. Editar a cópia dentro de uma skill não adianta: o próximo sync reverte.
 
 ## Onde o perfil mora (self-serve)
 

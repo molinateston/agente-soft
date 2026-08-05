@@ -162,7 +162,7 @@ Um caminho, três frentes: **atração → desejo → conversão.** Cada zona em
 
 **atração · Atração, o feed que filtra.** Não escreve pra viralizar. Escreve pra filtrar. Audiência não é cliente: viralizar traz quem curte e salva, não quem compra. O feed instala a percepção e qualifica quem tem o problema. Quem para no reel encontra o carrossel, que aprofunda. Regra dura: mostra a função, nunca a execução.
 
-**desejo · Desejo, a Carta ou o Vídeo.** O ativo que qualifica antes da conversa. Transforma o curioso em comprador aquecido, sem você presente. O desejo nasce aqui: quem chega no WhatsApp depois disso chega quente, não cru. Carta OU Vídeo, mesma função, formatos paralelos, não é evolução de um pro outro. Ticket até R$2k, Carta; R$15k+, Vídeo; no meio, testa. Sem preço na Carta, o preço vai pro WhatsApp, depois do desejo. Leitura solitária não perdoa: cada frase puxa a próxima, ou ele fecha a aba.
+**desejo · Desejo, a Carta ou o Vídeo.** O ativo que qualifica antes da conversa. Transforma o curioso em comprador aquecido, sem você presente. O desejo nasce aqui: quem chega no WhatsApp depois disso chega quente, não cru. Carta OU Vídeo, mesma função, formatos paralelos, não é evolução de um pro outro. Ticket até ~R$3k, Carta; R$15k+, Vídeo; no meio, testa. Sem preço na Carta, o preço vai pro WhatsApp, depois do desejo. Leitura solitária não perdoa: cada frase puxa a próxima, ou ele fecha a aba.
 
 **conversão · Conversão, o WhatsApp que fecha.** O funil entrega o lead aquecido na porta. A conversa não convence do zero: confirma o desejo e remove a última objeção. Cliente que precisa de sete follow-ups, desconto-relâmpago e reunião de uma hora pra fechar é cliente errado. Solta.
 
@@ -213,7 +213,7 @@ Quem responde "umas 40h" sem pensar quase sempre tem 22 a 28 reais. Faz preenche
 
 Tocar · Analisar · Melhorar. Sempre nesta ordem.
 
-**Tocar.** Produz o conteúdo, com o Agente do dono carregando a parte braçal. Mantém o funil no ar. Conduz as conversas que o funil já qualificou. Uma oferta ativa por semana, não cinco, quem toca cinco não consegue ler qual funcionou.
+**Tocar.** Produz o conteúdo, com o Sócio IA carregando a parte braçal. Mantém o funil no ar. Conduz as conversas que o funil já qualificou. Uma oferta ativa por semana, não cinco, quem toca cinco não consegue ler qual funcionou.
 
 **Analisar.** Lê os números contra o próprio padrão, não contra benchmark de fora. Subiu ou caiu em relação a você mesmo da semana passada. Quem lê isso toda semana gere; quem gere, otimiza; quem otimiza, prevê.
 

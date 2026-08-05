@@ -25,7 +25,7 @@
 
 ## 2. Contratos essenciais {#2-contratos}
 
-- **Prestação de serviço:** acordo por um resultado, sem vínculo de emprego. Cláusulas que não podem faltar: qualificação das partes, **objeto** (escopo, entregáveis, o que NÃO inclui, critério de aceite), prazo, valor e forma de pagamento, rescisão/multa, foro. *Erro comum (matar):* objeto vago ("serviços de consultoria") é a causa nº 1 de briga. *(Código Civil arts. 593-609.)* Para gerar o contrato pronto existe a skill `soft-contratos-consultoria`.
+- **Prestação de serviço:** acordo por um resultado, sem vínculo de emprego. Cláusulas que não podem faltar: qualificação das partes, **objeto** (escopo, entregáveis, o que NÃO inclui, critério de aceite), prazo, valor e forma de pagamento, rescisão/multa, foro. *Erro comum (matar):* objeto vago ("serviços de consultoria") é a causa nº 1 de briga. *(Código Civil arts. 593-609.)* Para gerar o contrato pronto existe a skill `soft-vendas-contratos`.
 - **Contrato social:** documento de fundação (sócios, capital em quotas, objeto, administração, regra de entrada/saída de sócio). *Erro comum (matar):* sociedade 50/50 **sem regra de desempate** emperra na primeira briga. *(CC arts. 1.052-1.087.)*
 - **Termos de uso + política de privacidade:** dois documentos distintos (regras do serviço × transparência de dados). *Erro comum (matar):* copiar termos de outro site (vai junto o nome da outra empresa). *(Marco Civil, Lei 12.965/2014.)*
 - **NDA (confidencialidade):** quem recebe um segredo promete não contar/usar. Precisa definir **o que** é confidencial (lista, não "tudo"), prazo e penalidade. *(Contrato atípico; reforço penal na Lei 9.279/1996.)*
@@ -62,7 +62,7 @@ Lei de como o negócio coleta/guarda/usa dados de pessoas. **Dado pessoal** = o 
 | A skill EXPLICA | A skill ENCAMINHA |
 |---|---|
 | O que é cada regime/contrato/lei e pra que serve | **Parecer / defesa / representação → ADVOGADO** (art. 1º Lei 8.906/94) |
-| O caminho geral e a armadilha comum | **Redigir contrato específico, acordo de sócios → ADVOGADO** (gerar contrato simples: `soft-contratos-consultoria`) |
+| O caminho geral e a armadilha comum | **Redigir contrato específico, acordo de sócios → ADVOGADO** (gerar contrato simples: `soft-vendas-contratos`) |
 | Onde a regra se aplica, em tese | **Escolher regime, calcular tributo, fechar balanço → CONTADOR** |
 | Conceito de vínculo, CDC, LGPD | **Caso concreto, prazo correndo, intimação, fiscalização → profissional, imediato** |
 

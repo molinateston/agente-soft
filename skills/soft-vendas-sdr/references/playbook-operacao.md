@@ -1,69 +1,98 @@
-# Playbook de operação — cadência, temperatura, métricas
+# Playbook de operação: estados, cadência, handoff, auditoria, métricas
 
-Como o SDR opera no dia a dia depois de ligado: quando dar follow-up, como classificar o lead, o que reportar pro dono. Regras práticas, não teoria.
+Como o agente opera no dia a dia depois de ligado. Regras práticas, provadas em motor rodando com lead real.
 
-## Régua de temperatura (onde o lead está)
+## Os 7 estados do lead (a fonte de verdade decide, nunca o chute)
 
-O SDR classifica cada lead por temperatura e isso dita a ação. A temperatura sai da qualificação (BANT + dor nomeada), nunca do achismo.
+Todo lead está em UM estado, classificado por dados do CRM (tags, campos, compra) + o relógio contra o horário que ELE escolheu. O estado dita a postura do prompt.
 
-| Temperatura | Sinal | Ação do SDR | Tag / stage sugerido |
-|---|---|---|---|
-| **Frio** | não respondeu ainda, ou respondeu monossilábico, sem dor | 1 tentativa de reengajar pela dor; se não vier, cadência lenta | `novo` / "Novo Lead" |
-| **Morno** | conversa acontecendo, dor aparecendo, mas sem budget/urgência clara | conduz o diagnóstico, aprofunda a implicação | `em-qualificacao` / "Em Conversa" |
-| **Quente** | dor nomeada + budget + é quem decide + quer resolver agora | oferece a sessão AGORA, agenda | `qualificado` / "Qualificado" |
-| **Agendado** | sessão marcada no calendário | confirma véspera, prepara o closer | `sessao-agendada` / "Reunião Agendada" |
-| **Sem perfil** | sem budget / não decide / sem dor real / fora do ICP | encerra leve, para | `sem-perfil` / "Descartado" |
+| Estado | Como se detecta | Postura do agente |
+|---|---|---|
+| **novo** | sem tag de evento/compra | abre consultivo, qualifica de leve |
+| **pré-evento** | inscrito, horário ainda não chegou | acolhe, confirma data/hora/link. NÃO vende |
+| **ao vivo / em cima da hora** | a janela do evento é agora | urgência real, manda o link, mensagens curtas |
+| **compareceu** | tag de presença positiva | modo consultivo: escuta, valida a dor, qualifica, vende a sessão |
+| **faltou** | tag negativa OU horário passou sem presença | acolhe sem culpa, replay/remarcar. Não qualifica ainda |
+| **carrinho abandonado** | iniciou checkout/ficha e não terminou | retoma pelo que faltou; PRIORIDADE sobre "compareceu" |
+| **cliente** | compra confirmada | **ganha de TODOS: quem comprou NUNCA recebe oferta.** Vira atendimento/entrega |
 
-**Regra de subida:** morno que revela budget+urgência vira quente na hora — o SDR não segura lead pronto esperando "a próxima etapa".
+**Regras de precedência (a ordem em que se confere):**
+1. `cliente` primeiro, sempre (checa compra antes de qualquer coisa).
+2. `carrinho abandonado` antes de `compareceu` (o sinal mais quente manda).
+3. A tag NEGATIVA se confere antes da positiva (quem tem as duas por defeito de automação é tratado como faltou, o caso conservador).
+4. Sem tag nenhuma, decide o relógio contra o horário escolhido no cadastro (com parser tolerante de data em português; ver os achados do `conector-ghl.md`).
+
+**Sinais finos das tags entram DIRETO no prompt** (usa, não pergunta de novo): assistiu até o fim · clicou na oferta e não comprou · ficha iniciada e não terminada. Cada sinal muda a mensagem certa.
+
+## Régua de temperatura (dentro do estado, pro objetivo A)
+
+| Temperatura | Sinal | Ação |
+|---|---|---|
+| **Frio** | monossilábico, sem dor | 1 tentativa pela dor; senão cadência lenta |
+| **Morno** | conversa andando, dor aparecendo, sem BANT claro | conduz o diagnóstico, aprofunda |
+| **Quente** | dor nomeada + budget + decide + agora | oferece a sessão AGORA, agenda |
+| **Agendado** | sessão marcada | confirma véspera, prepara o closer |
+| **Sem perfil** | sem budget/dor/decisão | encerra leve, taga, PARA |
+
+Morno que revela budget+urgência vira quente NA HORA. Não se segura lead pronto.
 
 ## Cadência de follow-up (o teto anti-spam)
 
-Follow-up é pra lead COM perfil que não fechou o agendamento agora. Nunca pra quem disse não nem pra sem-perfil. Cadência padrão (o dono pode ajustar):
+Só pra lead COM perfil que não fechou o passo. Nunca pra quem disse não.
 
-| Toque | Quando | Ângulo (detalhe em `modos-e-mentalidade.md`) |
+| Toque | Quando | Ângulo |
 |---|---|---|
-| 1º | mesmo dia / poucas horas | retoma pela última dor que ele nomeou (não "e aí?") |
-| 2º | +1 dia | traz um ângulo novo: uma implicação, uma prova, uma pergunta |
-| 3º | +3 dias | pergunta de decisão leve ("faz sentido seguir ou prefere deixar pra frente?") |
-| 4º (último) | +7 dias | encerramento com porta aberta ("vou te tirar da minha lista de agora, mas tô aqui quando quiser") |
+| 1º | mesmo dia / poucas horas | retoma pela última dor que ele nomeou |
+| 2º | +1 dia | ângulo novo: uma implicação, uma prova, uma pergunta |
+| 3º | +3 dias | pergunta de decisão leve ("faz sentido seguir ou deixa pra frente?") |
+| 4º (último) | +7 dias | encerramento com porta aberta |
 
-Depois do 4º sem resposta: para, taga `follow-up-esgotado`, para de tocar. **4 toques é o teto** — perseguir além disso queima o lead e a marca. Silêncio noturno (22h–8h local) sempre respeitado nos toques proativos.
+**4 toques é o teto.** Depois: `follow-up-esgotado`, para. Silêncio noturno sempre respeitado no proativo. Na esteira (objetivo C), a cadência de topo é mais curta: 10min / +24h / +24h com encerramento que fecha o loop (`modos-e-mentalidade.md`).
 
-## Confirmação de sessão (reduzir no-show)
+## Confirmação de sessão (no-show é dinheiro no chão)
 
-Lead agendado ≠ lead que aparece. O SDR:
-- Manda **confirmação na véspera** ("amanhã às [hora] tá de pé? responde SIM que eu garanto seu horário").
-- Se não confirmar até algumas horas antes, um lembrete leve.
-- No-show → reagenda 1x pela dor ("aconteceu algo? bora remarcar, seu caso é do tipo que não pode esperar"); segundo no-show → volta pra follow-up morno.
+- Confirmação na véspera ("amanhã às [hora] tá de pé? responde SIM que eu garanto teu horário").
+- Lembrete leve em cima da hora se não confirmou.
+- No-show → reagenda 1x pela dor; segundo no-show → volta pra morno.
+- Benchmark de mercado: show rate saudável de reunião bem qualificada fica em **75-85%** ([tamtotarget.com](https://tamtotarget.com/sdr-meeting-benchmarks/)). Abaixo de 70%, o problema é peso da sessão (ver `vender-a-sessao.md`), não agenda.
 
-## Métricas que o SDR reporta (nunca opera calado)
+## O handoff rico (a passagem que não queima o trabalho)
 
-O SDR manda pro dono um **resumo diário** (e alerta na hora quando algo pede decisão). O resumo:
+Quando o agente escala (lead quente pro closer, dúvida fora do escopo, gate acionado):
+1. **Frase pronta pro lead, por motivo** (ele nunca fica no vácuo): *"boa! vou te passar com [nome/time] pra fechar isso direitinho, já te chamam aqui."*
+2. **Briefing rico pro humano:** nome, fone, estado, temperatura, a dor nomeada, o Problema Avançado, BANT, objeções ditas, o que falta cair, link direto do CRM.
+3. **Dedup de 30 min por lead+motivo:** o mesmo lead pelo mesmo motivo não notifica o dono 2x na mesma meia hora.
+4. **Depois do handoff o agente NÃO retoma sozinho.** A conversa é do humano até ele devolver.
 
-- **Leads novos** que entraram
-- **Em qualificação** (morno, em conversa)
-- **Qualificados/quentes** (prontos, precisam do closer)
-- **Agendados** (com dia/hora e link da sessão)
-- **Sem perfil** (descartados, com motivo)
-- **Follow-ups pendentes** pra hoje
-- **Alertas:** lead quente parado esperando closer, erro de CRM, gate acionado
+Handoff raso ("tá quente") joga fora o trabalho inteiro do topo: o closer entra perdendo e faz o lead repetir tudo.
 
-Números que importam pro dono (o funil do SDR): leads → qualificados → agendados → (comparece → vira venda, do lado do closer). Taxa de qualificação e taxa de agendamento são o placar do SDR (detalhe em `prospeccao-e-qualificacao.md`). A venda em si é métrica do closer (`soft-vendas-closer`).
+## Auditoria dupla (nunca opera calado)
 
-## Passagem pro closer (o handoff quente)
+- **`turnos.jsonl`** (máquina): cada turno com entrada, estado, ferramentas, saída, veredito do gate. Alimenta o replay.
+- **Diário legível por dia** (dono): a conversa como aconteceu + o que o agente decidiu e por quê. É o que o dono lê no modo sombra pra aprovar, e no autônomo pra auditar.
+- **Resumo diário** no canal do dono: novos, em conversa, qualificados, agendados, sem perfil, follow-ups de hoje, escaladas, erros.
+- **Alerta na hora** quando algo pede decisão: lead quente parado, gate barrando saída, conexão caída.
 
-Quando o SDR passa o lead qualificado, ele entrega **contexto pronto**, não só "olha, esse tá quente":
-- O **diagnóstico** (a dor nomeada, o Problema Avançado, o que já tentou).
-- O **BANT** (budget confirmado?, decide?, urgência?).
-- O **histórico** relevante (link da conversa no CRM).
-- O que **falta** (a objeção que ainda não caiu, se houver).
+## Métricas por objetivo (o placar de cada missão)
 
-Isso está na NOTA do contato + na notificação. O closer chega sabendo tudo — é o que faz a sessão converter. Handoff sem contexto joga fora o trabalho do SDR.
+### A. SDR clássico
+- Funil: leads → qualificados → **agendados** → show rate → (venda: métrica do closer).
+- Velocidade: tempo até a 1ª resposta. Meta: **minutos**. Referência de mercado: responder em até 5 min multiplica a conversão (~4x) e deixa a qualificação até 21x mais provável que após 30 min ([martal.ca](https://martal.ca/speed-to-lead-lb/), [prospeo.io](https://prospeo.io/s/speed-to-lead-ai)); a média do mercado é ~47h, e é por isso que o 24-7 ganha.
+- Qualidade: % de agendados que o closer aceitou como qualificados (handoff devolvido = defeito do topo).
 
-## Ritmo humano (o que evita "cara de robô")
+### B. Atendente 24-7
+- Tempo de resposta (meta: minutos, madrugada inclusa via fila da manhã).
+- % resolvido sem humano · escaladas por motivo · temas recorrentes (viram página de wiki).
+- Reclamação/optout: o alarme de tom errado.
 
-- **Uma pergunta/ideia por mensagem.** WhatsApp é troca curta.
-- **Não responde no milissegundo** sempre — um respiro curto parece humano (o CRM/canal pode ter delay natural; não force resposta instantânea 24/7 que denuncia o bot).
-- **Lê o histórico** — nunca repete pergunta respondida.
-- **Espelha o vocabulário do lead** (a Conexão do diagnóstico).
-- **Sem textão, sem emoji em excesso, sem "olá! como posso ajudá-lo hoje?"** — fala como gente do método, não como script de call center. Passa pelo filtro anti-IA antes de qualquer mensagem sair.
+### C. Operador de funil
+- Comparecimento (inscrito → presente) · conversão por etapa da esteira · carrinho recuperado.
+- Optout por campanha: subiu, a cadência tá agressiva.
+- Janela quente: % de pós-evento tocado na 1ª hora.
+
+## Ritmo humano (o que evita cara de robô)
+- Uma pergunta/ideia por mensagem; WhatsApp é troca curta.
+- Não responde no milissegundo sempre; um respiro curto parece gente.
+- Lê o histórico; nunca repete pergunta respondida.
+- Espelha o vocabulário do lead.
+- Sem textão, sem emoji em excesso, sem saudação de call center. Toda saída passa pelo crivo anti-IA.

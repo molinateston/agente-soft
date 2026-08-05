@@ -367,7 +367,7 @@ Investimento hoje: R$[preço real]
 Antes de mostrar qualquer bloco escrito aqui (hero, oferta, FAQ, CTA final ou qualquer um dos 14), ele passa pelo Crivo embutido em `shared-references/crivo/`, nesta ordem:
 1. **Ancoragem** (`crivo/01-entrada-verbatim.md`), na entrada e na checagem: toda fala entre aspas é verbatim literal da fonte real do cliente, e o ângulo-mãe tem N. Aspa que não bate na fonte reprova.
 2. **Simulação na pele do avatar** (`crivo/02-simulacao-cliente.md`): onde ele larga, onde se reconhece, o teste dos 2 segundos.
-3. **Gate CUB bloqueante + as 3 perguntas do gate** (`crivo/03-gate-cub.md`): imprime a tabela, o veredito é o pior bloco, peça que falha não sai, volta pra reescrita.
+3. **Gate CUB bloqueante + as 3 perguntas do Harry** (`crivo/03-gate-cub.md`): imprime a tabela, o veredito é o pior bloco, peça que falha não sai, volta pra reescrita.
 4. **Linter anti-IA executável** (`scripts/lint_copy.py`): roda o texto no linter, qualquer padrão banido reprova antes de mostrar.
 
 O anti-IA limpa o robô; o Crivo dá a força. Limpo não é forte. Os dois, nessa ordem. **Sem a tabela do Crivo impressa junto, a peça não foi entregue.**

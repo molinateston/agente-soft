@@ -192,7 +192,7 @@ O slide de oferta é onde o deck ganha ou perde dinheiro. Regras duras:
 
 ## A lei do render (igual carrossel e banner)
 
-A copy-visual de cada slide passa pelo gate do Crivo ANTES de desenhar (`shared-references/crivo/03-gate-cub.md`: CUB, as 3 perguntas do gate no título de cada slide-chave, anti-vazamento, prova no CTA). Depois de aprovada, o render **não muda palavra**; se o layout exigir mexer, re-passa a ancoragem e a headline do gate antes de exportar. Anti-IA (sem travessão, sem frase de robô) e mobile-first quando o deck também roda no celular (webinário assistido no telefone). Sem prova real no perfil, número sai como placeholder marcado, nunca inventado.
+A copy-visual de cada slide passa pelo gate do Crivo ANTES de desenhar (`shared-references/crivo/03-gate-cub.md`: CUB, as 3 perguntas do Harry no título de cada slide-chave, anti-vazamento, prova no CTA). Depois de aprovada, o render **não muda palavra**; se o layout exigir mexer, re-passa a ancoragem e a headline do gate antes de exportar. Anti-IA (sem travessão, sem frase de robô) e mobile-first quando o deck também roda no celular (webinário assistido no telefone). Sem prova real no perfil, número sai como placeholder marcado, nunca inventado.
 
 ---
 

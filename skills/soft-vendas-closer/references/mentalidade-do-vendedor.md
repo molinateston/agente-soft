@@ -315,7 +315,6 @@ Mentalidade Soft não é "atitude positiva". É **estrutura mental que sustenta 
 **O que ensina:** a pressão útil é ao vivo, dentro da conversa, onde dá pra tratar o sinal na hora. Quem amolece na call e depois fica perseguindo por mensagem inverteu o jogo. Quem ainda não pagou nada não comprou o direito de te ter correndo atrás. Estar a serviço é diferente de estar carente.
 
 **Na prática:** toda a energia de fechar acontece com a pessoa ali. O vendedor diz, em algum ponto: *"Eu vou te dar aqui hoje toda a clareza que dá sobre [problema]. Se fizer sentido pra nós dois, a gente avança. Se não fizer, sem problema."* Depois da conversa ele não vira caçador de resposta no WhatsApp.
-*(origem: DV9VoTUCbXv)*
 
 ### Ego saudável: respeitar o próprio tempo primeiro
 **Fala real:**
@@ -324,7 +323,6 @@ Mentalidade Soft não é "atitude positiva". É **estrutura mental que sustenta 
 **O que ensina:** sem ego o vendedor se submete e aceita qualquer adiamento do cliente ("agora não é", "tô na correria"). O ego saudável nasce de respeitar o próprio tempo primeiro, e é isso que sustenta ser direto sem soar desesperado.
 
 **Na prática:** princípio de cabeça, não vira fala pro cliente. Antes da conversa o vendedor firma: você não está pedindo favor, está oferecendo a solução de um [problema] que custa caro pra essa pessoa. Quem respeita o próprio tempo primeiro consegue ser direto sem soar carente.
-*(origem: DTS6CFODeTu)*
 
 ### Incisivo não é agressivo: a régua 7-38-55
 **Fala real:**
@@ -333,7 +331,6 @@ Mentalidade Soft não é "atitude positiva". É **estrutura mental que sustenta 
 **O que ensina:** a maior parte da mensagem é tom e corpo, não palavra. A mesma frase dura, dita leve e de boa, vira incisiva; dita com cara fechada, vira agressiva. O conteúdo é só 7% do peso, então dá pra ser direto sem espantar. Resolve o medo do avatar Soft de soar grosso ao ser firme.
 
 **Na prática:** o vendedor pode falar a verdade dura sobre o [problema] sem ser grosso. O que define se a pessoa recua ou abre é o tom e a expressão, não as palavras. Ensaie a mesma fala de fechamento nos dois tons pra sentir a diferença. Firme com semblante leve.
-*(origem: DZAR8dZu2Zr)*
 
 ### Bom, não bonzinho: o cliente quer ser desafiado
 **Fala real:**
@@ -342,7 +339,6 @@ Mentalidade Soft não é "atitude positiva". É **estrutura mental que sustenta 
 **O que ensina:** o bonzinho acata pra agradar e parece bom, mas não ajuda; o justo faz o que precisa ser feito mesmo trazendo desconforto. Se o cliente já tivesse a resposta, não estaria ali, então acatar a visão dele é não entregar valor.
 
 **Na prática:** permissão pra discordar do cliente com respeito. Na call o vendedor diz: *"Se eu só concordar com o que você já pensa, você não precisava de mim. Meu papel aqui é te levar onde você não chegou sozinho."* Acatar tudo é covardia disfarçada de simpatia.
-*(origem: DZN3BHitnqZ)*
 
 ### Espelhar o desinteresse: acompanhe o cliente, nunca exceda
 **Fala real:**
@@ -351,4 +347,3 @@ Mentalidade Soft não é "atitude positiva". É **estrutura mental que sustenta 
 **O que ensina:** o nível de interesse do vendedor deve espelhar o do cliente, não excedê-lo. Quem não liga a câmera, não abre os dados e só quer preço está desinteressado; quem se mantém mais interessado perde poder. Jogar o preço cru devolve a bola e faz o cliente puxar pelo valor sozinho. Operacionaliza o interesse reverso dentro da qualificação.
 
 **Na prática:** *"Eu acompanho o seu interesse. Se você está aberto, eu vou fundo; se você só quer um número solto, eu te dou o número e a gente encerra."* Quando a pessoa volta com "o que vocês entregam?", o vendedor devolve: *"exatamente, o que você precisa?"* e retorna pro diagnóstico.
-*(origem: DZn2lMhsyQ3)*

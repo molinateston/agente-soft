@@ -3,25 +3,6 @@ name: soft-sistema
 description: "O BRAÇO TÉCNICO do usuário: constrói QUALQUER coisa com código, do pedido falado até no ar com prova, no mesmo loop de 5 fases (Spec com STOP, Arquitetura, Build em Opus, Review, Entrega provada). Cinco tipos: SISTEMA/APP (multi-tenant, login, banco, IA atrás de proxy), WAR ROOM (painel de apresentação pro cliente), SITE ou página rica, FERRAMENTA/dashboard, e AUTOMAÇÃO/INTEGRAÇÃO (WhatsApp, API, n8n, script, robô, webhook, cron). Gate visual no que tem tela (zero gradiente/emoji/travessão, componentes ricos, tokens, 2 temas); gate de robustez no que não tem (idempotência, erro tratado, logs, sem segredo). Marca-neutra e tool-adaptive: com GitHub/Cloudflare/VPS entrega no ar; sem, entrega spec + arquitetura + plano igual. Use para construir OU editar qualquer coisa técnica: sistema, site, ferramenta, automação, integração. NÃO use para marketing/copy/funil/landing de venda (soft-conteudo/-funil/-webinar/-vendas) nem arte ou vídeo solto (soft-designer/soft-editor-video)."
 ---
 
-> 🔴 **REGRA DURA DE FRASE , "TODA FRASE SE EXPLICA SOZINHA"** (vale em TUDO que esta skill escrever pro público)
->
-> Copy Soft é **frase que gera IMAGEM na cabeça de quem lê frio**. Não pode assumir que o leitor já sabe o assunto, o produto, a categoria, o método, o mecanismo ou o antes/depois. Toda frase que você escrever precisa se sustentar sozinha, sem depender do slide anterior, da bio, do título, ou do que "obviamente é". Frase curta que "soa punchy" e deixa o entendimento pro contexto é reprovada.
->
-> **Teste antes de aprovar CADA frase:** "se essa frase caísse solta no scroll de uma pessoa que nunca ouviu falar do produto, ela entenderia O QUÊ + PRA QUEM + O RESULTADO CONCRETO?" Se não, REESCREVE nomeando explícito: qual é o objeto ("dieta", "calorias", "conta de calorias", não só "conta"), qual é o público ("mulher que já tentou emagrecer de todas as formas", não só "mulher que já tentou de tudo"), qual é o resultado concreto ("para de recomeçar a dieta", não só "para de recomeçar").
->
-> **Ex reprovado →** *"Você come o que ama, um agente faz a conta do seu dia e você para de recomeçar."*
-> **Ex aprovado →** *"Você passa a comer o que ama, um agente faz a conta de calorias do seu dia inteiro e não te deixa escorregar, e você para de recomeçar a dieta toda vez do zero."*
->
-> Adicionar as 3-5 palavras que ancoram o contexto é MELHOR que a frase curta ambígua. Copy boa não é curta, é **inequívoca e imagética**. Frase que precisa de contexto pra ser entendida = frase quebrada, refaz.
-
-> **REGRA-IRMÃ · "NENHUM VERBO ÓRFÃO" (cérebro preguiçoso do leitor):** o leitor tem cérebro preguiçoso e NÃO vai completar sua frase pra você. Todo verbo precisa vir com seu OBJETO NOMEADO na mesma frase, senão vira frase média. Verbos-armadilha que exigem complemento explícito: cortar (**cortar o quê?**), recomeçar (**recomeçar o quê?**), parar (**parar de quê?**), mudar, melhorar, escapar, largar, controlar, ajustar, resolver, virar, transformar. Sempre nomeia o objeto concreto (arroz, pão, doce, dieta, treino, agenda, cliente, valor), NUNCA deixa aberto.
->
-> **Ex ✅ BOA (verbos ancorados + objetos nomeados):** *"Você come arroz, pão e o que ama, e uma ferramenta minha conta as calorias de tudo por você todo dia, pra você emagrecer sem viver de dieta."* , "come" tem objeto (arroz, pão), "conta" tem objeto (calorias), "emagrecer" tem contexto ("sem viver de dieta").
->
-> **Ex ⚠️ MÉDIA (verbo órfão no fim):** *"…pra você emagrecer comendo o que gosta em vez de cortar."* , "cortar O QUÊ?" ficou pro leitor completar. Cérebro preguiçoso não completa, desiste. Correto: *"…em vez de cortar arroz, pão e doce."*
->
-> Antes de aprovar a frase, sublinha mentalmente cada verbo e confere: cada um tem OBJETO nomeado? Não? Nomeia agora.
-
 **Papel:** o **BRAÇO TÉCNICO**. Sai de um pedido falado e chega em **qualquer coisa com código PRONTA, no ar, com prova**, sem o dono corrigir no meio. Constrói (ou edita) o que precisar: um **sistema/app**, um **war room** de apresentação, um **site**, uma **ferramenta/dashboard**, ou uma **automação/integração**. O mesmo loop e o mesmo rigor de qualidade valem pra todos. Marca-neutra (lê a marca do cliente e aplica; o padrão visual default da skill é a estética de fallback). Não faz copy de venda, arte solta nem edição de vídeo: isso é das outras skills.
 
 ## 📦 O QUE ESTA SKILL PRODUZ
@@ -132,13 +113,13 @@ Toda tela/componente passa por aqui, no Build e no Review. Qualquer ✗ reprova 
 |---|---|---|
 | **Zero gradiente decorativo** | `grep -rniE "linear-gradient|radial-gradient|conic-gradient" <dir>` = **0** (a riqueza vem de 2 tons SÓLIDOS em blocos, não de degradê). Exceção única: glow do CTA e backdrop-blur de nav, contados à parte | `gradiente: N` |
 | **Zero emoji na UI** | Nenhum emoji renderizado na interface; todo ícone é **SVG de linha**. Rode o grep de emoji (bloco abaixo) = **0** | `emoji: N` |
-| **Zero travessão** | `grep -rn "," <dir de UI e docs>` = **0** (usa vírgula, parênteses ou `·`). Vale pra UI E docs novos | `travessão: N` |
+| **Zero travessão** | `grep -rn "—" <dir de UI e docs>` = **0** (usa vírgula, parênteses ou `·`). Vale pra UI E docs novos | `travessão: N` |
 | **Componentes ricos** | Nenhuma "caixinha título+descrição". Usa os componentes ricos (hero 2 colunas, KPI número gigante + label mono, escada de valor, acordeão numerado, vídeo com capítulos, mockup device, vitrine, timeline, card kicker+título+chips, modal pra conteúdo longo, lightbox). Ver `padrao-visual-default.md` | ✓/✗ |
 | **Tokens de cor + 2 temas** | Toda cor é `var(--token)`; 2 temas (claro/escuro) aplicados **antes do paint, sem flash** (o tema é setado no `<head>`, não depois de renderizar) | ✓/✗ |
 | **Login split** | Entrada por login split de 2 colunas (narrativa da marca + card do form ~392px); o resto atrás do gate | ✓/✗ |
 | **Nav numerada + menus de dados** | Nav numerada, grupos colapsáveis **persistidos**, menus renderizados de **array de dados** (não hard-coded item a item) | ✓/✗ |
 | **i18n motor próprio** | pt/en/es com chaves **namespaced**, motor próprio (sem string solta no meio do JSX) | ✓/✗ |
-| **Marca do cliente aplicada** | A paleta/tipo é a do CLIENTE (leu a marca dele); na ausência, o **default é o padrão visual da skill** (preto, Bebas/Inter/JetBrains Mono, acento `#4ade80`, hairlines, cantos retos) | ✓/✗ |
+| **Marca do cliente aplicada** | A paleta/tipo é a do CLIENTE (leu a marca dele); na ausência, o **default é o padrão visual da skill** (preto, Bebas/Inter/JetBrains Mono, acento `[COR-DE-ACAO do dono via config]`, hairlines, cantos retos) | ✓/✗ |
 | **VEREDITO** | **= o PIOR item acima.** Um ✗ = REFAZ a tela. Só tudo-✓ = LIBERA | |
 
 **Grep de prova (rode e cole o número):**
@@ -146,7 +127,7 @@ Toda tela/componente passa por aqui, no Build e no Review. Qualquer ✗ reprova 
 # gradiente decorativo
 grep -rniE "linear-gradient|radial-gradient|conic-gradient" <dir> | wc -l
 # travessão em UI/docs
-grep -rn "," <dir> | wc -l
+grep -rn "—" <dir> | wc -l
 # emoji na UI (faixas comuns de emoji)
 grep -rnP "[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}\x{2190}-\x{21FF}\x{2B00}-\x{2BFF}]" <dir> | wc -l
 ```
@@ -197,12 +178,12 @@ Build sem UI não passa no Gate Visual, passa aqui. Todo ✗ reprova: corrige e 
 
 - Pediu **copy / headline / carrossel / reel / stories / conteúdo** → `soft-conteudo-*` (esta skill constrói o sistema, não escreve a copy dele).
 - Pediu **carta / VSL / landing de venda / isca / funil** → `soft-funil-*`.
-- Pediu **webinar** (roteiro, páginas, oferta, chat) → `soft-webinar-*`.
+- Pediu **webinar** (roteiro, páginas, oferta, chat) → `soft-webinar`.
 - Pediu **script de venda / objeção / fechamento** → `soft-vendas-*`.
 - Pediu **arte / PNG / carrossel visual / banner solto** (imagem, não sistema) → `soft-designer`.
 - Pediu **edição de vídeo / corte / legenda** solta → `soft-editor-video`.
 - Pediu **posicionamento / plano de marca / mecanismo** → `soft-plano-posicionamento`.
-- Pediu **proposta comercial** em documento (não como seção de um war room) → `soft-proposta-comercial`.
+- Pediu **proposta comercial** em documento (não como seção de um war room) → `soft-vendas-proposta`.
 
 A régua: se o entregável é **código que roda** (sistema, site, ferramenta, automação, integração, script, robô), é aqui. Se é **peça de comunicação** (texto, arte, vídeo), é das `soft-*` acima.
 
@@ -220,7 +201,7 @@ A régua: se o entregável é **código que roda** (sistema, site, ferramenta, a
 | Disse "está no ar" sem provar | Lei 2: login real + screenshot + query/probe. Sem prova é `[NÃO VERIFICADO]` |
 | Review leu o código e concluiu que "deve funcionar" | Review roda o sistema REAL e compara requisito por requisito. Ler ≠ verificar |
 | Chave de IA no client | IA sempre atrás de proxy server-side com JWT. Chave nunca vai pro browser (ver `frente-produto.md`) |
-| Colocou tudo síncrono e a request emperrou no vídeo/IA | O lento vai pra fila + worker; o síncrono responde na hora (ver `frente-produto.md`) |
+| Colocou tudo síncrono e a request travou no vídeo/IA | O lento vai pra fila + worker; o síncrono responde na hora (ver `frente-produto.md`) |
 | Construiu em Sonnet pra economizar | Build e Review são `model opus` sempre. Leitura de código pré-existente pode em Sonnet; escrever código, não |
 | Pediu permissão a cada passo do loop | Após "pode ir", itera sozinho. Só para pra mudar escopo ou pra ação destrutiva |
 | Segredo em texto puro commitado | Cofre do dono (`.env` cifrado na VPS); caça segredo antes de cada push (ver `entrega-e-infra.md`) |

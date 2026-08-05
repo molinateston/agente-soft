@@ -133,7 +133,7 @@ Feito pra quem vende **procedimento ou servico** (o profissional que atende, o c
 
 O nome "micro-ondas" e literal: aquece rapido. O pulo do gato e o WhatsApp aparecer **so depois** da aula, nunca antes: quem chega no WhatsApp ja passou pela aula e chega pronto pra fechar, o que muda o jogo pra quem fecha servico 1:1.
 
-**Ajuste Soft:** a aula **filtra E convence** (ensina de verdade, nao isca vazia pra empurrar), a mesma doutrina do conteudo util da Reuniao de R$100. O reel = **soft-conteudo-reels**; o trafego do anuncio = **soft-conteudo-impulsionar**; a automacao de comentario/DM (o bot) = **soft-vendas-sdr**; a pagina de aula de 15 min = **soft-funil-miniwebinar**; o fechamento no WhatsApp no fim = **soft-vendas-closer**. Handoff limpo: esta reference decide a arquitetura do funil, as maes executam cada peca.
+**Ajuste Soft:** a aula **filtra E convence** (ensina de verdade, nao isca vazia pra empurrar), a mesma doutrina do conteudo util da Reuniao de R$100. O reel = **soft-conteudo-reels**; o trafego do anuncio = **soft-trafego-meta**; a automacao de comentario/DM (o bot) = **soft-vendas-sdr**; a pagina de aula de 15 min = **soft-funil-miniwebinar**; o fechamento no WhatsApp no fim = **soft-vendas-closer**. Handoff limpo: esta reference decide a arquitetura do funil, as maes executam cada peca.
 
 ---
 

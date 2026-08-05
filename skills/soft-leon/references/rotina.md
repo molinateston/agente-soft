@@ -9,9 +9,9 @@ Esta reference desenha COMO o cliente Soft vai operar semanalmente e mensalmente
 
 ## Pré-requisitos obrigatórios
 
-**FASE 1, Plano de Posicionamento Incomum + Voz (soft-plano-posicionamento)** concluído. A voz é construída dentro do próprio posicionamento (os 5 elementos de voz), não numa fase à parte.
+**FASE 1, Plano de Posicionamento Incomum + Voz (soft-posicionamento)** concluído. A voz é construída dentro do próprio posicionamento (os 5 elementos de voz), não numa fase à parte.
 
-Sem persona-âncora destilada e voz definida (ambas saem do soft-plano-posicionamento), a rotina não tem destino nem coerência. Volta pra fundação se não estiver pronta.
+Sem persona-âncora destilada e voz definida (ambas saem do soft-posicionamento), a rotina não tem destino nem coerência. Volta pra fundação se não estiver pronta.
 
 ---
 
@@ -19,17 +19,16 @@ Sem persona-âncora destilada e voz definida (ambas saem do soft-plano-posiciona
 
 ```
 FASE 1 - POSICIONAMENTO + VOZ
-└── soft-plano-posicionamento (quem ele é, pra quem fala e como fala)
+└── soft-posicionamento (quem ele é, pra quem fala e como fala)
 
 FASE 2 - CONTEÚDO (atração)
-└── soft-conteudo-headlines · soft-conteudo-carrossel · soft-conteudo-reels · soft-conteudo-stories (+ multiplataforma · impulsionar)
+└── soft-conteudo
 
 FASE 3 - FUNIL (aquece e qualifica o lead)
 └── soft-funil-carta · soft-funil-miniwebinar · soft-funil-landing · soft-funil-isca
 
 FASE 4 - VENDAS (o comercial 1:1)
-├── soft-vendas-sdr     (abre, qualifica e agenda o lead)
-└── soft-vendas-closer  (conduz, isola objeção e fecha no 1:1)
+└── soft-vendas
 
 FASE 5 - ROTINA ESTRATÉGICA  ← VOCÊ ESTÁ AQUI
 └── conduzida pelo LEON · reference rotina.md (o que oferta + quando + cabendo na vida)
@@ -141,15 +140,15 @@ Após a Fase 5 (Rotina) concluída, o cliente sai com:
 - Rituais documentados
 - Teste de cabimento aprovado
 
-Esse documento, junto com a skill `soft-plano-posicionamento-[nome-cliente]` (Fase 1), forma o **pacote de entregáveis oficiais** da Implementação Soft.
+Esse documento, junto com a skill `soft-posicionamento-[nome-cliente]` (Fase 1), forma o **pacote de entregáveis oficiais** da Implementação Soft.
 
 ---
 
 ## Como esta reference se relaciona com outras
 
-- **soft-plano-posicionamento (Fase 1)**: pré-requisito. Carrega persona-âncora E voz (os 5 elementos de voz saem daqui). Sem isso, rotina não tem destino nem produção calibrada.
-- **soft-plano-posicionamento-[cliente]**: a skill gerada do cliente; após a Rotina (Fase 5), atualizar os pilares de conteúdo dela com o ritmo definido aqui.
-- **soft-conteudo-* (headlines/carrossel/reels/stories/multiplataforma/impulsionar), soft-funil-* (carta/miniwebinar/landing/isca), soft-vendas-sdr/-closer (Fases 2-4)**: skills executivas que operam DENTRO da rotina definida aqui.
+- **soft-posicionamento (Fase 1)**: pré-requisito. Carrega persona-âncora E voz (os 5 elementos de voz saem daqui). Sem isso, rotina não tem destino nem produção calibrada.
+- **soft-posicionamento-[cliente]**: a skill gerada do cliente; após a Rotina (Fase 5), atualizar os pilares de conteúdo dela com o ritmo definido aqui.
+- **soft-conteudo, soft-funil-* (carta/miniwebinar/landing/isca), soft-vendas (Fases 2-4)**: skills executivas que operam DENTRO da rotina definida aqui.
 - **filtro-anti-ia + filtro-mobile-first** (shared-references), aplicáveis em qualquer peça produzida dentro da rotina.
 
 ---

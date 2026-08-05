@@ -24,7 +24,7 @@ Os exemplos são de nicho fictício (marca-neutra). Nunca copia pro cliente: o f
 - Slippery Slide
 - 12-step de VSL (Benson)
 - Roteador rápido (qual framework pra qual peça)
-- Nota de ponte · o APSD rege a carta/VSL Soft
+- Nota de ponte · o ADMA rege a carta/VSL Soft
 
 ---
 
@@ -242,8 +242,8 @@ Os exemplos são de nicho fictício (marca-neutra). Nunca copia pro cliente: o f
 
 ---
 
-## Nota de ponte · o APSD rege a carta/VSL Soft
+## Nota de ponte · o ADMA rege a carta/VSL Soft
 
-No método Soft, o arco-mãe da CARTA e do VSL é o APSD (Atenção, Problema, Solução, Decisão), que vive em `soft-funil-carta`. Os frameworks deste arquivo são o repertório de APOIO pros tipos novos de página: eles montam squeeze, advertorial, pricing, application, OTO e companhia. Onde o APSD rege (a carta-texto, o roteiro do VSL de venda), você não troca o APSD por PASTOR ou AIDA: usa o APSD e puxa estes frameworks só pra peças que o APSD não cobre.
+No método Soft, o arco-mãe da CARTA e do VSL é o ADMA (Atenção, Diagnóstico, Mecanismo, Ação), que vive em `soft-funil-carta`. Os frameworks deste arquivo são o repertório de APOIO pros tipos novos de página: eles montam squeeze, advertorial, pricing, application, OTO e companhia. Onde o ADMA rege (a carta-texto, o roteiro do VSL de venda), você não troca o ADMA por PASTOR ou AIDA: usa o ADMA e puxa estes frameworks só pra peças que o ADMA não cobre.
 
 Em todos eles, a regra-mãe permanece: a prova vem DEPOIS da promessa, sempre. Framework nenhum justifica jogar depoimento antes de o leitor saber o que aquilo prova.

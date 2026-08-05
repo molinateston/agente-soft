@@ -14,7 +14,7 @@ A nav é numerada e renderizada de array (`padrao-visual-default.md`). As seçõ
 2. **Diagnóstico**: os gargalos que o dono achou, cada um como **card rico** (kicker "Gargalo 0N", título, o dado que prova, chips de área/impacto). Um número por gargalo, sempre com a fonte do número. Nunca opinião solta: cada gargalo tem prova.
 3. **Vídeo**: a gravação do dono explicando o diagnóstico, com **capítulos** (abaixo). O cliente pode rever depois; os capítulos deixam ele pular pro gargalo dele.
 4. **Plano de ação**: as fases da solução em **acordeão numerado** ou **timeline**. Cada fase: o que se faz, o resultado esperado, o prazo. Numerada porque é sequência.
-5. **Proposta**: a **escada de valor** (2 a 3 níveis de investimento), o do meio destacado. Aqui não se escreve a copy de venda (isso é `soft-proposta-comercial`); aqui se **apresenta** a proposta como seção do painel. Se o dono já tem a proposta redigida, ela entra; se não, o painel abre o espaço e o dono pede a copy à skill certa.
+5. **Proposta**: a **escada de valor** (2 a 3 níveis de investimento), o do meio destacado. Aqui não se escreve a copy de venda (isso é `soft-vendas-proposta`); aqui se **apresenta** a proposta como seção do painel. Se o dono já tem a proposta redigida, ela entra; se não, o painel abre o espaço e o dono pede a copy à skill certa.
 
 ## Vídeo com capítulos
 
@@ -50,5 +50,5 @@ Enxuto de propósito: a war room é read-mostly (o cliente consome, não edita).
 
 ## O que a war room NÃO é
 
-- Não é a **copy** da proposta nem do diagnóstico escrito: o texto persuasivo é `soft-proposta-comercial` / `soft-conteudo-*`. A war room **apresenta** o conteúdo em componentes ricos.
+- Não é a **copy** da proposta nem do diagnóstico escrito: o texto persuasivo é `soft-vendas-proposta` / `soft-conteudo-*`. A war room **apresenta** o conteúdo em componentes ricos.
 - Não é o **produto**: a war room vende/apresenta; o produto (`frente-produto.md`) é o que o cliente usa depois de fechar. Costumam vir no mesmo pedido, mas são dois deploys.

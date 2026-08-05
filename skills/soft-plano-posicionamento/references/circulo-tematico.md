@@ -106,10 +106,10 @@ Exemplo aplicado:
 
 | Tema indireto | Por que está no círculo |
 |---|---|
-| "Por que comecei a recusar reuniões nas sextas" | Cruza com método, tempo livre é resultado de sistema (Agente do dono IA Vertical) |
+| "Por que comecei a recusar reuniões nas sextas" | Cruza com método, tempo livre é resultado de sistema (Sócio IA IA Vertical) |
 | "A decisão que mudou meu jeito de cobrar" | Cruza com método, posicionamento de preço (Cap 3) |
 | "O dia em que parei de aceitar cliente novo por indicação" | Cruza com método, filtro Soft (conversão) |
-| "Como eu organizo minha rotina sem reunião" | Cruza com método, sistema constante (Agente do dono) |
+| "Como eu organizo minha rotina sem reunião" | Cruza com método, sistema constante (Sócio IA) |
 
 Tema indireto **sem** cruzamento:
 

@@ -10,7 +10,6 @@ Exemplo de `config/personagens.json`:
   "estilo": "ULTRA-REALISTIC ANIME-CINEMATIC 3D STYLE, premium movie-poster quality",
   "ambiente": "a modern futuristic studio/office at night, neon glow, holographic HUD panels, depth and bokeh",
   "paleta": "deep navy, coral red, cyan glow, gold, cream. Cinematic dramatic neon lighting, ultra detailed",
-  "cor_legenda": "4ade80",
   "personagens": {
     "principal": "NAME, the host: <etnia, idade, cabelo/careca, barba, roupa, vibe — bem detalhado>",
     "mascote": "MASCOT, a <animal/cor/estilo>, <textura, olhos, roupa, proporção — bem detalhado>",
@@ -29,4 +28,3 @@ Regras pra ficar bom:
 - Inclua sempre os "NUNCA" de cada personagem (ex.: "NEVER an insect", "NEVER a smooth ball head") pra travar o gpt-image-2.
 - Se o mascote tiver foto de referência, peça ao dono e descreva fielmente.
 - `trio_sempre` = quem aparece em TODA cena.
-- `cor_legenda` = a cor hex (sem `#`) que a legenda karaokê e as animações de tela acendem quando a palavra é falada. Use a cor da marca do dono (a mesma do carrossel/banner na `soft-designer`). Se ele não tiver uma, deixe o verde do produto `4ade80`. É esse campo que `07_karaoke.py` e `08_screen_fx.py` leem.

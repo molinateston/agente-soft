@@ -27,7 +27,7 @@ Não repete a engenharia (os 4 blocos da carta, arquiteturas, blocos de copy, ro
 - **A entrada filtra, não só capta.** A ponte do feed pra carta já é qualificação: quem pede a carta demonstrou interesse real. O funil não quer volume na entrada, quer a pessoa certa atravessando, alcance grande de estranho é vaidade, não funil.
 
 ## 5. Lançamento pago: a sabedoria por trás da operação
-O lançamento é o pico, não o sistema, injeção pontual, 1-2 por ano pra cliente Soft. Quando entra, a condução obedece a alguns reframes (operação fina na skill `soft-launch`):
+O lançamento é o pico, não o sistema, injeção pontual, 1-2 por ano pra cliente Soft. Quando entra, a condução obedece a alguns reframes (operação fina na skill `soft-lancamento-pago`):
 - **Não é o ingresso que paga, é o produto lá dentro.** O jogo do pago é aceitar prejuízo na entrada (benchmark: CAC até ~4x o ingresso) porque o lucro está no pitch do produto principal. Quem tenta lucrar no ingresso espreme o CAC e esvazia o evento. Por isso se projeta cenários antes, orçamento nasce do ticket e do retorno, nunca do "quanto quero faturar".
 - **Comprometimento não é comparecimento, e comparecimento não é venda.** O ingresso compra presença; a presença não compra o produto. A Trilha de Conscientização (objeções e oportunidades respondidas, só pra quem já está dentro) e o follow-up comercial existem pra tirar a fricção antes do pitch, sem eles, o lead chega frio na hora da oferta.
 - **Entrega o ouro.** No pago a pessoa pagou pra aprender: segura o ouro e ela não compra. O pitch não é "te falta o método", é "te falta o acompanhamento". Mesmo princípio do conteúdo, dá o valor, vende a relação.
@@ -35,7 +35,7 @@ O lançamento é o pico, não o sistema, injeção pontual, 1-2 por ano pra clie
 - **O cru converte.** Criativo nativo, feio, sem cara de anúncio, vende mais ingresso que produção polida, e exige volume. Mesma lógica do lo-fi no feed: o que performa é a ideia, não a câmera.
 
 ## O gate de saída (toda copy escrita do funil)
-Antes de entregar qualquer peça escrita (carta, VSL, página, isca), roda o **Crivo** (o Crivo embutido, `shared-references/crivo/`): puxa o verbatim do VoC, lê na pele do avatar, e preenche o gate CUB bloqueante (Confuso, Inacreditável, Boring, mais as 3 perguntas do gate). Peça que falha não sai, é consertada e re-rodada. Aqui era onde mais faltava no método: o funil escrevia e entregava só com o filtro anti-IA, que limpa o robô mas não dá força. Anti-IA limpa, Crivo dá força, nessa ordem. Detalhe em `shared-references/crivo/`.
+Antes de entregar qualquer peça escrita (carta, VSL, página, isca), roda o **Crivo** (o Crivo embutido, `shared-references/crivo/`): puxa o verbatim do VoC, lê na pele do avatar, e preenche o gate CUB bloqueante (Confuso, Inacreditável, Boring, mais as 3 perguntas do Harry). Peça que falha não sai, é consertada e re-rodada. Aqui era onde mais faltava no método: o funil escrevia e entregava só com o filtro anti-IA, que limpa o robô mas não dá força. Anti-IA limpa, Crivo dá força, nessa ordem. Detalhe em `shared-references/crivo/`.
 
 ## O fio que costura tudo
 O funil aquece e entrega o lead quente porque é **congruente, minimalista e ancorado no posicionamento**, não porque é elaborado. A peça repete a tese do Plano na voz do cliente; a IA barateou a forma; o feed abre a entrada; e a venda fecha do outro lado, na conversa, confirmando o que o funil já instalou. Funil que precisa convencer do zero é sinal de Plano fraco, não de peça mal feita.

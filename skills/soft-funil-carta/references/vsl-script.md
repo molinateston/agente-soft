@@ -83,7 +83,7 @@ Diferença do VSL genérico:
 
 | Currículo | Procedência |
 |---|---|
-| "Tenho 10 anos de experiência em marketing" | "Passei 2 anos gerenciando 8 dígitos em vendas com equipe de 5, sem postar nada. Quando saí e precisei construir sozinho, entendi por que a maioria dos sistemas não escalam." |
+| "Tenho 10 anos de experiência em marketing" | "Passei 2 anos gerenciando R$13M em vendas com equipe de 5, sem postar nada. Quando saí e precisei construir sozinho, entendi por que a maioria dos sistemas não escalam." |
 | "Já atendi 200 clientes" | "O primeiro método que criei funcionou. Só que exigia 6h/dia de operação. Aí entendi que tinha construído um emprego, não um negócio." |
 
 **Formato:** 1–2 minutos. História cênica, não biografia. O momento específico que gerou o insight que virou o método.
@@ -176,22 +176,6 @@ Diferença do VSL genérico:
 
 ---
 
-## Testa a MENSAGEM antes de produzir (MVP barato)
-
-Produção cara (locação, câmera, edição, regravação) só entra DEPOIS que a mensagem provou que segura. Antes disso, o VSL vencedor não se acha gravando bonito, se acha testando barato.
-
-O caminho:
-
-1. **Roda a mensagem num formato barato.** Vídeo cinético (imagens + legendas + narração), slides narrados, uma gravação caseira de celular. O objetivo não é ficar bonito, é testar o ROTEIRO (hook, mecanismo, prova, oferta) por poucos reais.
-2. **Compara os ângulos e acha a menos-pior.** Vários leads/roteiros no mesmo formato barato; o tráfego diz qual segura e converte melhor. Você não está procurando a peça final, está eliminando as ruins.
-3. **Só a vencedora do teste barato vai pra produção pesada.** Aí sim vale gravar caro: você já sabe qual mensagem defender.
-
-**Ressalva honesta (não-validado, testar caso a caso).** Às vezes a mensagem que ganha no cinético não ganha depois de produzida (a produção muda o tom, a presença, o ritmo). Então o teste barato elimina as claramente ruins e aponta a favorita, mas não é veredito final: quando a produção subir, re-testa a vencedora contra uma alternativa antes de escalar verba.
-
-Isso casa com a modelagem do Passo 0-bis: você modela a estrutura de um vencedor, testa a mensagem barato, e só produz o que sobreviveu ao teste.
-
----
-
 ## Durações por ticket
 
 | Ticket | Duração ideal do VSL |
@@ -209,6 +193,6 @@ VSL acima de 35 minutos com tráfego frio raramente converte mais que versão ma
 Antes de mostrar a peça, ela passa pelo Crivo embutido em `shared-references/crivo/`, nesta ordem:
 1. **Ancoragem** (`crivo/01-entrada-verbatim.md`), na entrada e na checagem: toda fala entre aspas é verbatim literal da fonte real do cliente, e o ângulo-mãe tem N. Aspa que não bate na fonte reprova.
 2. **Simulação na pele do avatar** (`crivo/02-simulacao-cliente.md`): onde ele larga, onde se reconhece, o teste dos 2 segundos.
-3. **Gate CUB bloqueante + as 3 perguntas do gate** (`crivo/03-gate-cub.md`): imprime a tabela, o veredito é o pior bloco, peça que falha não sai, volta pra reescrita.
+3. **Gate CUB bloqueante + as 3 perguntas do Harry** (`crivo/03-gate-cub.md`): imprime a tabela, o veredito é o pior bloco, peça que falha não sai, volta pra reescrita.
 
 O anti-IA limpa o robô; o Crivo dá a força. Limpo não é forte. Os dois, nessa ordem. **Sem a tabela do Crivo impressa junto, a peça não foi entregue.**

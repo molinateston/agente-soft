@@ -9,7 +9,7 @@ Um gerador de copy só é tão bom quanto a matéria-prima do usuário. Se o pro
 ## Os 5 slots do perfil (cada usuário preenche o seu)
 
 1. **Fonte de VoC.** Onde está a fala REAL do público do usuário (a matéria-prima da ancoragem): calls, comentários, prints de conversa, mensagens de aluno, dúvida recorrente no Direct, ou uma wiki destilada. *Exemplo, perfil de exemplo:* o acervo de fala real do usuário (ex.: uma wiki de VoC destilada, com páginas por tema). *Cliente self-serve:* o acervo dele, ou a mineração rápida do `01-entrada-verbatim.md` (protocolo sem-VoC) quando ainda não tem acervo.
-2. **Plano de Posicionamento + Biblioteca de Assinatura.** O avatar, os inimigos nominais, a tese central, os bordões e cenas-assinatura. Gerado pela skill `soft-plano-posicionamento` (Blocos 1-5). Cada usuário tem o SEU. *Exemplo (outro nicho, ilustra o formato):* avatar "a dentista que atende bem e tem buraco na agenda", mecanismo nomeado "o Filtro de Caso", nicho odontologia. *Cada usuário:* o Plano dele.
+2. **Plano de Posicionamento + Biblioteca de Assinatura.** O avatar, os inimigos nominais, a tese central, os bordões e cenas-assinatura. Gerado pela skill `soft-posicionamento` (Blocos 1-5). Cada usuário tem o SEU. *Exemplo (outro nicho, ilustra o formato):* avatar "a dentista que atende bem e tem buraco na agenda", mecanismo nomeado "o Filtro de Caso", nicho odontologia. *Cada usuário:* o Plano dele.
 3. **Banco de provas.** Os cases REAIS do usuário (nome + número + prazo, falsificáveis) e os canais de conversão (WhatsApp, link de checkout, página). É o que preenche os `[CASE: ...]` e `[LINK]` das peças. **Cada prova precisa de LASTRO** - uma fonte verificável (print, página, contrato, gravação), não só o número. O banco mora materializado no slot 3 do `soft-perfil.md` do usuário, com a lista de **números a-NÃO-regredir** ao lado, pra copy nenhuma reinventar valor (mesmo número sempre, mesmo recorte). Sem banco, ou citando número sem lastro, a peça para em `RASCUNHO-COM-PENDÊNCIA` (estrutura pronta, falta o insumo do usuário). Ninguém inventa prova por ninguém.
 4. **Voz.** Como o usuário fala (termos que usa, termos que evita). *Exemplo, perfil de exemplo:* a skill de voz pessoal do autor (autor-only, que não viaja em bundle de cliente). *Cliente:* declara a voz dele, ou a skill infere do VoC e confirma.
 5. **Nicho + estágio.** O nicho do usuário e o estágio de consciência/sofisticação do mercado dele (Schwartz, ver `05-premissas-mestras.md`). Decide o REGISTRO da abertura (passada 0.5 do gate). *Exemplo, perfil de exemplo:* nicho saturado E4-E5. *Cliente:* o estágio do mercado dele, que pode ser outro.
@@ -18,8 +18,8 @@ Um gerador de copy só é tão bom quanto a matéria-prima do usuário. Se o pro
 
 - O processo universal SEMPRE lê o perfil do usuário da vez pra esses 5 slots. Nunca assume os valores do perfil de exemplo: eles são um exemplo de perfil preenchido, não o default.
 - Slot vazio não para a skill, mas marca o limite: sem VoC, a peça sai "rascunho genérico"; sem banco de provas, sai `RASCUNHO-COM-PENDÊNCIA` (a estrutura converte, falta o insumo). Honestidade sobre o que falta, no nome do usuário.
-- Usuário novo, sem perfil (cold start): a skill ROTEIA pro onboarding (gera o Plano via `soft-plano-posicionamento` e minera o VoC inicial via `01-entrada-verbatim.md`), em vez de empacar ou de assumir os dados do perfil de exemplo.
-- Melhoria do processo (qualquer arquivo de `shared-references/`) entra na FONTE canônica (`_fonte/shared-references/`, na raiz do repo de skills) e o `scripts/sync-crivo.py` propaga pra todas as skills de todos os usuários. Melhora uma vez, vale pra todos. O perfil de cada um fica intacto. Editar a cópia dentro de uma skill não adianta: o próximo sync reverte.
+- Usuário novo, sem perfil (cold start): a skill ROTEIA pro onboarding (gera o Plano via `soft-posicionamento` e minera o VoC inicial via `01-entrada-verbatim.md`), em vez de empacar ou de assumir os dados do perfil de exemplo.
+- Melhoria do processo (qualquer arquivo de `shared-references/`) entra na FONTE (`soft-conteudo`) e o sync do deploy do dono propaga pra todas as skills de todos os usuários (o script de sync vive na infra do dono, fora deste bundle). Melhora uma vez, vale pra todos. O perfil de cada um fica intacto.
 
 ## Onde o perfil mora (self-serve)
 
@@ -29,7 +29,7 @@ O usuário instala as skills no Claude Code dele, e o perfil vive no ambiente DE
 
 Quando não existe `soft-perfil.md`, a skill NÃO assume os dados do perfil de exemplo nem empaca. Conduz o usuário a montar o dele, nesta ordem:
 
-1. **Plano + Biblioteca de Assinatura (slot 2):** roda a `soft-plano-posicionamento` (Blocos 1-5). Sai o avatar, os inimigos nominais, a tese, os bordões e cenas-assinatura. É o coração do perfil.
+1. **Plano + Biblioteca de Assinatura (slot 2):** roda a `soft-posicionamento` (Blocos 1-5). Sai o avatar, os inimigos nominais, a tese, os bordões e cenas-assinatura. É o coração do perfil.
 2. **Fonte de VoC (slot 1):** pergunta onde está a fala real do público dele (calls, comentários, prints, DMs). Sem acervo ainda, roda a mineração rápida do `01-entrada-verbatim.md` (protocolo sem-VoC: 3 baldes ama/odeia/teme, fala sticky). Aponta o caminho no perfil.
 3. **Voz (slot 4):** infere do VoC como o usuário fala e confirma com ele (termos que usa, termos que evita), sem clonar o autor do método.
 4. **Nicho + estágio (slot 5):** pergunta o nicho e estima o estágio de consciência e sofisticação do mercado (Schwartz).
@@ -47,7 +47,7 @@ Onboarding parcial é válido: com o Plano e um pouco de VoC já dá pra produzi
 [caminho ou pasta do acervo de fala real, ou "minerado em soft-perfil-voc.md"]
 
 ## 2. Plano + Biblioteca de Assinatura
-[referência ao Plano gerado pela soft-plano-posicionamento, ou colado: avatar, inimigos, tese, bordões, cenas-assinatura]
+[referência ao Plano gerado pela soft-posicionamento, ou colado: avatar, inimigos, tese, bordões, cenas-assinatura]
 
 ## 3. Banco de provas
 - Cases reais (nome + número + prazo + LASTRO): [preencher conforme chegam - cada prova com fonte verificável (print/página/contrato/gravação); número sem lastro não entra]

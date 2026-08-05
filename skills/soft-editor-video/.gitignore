@@ -4,9 +4,6 @@ config/personagens.json
 config/cta_take.mp4
 config/cta_image.jpg
 
-# whisper.cpp compilado (pesado; setup local via scripts/setup_whisper.sh)
-vendor/
-
 # arquivos de trabalho
 work/
 output/
@@ -19,7 +16,4 @@ __pycache__/
 *.pyc
 scenes.json
 transcript*.json
-*.words.json
-*.words.csv
-*.16k.wav
 *.log

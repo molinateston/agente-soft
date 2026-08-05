@@ -38,6 +38,38 @@ O padrão que o usuário deve ajustar no próximo lead parecido. Ex: *"Próximo 
 
 ---
 
+## A régua que rege a análise: conversão se mede do APROVADO NO DIAGNÓSTICO
+
+Antes de analisar qualquer call, cravar a métrica certa, porque métrica errada absolve call ruim:
+- **Conversão = PAGAMENTO** (dinheiro ou sinal na conta). Contrato assinado, "fechou verbal", proposta enviada: nada disso converteu.
+- **A base da taxa NÃO é "call feita", é "aprovado no diagnóstico"**: quem passou o diagnóstico, verbalizou o compromisso e recebeu a apresentação. Call de lead sem perfil (que o closer certamente filtrou) e **reunião sem decisor NÃO entram na conta**, e reunião sem decisor nem devia ter acontecido.
+- **A escala sobre os aprovados:** 20% ou menos = péssimo, o problema é grave e estrutural · 30% = sinal de vida · 40% = entrou no jogo · 50% = bom (a cada 2 aprovados, 1 paga) · acima disso = domínio.
+- Quando o usuário trouxer "minha conversão é X%", a primeira pergunta é: *"X% de quê: de call feita ou de aprovado no diagnóstico?"*. A maioria mede da base errada e se pune (ou se absolve) à toa.
+
+## Checklist de erro por fase (os padrões que mais aparecem em call real)
+
+Ao varrer a transcrição, procure ESTES primeiro (são as falhas-tipo de centenas de calls analisadas):
+
+| Erro | Onde aparece | O que denuncia |
+|---|---|---|
+| Apresentou solução antes do diagnóstico fechar | F5 no lugar da F2 | ansiedade de mostrar serviço; diagnóstico virou pretexto |
+| Deu aula durante a coleta | F2 | queimou a munição da apresentação; lead parou de falar |
+| Diagnóstico sem ferramenta visual, tudo falado | F2 | o peso se perdeu no ar; nada pra retomar |
+| Lead disse "é isso que eu já sabia" e a call seguiu | F2 | ficou no mesmo nível; ninguém paga por espelho |
+| Aceitou objeção vaga como resposta final | F6 | "ver o financeiro" sem número, sócio ausente sem confronto |
+| Apresentou sem saber quanto o lead tinha | F5 | pitch no escuro; a conta nunca ia fechar |
+| Revelou preço com dúvida aberta | F6→F7 | "vou pensar" garantido; o isolamento não aconteceu |
+| Perguntou "faz sentido pra você?" no fechamento | F7 | pediu aprovação; devolveu o bastão na hora do compromisso |
+| Calou depois do preço | F7 | eco do custo apagou o valor construído |
+| Saiu da call sem compromisso verbalizado | F7 | nem sim, nem não, nem sinal: virou limbo |
+| Follow-up marcado como plano, não como exceção | pós | a reunião foi feita PRA gerar follow-up; refaça a reunião |
+
+## A rotina que sustenta a análise (o 80/20 da gestão comercial)
+
+**Assistir 1 call POR SEMANA de cada vendedor** (com a régua de autoavaliação da `caixa-de-ferramentas-closer.md`) é o 80/20 da gestão comercial: coordenador que não assiste call gerencia número sem causa, e número sem causa não se corrige. Pra quem vende sozinho, vale igual: 1 call própria por semana, revista contra o checklist acima. A conversa gravada é dado, não evento perdido.
+
+---
+
 ## Regras da análise
 
 - **Feedback clínico, zero suavização.** Nada de "você foi ótimo, só um detalhe...". Usuário quer saber o erro.

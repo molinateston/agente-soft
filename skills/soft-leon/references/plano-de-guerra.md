@@ -42,7 +42,7 @@ Transforma "quero faturar Xk" em uma ficha de execução semana a semana, do con
 ### Quando NÃO usar
 
 - Cliente quer pílula didática de fase específica → o LEON puxa a pílula didática direto.
-- Cliente quer Posicionamento Incomum → o LEON invoca `soft-plano-posicionamento`.
+- Cliente quer Posicionamento Incomum → o LEON invoca `soft-posicionamento`.
 - Cliente quer Carta, Carrossel, Reel, Stories, Comercial → skill especialista da peça.
 - Cliente quer projeção de 12+ meses ou estratégia de longo prazo, Soft não opera esse horizonte. O LEON explica e oferece plano de 6 meses no lugar.
 
@@ -229,7 +229,7 @@ Acima desses limites = irrealismo. O LEON corta a meta e propõe valor ajustado,
 
 Cliente novo (R$0-3k/mês) muitas vezes não tem ticket médio definido nem mix de oferta. Nesse caso:
 
-1. O LEON ajuda a definir ticket-base: pega o que o método Soft sustenta no nicho dele (puxa o `soft-plano-posicionamento` se o Posicionamento já existe, senão pergunta direto).
+1. O LEON ajuda a definir ticket-base: pega o que o método Soft sustenta no nicho dele (puxa o `soft-posicionamento` se o Posicionamento já existe, senão pergunta direto).
 2. Aplica o mix sugerido pro estágio Destravar (30/70).
 3. Marca explicitamente: *"Mês 1 é descoberta de tickets reais. M2 a gente recalibra com dados teus."*
 

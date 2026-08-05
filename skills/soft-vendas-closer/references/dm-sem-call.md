@@ -1,6 +1,6 @@
-# DM sem call, vender high-ticket no chat sem sessão estratégica
+# DM sem call, fechar no chat sem sessão estratégica (até ~R$3.000)
 
-> Reference puxada quando: o lead quer resolver AGORA e o especialista quer fechar high-ticket **na DM/WhatsApp**, sem marcar sessão estratégica ou call de 30-40min. Cobre o processo de 5 etapas, os scripts literais, os suportes de venda (doc/vídeo/áudio) e a doutrina "venda fácil, entrega fácil".
+> Reference puxada quando: o lead quer resolver AGORA e o ticket está dentro do limiar unificado (**até ~R$3.000**), então o closer fecha **na DM/WhatsApp**, sem marcar sessão estratégica ou call de 30-40min. Acima de ~R$3.000, a DM qualifica e agenda a call 1:1. Cobre o processo de 5 etapas, os scripts literais, os suportes de venda (doc/vídeo/áudio) e a doutrina "venda fácil, entrega fácil".
 
 Este é o modo de venda por chat do método, com filtro Soft. Complementa a espinha de 7 fases da `processo-conversao`: a espinha continua valendo (a lógica diagnóstica é a mesma), este modo comprime a condução pra rodar 100% por mensagem, áudio e vídeo, sem reunião.
 
@@ -24,9 +24,9 @@ Este é o modo de venda por chat do método, com filtro Soft. Complementa a espi
 
 ## Quando este modo, quando a call
 
-**Este modo (DM sem call):** o lead tem **pouco tempo, mais dinheiro, um problema sério e quer resolver agora**. Ele quer entrar no programa e passar o cartão hoje, não marcar sessão pra daqui a cinco dias. E o trabalho de confiança já foi feito antes (perfil, conteúdo, um material que ele consumiu). Ticket alto fecha no chat com apoio de um doc ou um vídeo curto.
+**Este modo (DM sem call):** o lead tem **pouco tempo, mais dinheiro, um problema sério e quer resolver agora**. Ele quer entrar no programa e passar o cartão hoje, não marcar sessão pra daqui a cinco dias. E o trabalho de confiança já foi feito antes (perfil, conteúdo, um material que ele consumiu). Até ~R$3.000 fecha no chat com apoio de um doc ou um vídeo curto; acima de ~R$3.000 a DM qualifica e agenda a call 1:1.
 
-**A call (7 fases da `processo-conversao`):** quando o lead precisa da condução ao vivo, é um caso complexo, ou o especialista prefere o canal. A DM sem call **não substitui** a call; é o caminho mais rápido pro cliente que já está pronto e odeia a fricção da sessão estratégica.
+**A call (7 fases da `processo-conversao`):** quando o ticket passa de ~R$3.000 (o limiar unificado), o lead precisa da condução ao vivo, é um caso complexo, ou o especialista prefere o canal. A DM sem call **não substitui** a call; é o caminho mais rápido pro cliente que já está pronto e odeia a fricção da sessão estratégica.
 
 **A regra de ouro:** dependendo do contexto, **um dos passos é pulado**. Se a pessoa já se qualificou num formulário, pula a qualificação. Se já viu autoridade no seu conteúdo, acelera. A DM usa TODOS os mecanismos: chat, áudio e vídeo, não é venda fria de texto.
 

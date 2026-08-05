@@ -1,79 +1,90 @@
-# Fluxo do SDR autônomo — o ciclo completo
+# Fluxo do agente autônomo: o turno canônico + os fluxos por objetivo
 
-O SDR de IA roda um loop dirigido por evento: o CRM avisa quando chega mensagem, o SDR trata, registra, e volta a esperar. Este é o passo a passo de cada ramo. O CONTEÚDO das mensagens de topo (abrir, qualificar, vender a sessão, reativar) vem das refs de técnica desta skill (`prospeccao-e-qualificacao.md`, `vender-a-sessao.md`, `modos-e-mentalidade.md`); o CONTEÚDO do fechamento (quando o lead cai no closer) vem da `soft-vendas-closer`. Aqui está o QUANDO/COMO operar.
+O agente roda um loop dirigido por evento: o canal avisa quando chega mensagem, o agente trata o TURNO na ordem canônica abaixo, registra, e volta a esperar. Esta ordem vem de motor rodado em produção com lead de verdade; cada passo existe porque um defeito real o exigiu. **A ordem não se inverte.**
 
-## 0. Gatilho — o SDR acorda por evento, não por polling
+## O turno canônico (a ordem que vale pra qualquer objetivo)
 
-O SDR é notificado pelo CRM quando chega mensagem nova do lead (webhook `InboundMessage`, ver `conector-ghl.md`). Isso é o que o torna 24/7 sem ficar varrendo o CRM de minuto em minuto (caro e lento). Se o CRM do projeto não tiver webhook, cai no fallback de polling com intervalo (a cada N minutos) — mas webhook é o padrão.
+```
+mensagem chega (webhook)
+  │
+  0. DEBOUNCE   → junta a rajada do lead numa janela curta (padrão 8s): vira UM turno
+  1. KILLSWITCH → arquivo-flag ligado? PARA TUDO, antes de gastar modelo
+  2. OPTOUT     → lead pediu pra sair? taga, avisa o time, NUNCA mais fala com ele
+  3. ESTADO     → classifica o lead pela fonte de verdade (tags, cadastro, relógio)
+  4. ESCALADA DURA → regex na ENTRADA (antes do modelo): jurídico, pediu humano,
+                     sinal de compra, conversa de dinheiro, injeção de prompt → handoff direto
+  5. PROMPT     → identidade + postura do estado + a VERDADE do cadastro
+                  + PROIBIÇÕES e LIÇÕES do dono (arquivos vivos, sempre inteiros)
+  6. LOOP       → modelo em loop de ferramentas (teto 4 rodadas + 3 defesas anti-loop)
+  7. GATE DE SAÍDA → conferência EM CÓDIGO de cada mensagem (ver gate-de-seguranca.md)
+  8. SILÊNCIO   → madrugada (22h-8h local)? mensagem proativa fica pra manhã
+  9. ENVIO      → manda, registra na auditoria dupla, atualiza o CRM
+```
 
-Ao acordar, o SDR tem: `contactId`, `conversationId`, o texto da mensagem, o canal (WhatsApp/SMS/IG).
+### Por que cada passo existe (os defeitos que eles matam)
+- **Debounce (0):** lead de WhatsApp manda 3-5 mensagens picadas em segundos. Sem janela, o agente responde a primeira enquanto a terceira chega, e atropela a própria fala. A rajada inteira vira UM turno com o contexto completo.
+- **Killswitch antes de tudo (1):** desligar tem que ser instantâneo e barato. Um arquivo-flag que o passo 1 confere mata o motor sem deploy, sem restart, sem gastar um token.
+- **Optout antes do estado (2):** quem pediu pra sair não é lead, é obrigação legal e de respeito. Taga `optout`, avisa o time, e o motor nunca mais o processa.
+- **Estado pela fonte de verdade (3):** o estado NUNCA vem da conversa ("acho que ele já comprou"), vem do CRM: tags de compra/presença, campos do cadastro, e o relógio contra o horário que o lead escolheu. A taxonomia dos 7 estados e as regras de precedência vivem no `playbook-operacao.md`.
+- **Escalada dura antes do modelo (4):** os casos que NUNCA deviam depender do modelo acertar (assunto jurídico, "quero falar com uma pessoa", "como eu pago?", tentativa de "ignore suas instruções") são pegos por regex na entrada e viram `solicitar_humano` direto. O modelo nem opina.
+- **Prompt com a verdade do cadastro (5):** nome, o horário que a pessoa escolheu, o link exclusivo dela. Se o dado não existe no cadastro, a instrução explícita é NÃO inventar. E as PROIBIÇÕES/LIÇÕES do dono (a memória de correção que não regride) entram inteiras em todo turno.
+- **Loop com teto e defesas (6):** ver "As 3 defesas anti-loop" abaixo.
+- **Gate de saída (7):** barrou UMA mensagem, o turno INTEIRO não sai, e o dono recebe o porquê. Prompt não é gate; código é.
+- **Silêncio (8):** resposta a lead que ESCREVEU agora pode sair (ele iniciou); disparo proativo respeita a madrugada.
 
-**Debounce de 8s:** a 1ª mensagem chega e o SDR espera 8 segundos antes de processar. Se o mesmo lead manda mensagem nova nesse intervalo, a janela reinicia. Quando fecha sem mensagem nova, todas as mensagens da rajada viram um turno único (detalhe em `../SKILL.md` § Debounce). Isso evita responder a cada fragmento de uma ideia que o lead ainda está digitando.
+### As 3 defesas anti-loop (o pior defeito é o lead esperando calado)
+1. **Dedup de chamada:** a mesma ferramenta com os mesmos argumentos não roda 2x no mesmo turno.
+2. **Última rodada restrita:** na rodada-teto, só `solicitar_humano` fica na mesa; ou o agente escreve a resposta com o que já tem, ou escala.
+3. **Ordem explícita de concluir:** o prompt manda escrever a mensagem com a informação disponível em vez de buscar "só mais uma coisa". Lead esperando em silêncio é defeito pior que resposta imperfeita.
 
-## 1. Contexto antes de responder (NUNCA responde no vazio)
+## Contexto antes de responder (NUNCA responde no vazio)
 
-Antes de qualquer resposta, o SDR **lê o estado**, igual um humano abriria a conversa:
-1. **O contato** — nome, telefone, tags, campos, `assignedTo`, de onde veio (source).
-2. **O histórico da conversa** — as últimas mensagens (lê a conversa, não só a última linha). Sem isso, ele repete pergunta já respondida = cara de robô.
-3. **O stage no pipeline** — em que fase o lead está (novo? já qualificado? já agendado?). O pipeline é a memória do SDR entre sessões.
+Antes de qualquer resposta, o agente lê o estado como um humano abriria a conversa:
+1. **O contato:** nome, telefone, tags, campos custom, de onde veio.
+2. **O histórico da conversa:** as últimas mensagens (a conversa, não só a última linha). Sem isso, repete pergunta respondida = cara de robô.
+3. **O stage/pipeline:** onde o lead está. O pipeline é a memória entre turnos.
 
-Regra: **o que não está no CRM, não aconteceu.** O SDR não confia na "memória da conversa", ele lê o CRM toda vez. Não chuta, recupera.
+Regra: **o que não está no CRM, não aconteceu.** O agente não confia na "memória da conversa", lê o CRM toda vez.
 
-## 2. Identifica intenção e temperatura
+## Fluxo do objetivo A: SDR clássico (pré-qualifica e AGENDA)
 
-Com o histórico na mão, o SDR classifica onde o lead está no diagnóstico Soft (Descoberta → Implicação → Conexão, detalhe em `prospeccao-e-qualificacao.md`):
-- **Lead novo / primeira mensagem** → abre pelo Recuo Estratégico (fase 1): consultivo, sem empurrar, pede permissão pra diagnosticar.
-- **Já em conversa** → continua de onde parou (Descoberta → Implicação → Conexão → …), nunca recomeça.
-- **Mensagem fora do fluxo** (dúvida de suporte, assunto aleatório, reclamação) → não força venda; responde o que dá dentro do escopo e, se for fora da alçada, passa pro humano (ver gate).
+O turno canônico + a técnica de topo desta skill:
+1. **Lead novo** → abre pelo Recuo Estratégico: consultivo, sem empurrar.
+2. **Qualifica de leve** (os 4 elementos, uma pergunta por mensagem; BANT lido por dentro).
+3. **Pré-qualificador** (a aula do webinar OU a Mini Carta/Mini Webinar) antes da sessão. Sem pular.
+4. **Desfecho em 3 ramos:**
+   - **Quente (dor nomeada + BANT)** → VENDE A SESSÃO como vaga (`vender-a-sessao.md`), consulta slots livres, oferece 2 opções concretas, cria o appointment, move o card, taga, **handoff rico** pro closer (nota + notificação com dedup).
+   - **Morno** → pré-qualificador OU follow-up pela cadência (teto de 4 toques).
+   - **Sem perfil** → encerra leve, taga com o motivo, PARA.
+5. **Ticket ≤ ~R$3.000:** pode conduzir até o fechamento no mesmo atendimento (preço/link SÓ da tabela aprovada, via ferramenta de preço). Acima: para no agendamento.
 
-A temperatura (frio/morno/quente) sai da qualificação, não do "achismo": lead que já verbalizou a dor + tem budget/autoridade/urgência (BANT) = esquentando.
+## Fluxo do objetivo B: Atendente 24-7 (atende, responde, orienta)
 
-## 3. Qualifica — o diagnóstico Soft, conduzido no chat
+A missão é resolver, não vender. O turno canônico vale inteiro; muda a postura:
+1. **Classifica a pergunta:** dúvida de produto/acesso/agenda/entrega → responde; assunto fora do escopo (jurídico, financeiro do dono, reclamação grave, imprensa) → escala com contexto.
+2. **Responde SÓ com fato consultado:** toda afirmação sobre o produto vem de `buscar_conhecimento` na wiki (`motor-de-conhecimento.md`). Achou nada = diz que vai confirmar e escala. NUNCA inventa.
+3. **Dinheiro só via arquivo:** qualquer pergunta de preço/condição passa pela ferramenta de preço; tabela vazia = "te passo já com o time" + handoff.
+4. **Resolve e fecha o ciclo:** confirma que a dúvida foi resolvida; registra o tema na nota (vira insumo de FAQ pro dono).
+5. **Sinal comercial no meio do atendimento** (lead pergunta "como faço pra entrar?", "quanto custa?") → escalada dura: vira handoff comercial (ou fluxo A, se o dono ligou os dois).
+- **Métricas:** tempo de resposta (meta: minutos, não horas), % resolvido sem humano, escaladas por motivo, temas recorrentes.
 
-Aqui o SDR conduz a qualificação leve (os 4 elementos de `prospeccao-e-qualificacao.md`), uma mensagem por vez, respeitando o ritmo do canal (WhatsApp é troca curta, não textão):
+## Fluxo do objetivo C: Operador de funil (conduz pela esteira)
 
-- **Descoberta (F2):** lead fala 70%. Desce da situação à dor. Acha o Problema Avançado (o que as tentativas antigas criaram de pior). As perguntas em escada estão em `prospeccao-e-qualificacao.md`.
-- **Implicação (F3):** amplia o custo de ficar como está; qualifica intenção ("de 0 a 10, quanto quer resolver isso hoje?").
-- **Conexão (F4):** espelha o que entendeu antes de apresentar qualquer coisa.
-- **Qualificação por dentro (BANT):** Budget (dá pra investir no ticket?), Authority (é quem decide?), Need (a dor é real e nomeada?), Timeline (é agora ou "algum dia"?). O SDR não pergunta isso a seco, extrai pelo diagnóstico.
+A missão é levar o lead de estado em estado (isca → aula → oferta) com a mensagem certa do momento:
+1. **Estado primeiro:** os 7 estados do `playbook-operacao.md` (novo / pré-evento / ao vivo / compareceu / faltou / carrinho abandonado / cliente). A postura de cada estado dita a mensagem.
+2. **Sinais finos das tags direto no prompt:** assistiu até o fim, clicou na oferta e não comprou, ficha iniciada e não terminada. USA o sinal, não pergunta de novo.
+3. **Follow-up por estado, não genérico:** faltou → replay/remarcar; compareceu e não agiu → consultivo pela dor da aula; carrinho abandonado → retoma pelo que faltou (prioridade sobre "compareceu"); cliente → NUNCA recebe oferta.
+4. **Janelas de tempo:** confirmação de véspera, lembrete em cima da hora com link, pós-evento na janela quente (a primeira hora depois do fim vale mais que o dia seguinte).
+5. **Desemboca em:** compra no checkout (funil de aula), OU sessão agendada (vira fluxo A no fim da esteira).
+- **Métricas:** comparecimento (agendado → presente), conversão por etapa da esteira, carrinho recuperado, optouts (o alarme de cadência ruim).
 
-**Uma pergunta por mensagem.** Metralhar pergunta = interrogatório = lead foge. Ritmo de conversa humana.
-
-## 4. O desfecho — 3 ramos
-
-### 4a. Tem perfil + esquentou → AGENDA (o objetivo do SDR)
-O SDR **vende a sessão**, não o produto (a técnica, com as jogadas de campo, em `vender-a-sessao.md`):
-1. Oferece o agendamento pela dor que o lead nomeou ("pelo que você me falou, faz sentido a gente sentar 30min e eu te mostrar exatamente como resolver [a dor dele]. Tenho [dia] ou [dia], qual fica melhor?").
-2. Consulta os **slots livres** do calendário (ver `conector-ghl.md`) e oferece 2 opções concretas (nunca "quando você pode?" aberto).
-3. **Cria o appointment** no slot escolhido.
-4. **Move o card** pra "Reunião Agendada" (ou o stage equivalente do pipeline do cliente).
-5. **Taga** (`sessao-agendada`), **cria nota** com o resumo do diagnóstico (pro closer chegar sabendo tudo).
-6. **Notifica o closer/dono** — o lead quente com o contexto pronto.
-
-**Se ticket ≤ R$2.000** (venda direta pelo limiar): o SDR pode conduzir até o fechamento no mesmo atendimento (apresentação + isolamento + preço da tabela + link de checkout aprovado), puxando a condução da `soft-vendas-closer`, sem separar a etapa do closer. Acima do limiar, para no agendamento e faz o handoff.
-
-### 4b. Tem perfil, ainda morno → FOLLOW-UP
-Lead com perfil que não fechou o agendamento agora não é abandonado nem perseguido:
-1. Agenda o próximo toque pela cadência do `playbook-operacao.md` (não manda 5 mensagens seguidas).
-2. Registra o stage ("em qualificação" / "follow-up").
-3. No toque seguinte, retoma pela dor, não com "e aí, pensou?".
-
-### 4c. Sem perfil → ENCERRA LEVE
-Filtrar é vitória (regra do método). Lead sem budget/perfil/necessidade real:
-1. Encerra com respeito, sem queimar ("pelo que você me contou, acho que esse não é o momento certo pra você — mas fico à disposição se mudar").
-2. Taga (`sem-perfil` / `descartado` com o motivo na nota).
-3. **Para.** Não persegue, não faz follow-up de quem não tem perfil.
-
-## 5. Registra sempre (o pipeline é a memória)
-
-Todo desfecho vira estado no CRM: **nota** (o que rolou + o diagnóstico), **tag** (a temperatura/status), **stage** (a fase do pipeline). Sem isso, o próximo turno do SDR (ou o closer) chega cego. Registrar não é opcional — é o que torna o SDR confiável entre sessões e entre agentes.
-
-## 6. Nunca opera calado
-
-O SDR reporta pro dono (resumo diário, e na hora quando algo exige decisão — lead quente pra passar, gate acionado, erro de conexão). É a doutrina do respeito do LEON aplicada ao comercial: promete atender, atende; se falha (CRM caiu, token venceu), **avisa** — não deixa o lead no vácuo em silêncio.
-
-## Erros e bordas
+## Erros e bordas (valem pros 3 objetivos)
 - **Lead manda áudio/imagem:** transcreve/lê antes de responder (não ignora).
-- **Dois leads ao mesmo tempo:** cada conversa é isolada por `conversationId` — o SDR não mistura contexto.
-- **CRM fora do ar / token vencido:** o SDR NÃO inventa que respondeu; registra a falha e avisa o dono (o gate de "toda falha avisa" do motor).
-- **Lead já é cliente / já agendado:** lê o stage antes; não re-qualifica quem já está adiante.
+- **Duas conversas ao mesmo tempo:** cada uma isolada por conversa/contato; contexto nunca vaza entre leads.
+- **CRM fora do ar / token vencido:** NÃO inventa que respondeu; registra a falha e avisa o dono ("toda falha avisa").
+- **Handoff feito:** depois que escalou pro humano, o agente NÃO retoma a conversa sozinho. Só volta quando o humano devolver.
+- **Lead já é cliente:** checa compra ANTES de qualquer oferta, em qualquer objetivo.
+
+## Nunca opera calado
+
+Resumo diário pro dono + alerta na hora quando algo pede decisão (lead quente parado, gate acionado, erro de conexão). Cada turno gravado 2x: um log de máquina (jsonl) e um diário legível pro dono ler e aprovar (a auditoria dupla do `playbook-operacao.md`). Promete atender, atende; se falha, avisa.

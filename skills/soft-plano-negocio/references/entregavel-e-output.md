@@ -49,7 +49,7 @@ Seções 1-4 e 6 sempre. Seção 5 só quando o nicho estava em aberto. Prosa m�
 Mesmo conteúdo, destino diferente. `chat → MD · code → site`.
 
 - **No chat (claude.ai):** entrega em **Markdown** limpo (artifact), formato mapa-mental. Simples, sem firula. Sem Bash: você monta o conteúdo (Conta, projeção, score, roadmap) e devolve o doc consolidado. O dono abre, copia, baixa.
-- **No Claude Code:** entrega o arquivo `.md`. Se o dono pedir o plano publicado/bonito, **renderiza como site** reusando o motor da `soft-proposta-comercial` (Layout Soft, link único e privado, CSS+JS inline, zero build), com a ID visual do especialista (`soft-designer`). O pipeline completo roda aqui.
+- **No Claude Code:** entrega o arquivo `.md`. Se o dono pedir o plano publicado/bonito, **renderiza como site** reusando o motor da `soft-vendas-proposta` (Layout Soft, link único e privado, CSS+JS inline, zero build), com a ID visual do especialista (`soft-designer`). O pipeline completo roda aqui.
 - **No agente/Telegram (tem Bash):** a entrega é um **arquivo .md** consolidado; você grava e devolve o **caminho completo do arquivo** na resposta (o bridge anexa). A condução vai em mensagens de texto limpo, sem markdown pesado (sem `##`, sem tabela `|` no texto ao usuário, que ficam no doc anexado).
 
 A CONDUÇÃO (perguntas, escolhas de ajuste, os STOPs) acontece no chat; o PLANO mora no doc. Ao parar num STOP, mostra ou atualiza o DOC e pergunta "ajusto?". Nunca reescreve o plano em pedaços no corpo da conversa.

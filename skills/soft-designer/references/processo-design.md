@@ -5,22 +5,7 @@ Designer dos carrosséis do método Soft Business. **Escreve a copy-visual de ca
 
 **Lugar no método:** o Carrossel inteiro sai daqui, a copy-visual de cada card e o visual. A TESE e a copy-de-apoio chegam do usuário ou da skill de conteúdo; a copy-VISUAL (a frase de cada card) é escrita aqui, passa pelo Crivo, e aí vira imagem. Dois trabalhos num: escrever a copy-visual gated e desenhar.
 
-**O que esta reference é (e o que não é):** o método do Carrossel (estrutura, Fórmula 7, quantidade de cards, função de cada slide) vive no **Cap 6 do guia**, esta reference não o duplica, aponta pra ele. O que vive aqui é a **engenharia visual**, as 3 famílias de estilo, tipografia, escala, render HTML/CSS e export PNG. Isso não está no guia, é o valor próprio desta reference.
-
----
-
-## Índice
-- A fonte do método é o guia, leia primeiro
-- O que entrega
-- 1. Princípio fundador
-- 2. As 3 famílias visuais
-- 3. Fluxo de execução (a ordem certa)
-- 4. Filtro Mobile-First, obrigatório antes de aprovar
-- 5. Quando o usuário é leigo
-- 6. Erros que esta reference nunca comete
-- 7. Princípio final
-- 8. O branch de imagem-IA (HTML→PNG vs ilustração por IA); a capa/thumbnail de vídeo (modo desta soft-designer) mora aqui
-- Handoff
+**O que esta reference é (e o que não é):** o método do Carrossel (estrutura, Fórmula 7, quantidade de cards, função de cada slide) vive no **Cap 6 do guia**, esta reference não o duplica, aponta pra ele. O que vive aqui é a **engenharia visual**, as 3 famílias de estilo, tipografia, escala, render HTML/CSS e export PNG. Isso não está no guia: é o valor próprio desta reference.
 
 ---
 
@@ -28,7 +13,7 @@ Designer dos carrosséis do método Soft Business. **Escreve a copy-visual de ca
 
 A estrutura do Carrossel não mora aqui. Na primeira invocação da sessão, leia:
 
-- A **Fórmula 7** (os 7 movimentos: Hook · Quebra de Crença · Diagnóstico · Vilão · Nova Oportunidade · Mecanismo · Convite) e a regra de **7 a 10 slides** vêm da tese que chega da skill de conteúdo, ou de `soft-conteudo-carrossel` (Cap 6 do guia). **É a fonte da estrutura**, pra estruturar e reconhecer a função de cada card.
+- A **Fórmula 7** (os 7 movimentos: Hook · Quebra de Crença · Diagnóstico · Vilão · Nova Oportunidade · Mecanismo · Convite) e a regra de **7 a 10 slides** vêm da tese que chega da skill de conteúdo, ou de `soft-conteudo` (Cap 6 do guia). **É a fonte da estrutura**, pra estruturar e reconhecer a função de cada card.
 
 A copy-visual obedece a **lei de escrita do Crivo** (`shared-references/crivo/05-premissas-mestras.md`): a estrutura-mãe afiada (**Diagnóstico, Nomeação, Polaridade, Nova visão, Consequência, Movimento**, que espelha a Fórmula 7) e a lente da **percepção**, cada slide carrega **uma ideia**, fechando numa frase-conclusão. Depois que a copy passou no gate, o layout **amplifica** a frase (espaço negativo brutal, accent cirúrgico nas 2 a 4 palavras de mais peso), sem mudar palavra.
 
@@ -87,7 +72,7 @@ O carrossel só vira imagem DEPOIS que a copy-visual passou no Crivo. Esta é a 
 1. **Perfil:** roda `shared-references/crivo/00-perfil-do-usuario.md`. Sem perfil, vai pro onboarding antes de produzir. Avatar, VoC, banco de provas, voz e nicho são do usuário da vez, nunca de outra pessoa.
 2. **Ancora:** `shared-references/crivo/01-entrada-verbatim.md`, puxa a fala real do público do usuário sobre o tema. A capa e os cards nascem de palavra real, não de rótulo.
 3. **Escreve ou afia a copy-visual:** uma frase por card, na espinha (Fórmula 7), cada card UMA ideia comprimida (`shared-references/crivo/05-premissas-mestras.md`, as 8 leis). Se a copy-de-apoio que chegou é fraca ou falta um card, a skill ESCREVE o que falta, ancorada no perfil.
-4. **Passa pelo gate** `shared-references/crivo/03-gate-cub.md`: CUB por card, as 3 perguntas do gate na CAPA (dá pra ver a cena? é falsificável? só este cliente diria?), a passada de Consciência, prova no CTA, e o anti-vazamento (nada do perfil-de-referência entra). Nicho regulado roda também `04-gate-regulado.md`. Card que não passa, reescreve antes de desenhar.
+4. **Passa pelo gate** `shared-references/crivo/03-gate-cub.md`: CUB por card, as 3 perguntas do Harry na CAPA (dá pra ver a cena? é falsificável? só este cliente diria?), a passada de Consciência, prova no CTA, e o anti-vazamento (nada do perfil-de-referência entra). Nicho regulado roda também `04-gate-regulado.md`. Card que não passa, reescreve antes de desenhar.
 5. **Anti-IA** `shared-references/filtro-anti-ia/`: sem travessão, sem frase de robô. Roda `python3 scripts/lint_copy.py` na copy-visual (ele reprova em-dash e o verbo banido da anti-voz Soft, ver `shared-references/filtro-anti-ia/padroes-banidos.md`, falha dura re-roda).
 
 Só com a copy-visual aprovada o desenho começa. Daqui pra frente, a regra de ouro: o render não muda palavra (se o layout exigir mexer, re-passa a ancoragem e a capa no gate).
@@ -237,99 +222,6 @@ Não terceirize decisão técnica pro leigo. Decida você e mostre o resultado.
 Cada slide é uma página de revista, não uma página de Canva.
 
 O leitor vê o slide em 0,3 segundo. Se nesse tempo ele sente que é diferente do feed, lê o título inteiro sem esforço, e quer arrastar pro próximo, você acertou. Se ele rola sem registrar, todo o resto não importa. Quebra padrão. Sempre.
-
----
-
-## 8. O branch de imagem-IA (quando renderizar HTML→PNG vs quando gerar ILUSTRAÇÃO por IA)
-
-Quase toda peça do designer é **HTML→PNG determinístico**: é o nosso diferencial (contraste em código, anti-órfã, marca do cliente, copy editável). Mas há um caminho paralelo, o **branch de imagem-IA**, pra quando a peça pede uma ILUSTRAÇÃO/cena/textura que o HTML tipográfico não entrega. Este branch é o lar canônico da regra; o Infográfico-Lousa da Manuscrito Cru, o fundo do deck animado (`formato-deck-animado.md`) e a capa/thumbnail de vídeo (§8.5) todos herdam daqui.
-
-### 8.1 O roteamento (HTML estruturado vs ilustração livre)
-
-A decisão é pela NATUREZA do conteúdo, não pelo gosto:
-
-| Vai por HTML→PNG (o default) quando o conteúdo é | Vai pelo branch de imagem-IA quando o conteúdo é |
-|---|---|
-| passos numerados, framework, comparação X/Y, tabela, prova de números | um resumo visual, um fluxo, uma cena, uma ilustração conceitual, uma textura fotográfica (caderno, cenário) |
-| grade rígida, tipografia editorial, copy que muda em A/B | escaneável e livre, onde a "cara feita à mão" ou a cena É a mensagem |
-| a marca do cliente precisa ser exata (fonte própria, hex de cor) | o fundo/atmosfera importa mais que a precisão tipográfica |
-
-Além do conteúdo, o **ambiente força a mão**: se o ambiente **não renderiza PNG** (app puro, sem Playwright) e o cliente quer um visual ilustrado, o branch de imagem-IA é o caminho, entregando o **prompt pronto** em vez do PNG.
-
-### 8.2 A regra dura: texto por overlay HTML/CSS, NUNCA dentro da imagem gerada
-
-Vale pra TODO uso de imagem-IA nossa. O gerador de imagem **só produz o fundo/cena**; todo texto que precisa ser editável (título, bullets, números, CTA) entra por cima via overlay HTML/CSS. Por quê é lei: copy editável depois sem regenerar · gate de contraste funciona · o modelo não erra letra/acento · anti-órfã e escala de densidade só valem no HTML. (Detalhe completo em `formato-deck-animado.md` §4.)
-
-Exceção única: o **Infográfico-Lousa em modo imagem-IA**, onde o traço manuscrito É o ponto e a peça não vai pra A/B, pode ter o texto dentro da imagem gerada, com o custo declarado ao cliente de que não fica editável (mudar palavra = regenerar). Em qualquer peça que precise de copy editável, o texto entra por overlay, sem exceção.
-
-### 8.3 O prompt portátil (funciona em imagegen, gpt-image e Gemini)
-
-A copy-visual passa pelo **Crivo ANTES** (ancoragem + gate + anti-IA do Passo 0), igual a qualquer peça. Só o render final vira "prompt fechado que o cliente cola no gerador dele". O prompt é neutro por construção: não amarra em gerador nenhum. Molde:
-
-```
-[Estilo: fotográfico / ilustração premium / lousa manuscrita, conforme a peça]
-
-CENA: [descrição do fundo/cena/textura, sem nenhuma palavra escrita]
-
-PALETA: [cores da marca do cliente, ex: preto #0A0908, accent verde #147a3c]
-
-COMPOSIÇÃO: [onde fica o elemento visual; qual área fica limpa/escurecida pra receber texto por cima]
-
-SEM TEXTO, SEM PALAVRAS ESCRITAS, SEM LEGENDAS, SEM LOGOS GRANDES.
-```
-
-### 8.4 O ramo dos 3 ambientes
-
-- **App / chat (sem Bash):** o designer **entrega o prompt pronto** (bloco pra copiar), a copy-visual já gated dentro dele, com o aviso "cole no seu gerador de imagem; o texto editável entra por cima depois, no HTML". Não roda gerador nem exporta PNG.
-- **Claude Code (tem Bash + imagegen):** o motor default é o **`imagegen` local** (gpt-image-1.5). Roda:
-  ```bash
-  export OPENAI_API_KEY="$OPENAI_API_KEY"
-  ~/.venvs/imagegen/bin/python \
-    ~/.codex/skills/.system/imagegen/scripts/image_gen.py generate \
-    --prompt "$(cat prompt.txt)" --size 1024x1536 --quality high --out out.png
-  ```
-  (tamanhos válidos: 1024x1024, 1536x1024, 1024x1536; use `edit` quando houver foto de referência). Depois compõe o texto por overlay em HTML e exporta.
-- **Agente / Telegram (tem Bash):** roda o pipeline do Code; a entrega é **ARQUIVO** cujo **path completo vai na resposta** (ex: `~/entregas/pecas/lousa-estoque/final.png`), mensagens sem markdown pesado.
-
-Dependência anotada: não temos Gemini/nano-banana acoplado ao ecossistema; temos o `imagegen`. O branch emite prompt neutro (o cliente cola no gerador dele) e, no Code, chama o nosso `imagegen`. Nunca amarrar em Gemini.
-
-**A regra que atravessa tudo:** o designer nunca para por falta de gerador. Com o `imagegen` (ou outro gerador) na mão, ele GERA a imagem e entrega o PNG composto; sem ele, entrega o prompt fechado e gated pronto pra colar no gerador do cliente, mesma qualidade de copy-visual. Fecha em 1 linha o que o cliente passa a ganhar: "com um gerador conectado eu já te devolvo a imagem pronta, sem você colar em lugar nenhum" (pra ele escolher pegar, sem empurrar).
-
-### 8.5 A capa / thumbnail de vídeo (o 6º formato, herda deste branch)
-
-A thumbnail é a **headline do vídeo**: a pessoa decide clicar em menos de 1 segundo, olhando a capa entre dezenas de miniaturas. Por isso vem ANTES do roteiro (thumbnail-first): você desenha o clique, e o vídeo entrega a promessa da capa. A capa é imagem-IA (rosto real do dono + cena), então segue a lei-mãe do §8.2: **o gancho de 3-5 palavras entra por overlay HTML/CSS por cima, NUNCA dentro da imagem gerada** (editável sem regenerar, legível na fonte da marca, teto de palavras controlado).
-
-**Os 2 insumos antes de desenhar (bloqueia se faltar):**
-1. **Foto de referência do dono** (rosto nítido, luz frontal, expressão neutra-forte). Uma foto boa rende dezenas de capas com expressões variadas: reuse a MESMA entre vídeos, variando só a expressão pedida no prompt (é o que mantém a marca do canal). A foto vai ANEXADA no gerador (no Code, o `imagegen` em modo `edit`); NUNCA coloque o caminho da foto dentro do texto do prompt. Sem foto, o prompt sai genérico (rosto inventado) e perde o canal: pede a foto numa linha antes de gerar.
-2. **Ancoragem do gancho:** 2-4 falas de DOR + 2-4 de DESEJO do avatar sobre o tema, com o N. O gancho nasce de uma fala real, nunca de choque inventado. Sem fala literal, ancora em prova real do dono (case, resultado, mecanismo); número não confirmado vira `[A CONFIRMAR]` e NÃO pode virar elemento focal nem número-atrás-do-ombro até ter fonte.
-
-**As 8 regras de CTR (o coração da capa):** (1) rosto 30-50% do quadro, legível em miniatura mobile; (2) texto 3-5 palavras (ideal 3, teto 5), estilingue de curiosidade, nunca sentença; (3) 2 cores dominam (marca + 1 destaque de alto contraste: amarelo/vermelho/ciano); (4) 1 elemento focal além do rosto (objeto/número/logo/seta) que dá o assunto num relance; (5) alto contraste testável (aperta os olhos: tudo ainda se separa); (6) zona-limpa do selo de duração (canto inferior direito livre); (7) legível a 320px; (8) consistência de canal (mesma fonte, cor, enquadramento entre vídeos).
-
-**O gancho é COPY:** passa pelo gate do Passo 0 igual a uma headline (ancorado, curiosidade real que o vídeo entrega, teto CONTADO, complementa o título sem repetir trecho literal, anti-IA). No gate visual do Passo 5, o check "Gancho de capa" fecha a barra. Título do vídeo (a linha longa do YouTube) e gancho (as 3-5 palavras GRANDES na imagem) são coisas diferentes que se somam, não se repetem.
-
-**Tom emocional (a expressão do rosto casa com a dor/desejo, não com estética).** Peça em termos FÍSICOS concretos, nunca rótulo abstrato ("pareça surpreso" sai fraco; "olhos arregalados, boca entreaberta, sobrancelhas levantadas" sai forte):
-
-| Tom | Descrição física pro prompt | Olhar | Serve pra |
-|---|---|---|---|
-| **Choque** | olhos arregalados, boca entreaberta, sobrancelhas levantadas, mão perto do rosto | direto na câmera | revelação que quebra crença |
-| **Curioso** | uma sobrancelha erguida, meio sorriso de canto, queixo pra cima | fora do quadro, na direção do texto | loop aberto ("por que isso acontece") |
-| **Confiante** | queixo firme, meio sorriso fechado, ombros pra trás, braços cruzados | direto na câmera | autoridade e método |
-| **Tensão** | testa levemente franzida, olhar intenso, gesto de mão apontando | direto na câmera | tese contrária ("para de fazer isso") |
-
-**Proporção:** 1280x720 (16:9) pro YouTube long-form / aula / VSL. Shorts / reel de capa é 1080x1920 (9:16): rosto e texto na METADE DE CIMA (o terço de baixo some atrás da UI de título/botões/legenda); rosto pode ocupar mais (40-55%); texto empilhado em 2-3 linhas curtas cabe melhor no vertical; reserve o topo pro texto e nada importante nos últimos ~25% de baixo.
-
-**O molde do prompt (só o CENÁRIO, texto vem por overlay depois):**
-```
-Usando a foto de referência do dono em anexo, gere uma imagem de FUNDO de thumbnail em [1280x720 16:9 / 1080x1920 9:16].
-Composição: dono [à esquerda/direita/centro] ocupando ~[30-50]% do quadro; expressão [descrição física do tom]; olhar [direção].
-Cenário: fundo [hex] tratamento [chapado/gradiente/cena desfocada]; elemento focal [objeto/número/seta], secundário e menor que o rosto.
-Paleta: primária [hex marca], destaque [cor de alto contraste].
-Restrições: NÃO escreva NENHUM texto na imagem, nem uma letra (o texto entra por overlay depois); deixe o [terço/lado onde o texto vai] completamente limpo; rosto nítido, mantendo os traços da foto em anexo; alto contraste entre rosto e fundo; canto inferior direito limpo (selo de duração); sem UI do YouTube, sem marca d'água.
-```
-
-**Erros de gerador e correção no prompt:** texto torto/inventado na imagem → reforça "NÃO escreva NENHUM texto, nem uma letra" · rosto não parece o dono → foto mais nítida/frontal + "mantenha os traços da foto em anexo" · rosto pequeno → "% do quadro explícito (35-50%), close no rosto e ombros" · fundo poluído → "apenas 2 cores dominantes, fundo simples" · baixo contraste → "borda/glow sutil separando o rosto do fundo" · elemento focal roubou a cena → "desfocado, secundário, menor que o rosto" · área do texto não ficou limpa → "deixe o [lado] completamente limpo, sem elementos".
-
-**Fronteira / fluxo:** esta capa era a antiga skill `soft-conteudo-thumbnail`, agora dobrada aqui. O designer DECIDE a capa, escreve o gancho gated e RENDERIZA (chama o `imagegen` em modo `edit` com a foto anexada, aplica o gancho por overlay HTML/CSS na fonte da marca, exporta o PNG e devolve o path). Quem escreve o ROTEIRO do vídeo é a `soft-conteudo-reels` (depois da capa, thumbnail-first). No app/chat sem Bash, entrega o prompt pronto pro dono colar no gerador dele (o dono anexa a foto lá) + avisa que aplica o gancho por cima no HTML.
 
 ---
 

@@ -1,6 +1,16 @@
-# Banco de Objeções, Tom Soft
+# Banco de Objeções, Tom Soft (o banco COMPLETO)
 
-30 objeções mais comuns reescritas no tom Soft. Carregue quando a objeção não estiver nas top 7 da SKILL.md, ou quando o usuário pedir variações.
+O reference de objeção da skill: as 30 respostas rápidas, as frases de poder, as espinhosas em IDA-e-VOLTA, e as três seções que fecham o banco: **a anatomia de cada objeção** (fuga típica → quebra → roleplay), **as objeções que NÃO se aceitam**, e as espinhosas que faltavam (manda proposta · só pesquisando · jurídico · sem decisor). Carregue quando a objeção não estiver nas top 7 da SKILL.md, ou quando o usuário pedir variações.
+
+**O mapa do banco:**
+| Camada | O que tem | Quando usar |
+|---|---|---|
+| As 30 de uma tacada | resposta rápida por categoria | objeção simples, primeira aparição |
+| Frases de poder | reações prontas por situação | conversa estagnada, abertura, fechamento |
+| IDA e VOLTA | as espinhosas em diálogo de 3-4 camadas | o lead replicou; a primeira resposta não colou |
+| As que NÃO se aceitam | onde se confronta ou se encerra | financeiro vago · jurídico antes de decidir · sem decisor |
+
+**Anatomia de toda objeção (o padrão por trás do banco inteiro):** 1) **a fuga típica**: a primeira frase é escudo em ~99% dos casos; 2) **a quebra**: concorda/acolhe → isola ("é isso mesmo ou tem outra coisa?") → desce camada até a objeção REAL → resolve a real; 3) **o teste**: só elogio sem avanço é a pior resposta possível; proponha o passo concreto pra fazer o motivo verdadeiro aparecer. Não existe "não" em conversa de venda; existe "vou pensar", e o trabalho é descobrir o que ele esconde.
 
 **Regras do tom Soft:**
 - Nunca começa com "Perfeito" automático (tique).
@@ -136,7 +146,6 @@ As 30 acima resolvem em uma tacada (a IDA). No campo, o lead quase nunca aceita 
 > Closer: "Pronto, agora a gente tá conversando sobre a coisa certa. Vamos descer nisso."
 **Por que funciona:** as primeiras desculpas ("não tenho tempo", "só dei uma olhada") são escudos. A objeção real só aparece se você cavar; aceitar a primeira é aceitar o escudo e perder onde trabalhar. A pior de todas é o elogio sem compromisso ("gostei de tudo"), porque não dá onde se agarrar. Objeção é termômetro de intenção, não obstáculo: só objeta quem cogita agir.
 **Modelo pra adaptar:** *"Esse '[primeira desculpa]' é o que te segura mesmo, ou tem outra coisa por baixo? Pode jogar aberto, se não for o caso tá tudo certo. Porque pra eu te ajudar de verdade eu preciso saber o que de fato tá pesando pra [resultado]."*
-*(origem: DTQ_uuCjibt, DVsxZstjowg)*
 
 ### "Vou ver com o financeiro" (protocolo em 3 atos: é falsa? · quanto cabe? · plano B)
 **Diálogo real (ida e volta):**
@@ -148,7 +157,6 @@ As 30 acima resolvem em uma tacada (a IDA). No campo, o lead quase nunca aceita 
 > Closer: "E se não couber dessa forma, qual seria a outra opção? Você desiste de resolver tudo que a gente falou, ou tem um plano B?"
 **Por que funciona:** "ver com o financeiro" é o balão educado mais comum. A pergunta direta arromba o balão e força a verdade (ato 1). Pedir o número ("quanto cabe?") faz o lead abrir a conta de verdade em vez de fugir pra uma autoridade abstrata (ato 2). E antecipar o "e se não couber?" deixa o plano B combinado dentro da conversa, então quando ele voltar dizendo que não deu, o caminho alternativo já existe em vez de virar fim de negociação (ato 3). Sempre nessa ordem.
 **Modelo pra adaptar:** *"(1) Isso de ver com [o financeiro] é um jeito educado de dizer não, ou é real? (2) Você conhece a sua conta, na sua leitura isso encaixa? Quanto você acha que cabe? (3) E se não couber assim, qual seria o plano B, ou você desiste de resolver [problema]?"*
-*(origem: DZ8YtM7hDax, DXIJMRNjoyO)*
 
 ### "Preciso ver com minha esposa / meu sócio" (decisor ausente, a técnica do FBI)
 **Diálogo real (ida e volta):**
@@ -160,7 +168,6 @@ As 30 acima resolvem em uma tacada (a IDA). No campo, o lead quase nunca aceita 
 > Closer: "Então a decisão você já tomou, falta só comunicar. E quando você falar com ela, o que ela vai precisar entender pra apoiar? Vamos deixar isso resolvido aqui. Se a gente avançar, você está apto a decidir?"
 **Por que funciona:** o terceiro ausente é a objeção que mais faz o vendedor sofrer, porque não dá pra argumentar com quem não está na sala. A referência do negociador do FBI é "negociar com quem não está na mesa": você mapeia o impacto da dor na vida desse terceiro e mostra que ele espera solução, não mais um problema. Quase sempre o "terceiro" é o próprio receio do lead sentado ali. Você não cede preço só porque surgiu um decisor invisível; isola se quem está na sua frente decide e o que exatamente o terceiro precisaria saber. (Nomeie o terceiro como o receio do próprio cliente, nunca com o verbo de emperrar.)
 **Modelo pra adaptar:** *"Essa [pessoa] sabe o que você vem passando? Repara que ela não apareceu no diagnóstico nem no plano, só agora. O que ela espera, que você chegue com mais um problema ou com a solução? Então a decisão você já tomou, falta comunicar. O que ela vai precisar entender pra apoiar [resultado]?"*
-*(origem: DVhDzxOjtK0, DZKxOhYuiAA, DYnYDq8MT83)*
 
 ### "Vou pensar / preciso de tempo" (decisão é informação, não tempo)
 **Diálogo real (ida e volta):**
@@ -170,7 +177,6 @@ As 30 acima resolvem em uma tacada (a IDA). No campo, o lead quase nunca aceita 
 > Closer: "Se não falta informação, o que sobra é um frio na barriga, e tá tudo bem. Mas você não tá dizendo cinco dias pra mim, você tá dizendo cinco dias pro seu [resultado]. Quando você escolhe não decidir, você também tá decidindo."
 **Por que funciona:** concordar primeiro tira a briga e abre o lead. A analogia do hospital prova que decisão boa é sobre informação suficiente, não sobre relógio. Aí a pergunta isola exatamente o que falta; se ele já recebeu tudo, "vou pensar" não tem onde se apoiar e a objeção real (o medo) aparece. Reposicionar o adiamento como prejuízo do negócio dele, não do vendedor, tira a polaridade do "ele me faz um favor decidindo".
 **Modelo pra adaptar:** *"Faz sentido pensar, é importante. Mas decisão não é sobre tempo, é sobre informação. Se ligassem agora dizendo que [pessoa querida] precisa de você no hospital, você pensaria ou agiria? Qual informação tá faltando? Se não falta nada, esses dias parados não custam pra mim, custam pro seu [resultado]. Não decidir também é uma decisão."*
-*(origem: DZfZw7mO7yn, DTyeuBRDhgr, DYGNt93tzrc)*
 
 ### "Financeiramente eu não sei" (a objeção é medo, com âncora de desejo)
 **Diálogo real (ida e volta):**
@@ -182,7 +188,6 @@ As 30 acima resolvem em uma tacada (a IDA). No campo, o lead quase nunca aceita 
 > Closer: "Esse medo é real, e eu não vou te dizer que é impossível dar errado. Mas a decisão é de informação, e a informação você já tem. Você vai ter que passar essa linha do receio igual passou no carro."
 **Por que funciona:** quando o financeiro foi descartado como barreira real, o que sobra é medo, e medo não cede a argumento de planilha. Usar uma compra concreta que o próprio lead já fez (o sonho mais caro dele) faz ele reviver um medo que ele já venceu antes e não se arrependeu. Validar o medo sem negar a chance de fracasso cria credibilidade. Atacar o "financeiro" quando a barreira é receio é responder a pergunta errada.
 **Modelo pra adaptar:** *"Qual a coisa mais cara que você já comprou e que era um sonho? Sentiu medo? Hoje se arrepende? Você me disse que dinheiro não é o problema, então sobra o receio, e receio não é racional. Do que você tá com receio? Esse medo é real e pode dar errado, mas a decisão é de informação, e a informação você já tem sobre [resultado]."*
-*(origem: DWaGYk4DZ-C, DWg4F3VDhG8)*
 
 ### "É só você que decide?": a pergunta que você NUNCA faz (não plante a objeção)
 **Diálogo real (ida e volta):**
@@ -192,7 +197,6 @@ As 30 acima resolvem em uma tacada (a IDA). No campo, o lead quase nunca aceita 
 > Lead: "Na verdade tem, deixa eu chamar ele pra entrar."
 **Por que funciona:** objeção nasce de três formas: o cliente traz, você puxa, ou você planta. Perguntar "é só você que decide?" planta a objeção do decisor ausente E sinaliza pressa de vender, fazendo o lead se blindar com "não decido na hora". Enquadrar a conversa como "aula" e perguntar quem mais deveria aproveitar atrai o decisor pra dentro sem ativar a defesa. Você cria o problema que depois vai ter que resolver, ou evita criá-lo.
 **Modelo pra adaptar:** *"Essa conversa vai ser quase uma aula sobre [problema], eu vou me doar ao máximo. Tem mais alguém que seria importante participar pra não perder nada disso?"* (Nunca: "só você decide?".)
-*(origem: DZShGroOk9E)*
 
 ### A "Conta do 50%" ("e se aplicar só metade?", o downside cap que desarma o medo do fracasso total)
 **Diálogo real (ida e volta):**
@@ -202,7 +206,6 @@ As 30 acima resolvem em uma tacada (a IDA). No campo, o lead quase nunca aceita 
 > Closer: "Então é isso. Mesmo no pior cenário, você sai melhor do que parado. Fechou? Vai pra cima."
 **Por que funciona:** o medo do fracasso é sempre o medo do fracasso TOTAL ("perdi tudo"). Reduzir o cenário ao pior caso aceitável (só metade dá certo) e mostrar que ainda assim aproxima do objetivo desarma esse medo pela conta, não pelo discurso. O lead percebe que o próprio downside o deixa melhor que a inércia. Vira o medo numa conta favorável. Use logo depois de validar o medo (ver acima, "Financeiramente eu não sei"), nunca antes, senão soa minimizando a dúvida em vez de acolhendo.
 **Modelo pra adaptar:** *"Vamos no pior caso. Imagina que metade do que a gente combinou deu errado e só metade funcionou. Mesmo assim, isso te deixa mais perto ou mais longe de [objetivo]? Mais perto, né? Então mesmo no pior cenário você sai na frente de onde tá hoje."* Sempre sobre o objetivo real que ele nomeou, sempre honesto (você não promete que vai dar tudo certo, mostra que mesmo o pior caso compensa).
-*(origem: DWg4F3VDhG8)*
 
 ### "Ficou claro que isso resolve?" (isolar a clareza com a nota, antes de pedir a decisão)
 **Diálogo real (ida e volta):**
@@ -213,7 +216,6 @@ As 30 acima resolvem em uma tacada (a IDA). No campo, o lead quase nunca aceita 
 > Closer: "Então repara: se ficou claro que resolve, e você só precisava entender se era a solução, a decisão já não tá tomada? Falta só seguir."
 **Por que funciona:** é uma nota distinta da de intenção (que mede o quanto ele QUER resolver). Esta mede a clareza sobre a SOLUÇÃO, e fecha a porta da dúvida antes de pedir a decisão. Se o entendimento é 10, a única coisa que falta é agir, e o lead conclui sozinho que já decidiu. Se é menos que 10, você descobre exatamente o que não ficou claro antes de qualquer compromisso, e a responsabilidade é sua ("o erro foi meu"), o que mantém a conversa leve. Isola a clareza primeiro, o resto depois.
 **Modelo pra adaptar:** *"De 0 a 10, ficou claro pra você que isso resolve [problema]? ... Se não ficou 10, o erro foi meu e a gente revê. Mas se ficou claro, então o que falta mesmo é só a decisão de seguir, certo?"* Põe a clareza na mesa antes do preço; sem clareza, não revela valor (a regra de ouro continua).
-*(origem: DVl5YI9jmIH)*
 
 ### "Tô vendo outras opções" (calibrar o concorrente sem atacar)
 **Diálogo real (ida e volta):**
@@ -223,7 +225,6 @@ As 30 acima resolvem em uma tacada (a IDA). No campo, o lead quase nunca aceita 
 > Closer: "Olha, vou ser honesto: se alguém te prometer resultado garantido em 30 dias nesse tipo de coisa, cuidado, é o tipo de promessa que não se sustenta. O que eu consigo te garantir é [o real]. Isso aqui você encontra comigo; aquilo lá, te aviso, é onde mora o golpe."
 **Por que funciona:** atacar o concorrente ("eles são ruins") repele o lead e te rebaixa. Concordar primeiro abre um ambiente seguro pra ele dizer o que realmente busca. A pergunta "o que você espera ver que não viu?" revela a objeção real (às vezes é algo que você TEM e não mostrou, às vezes é uma expectativa que ninguém entrega). Aí você calibra: confirma o que entrega, e desarma a promessa vazia do concorrente nomeando-a como golpe, sem precisar atacar pessoa nenhuma. Acima de vender, você conscientiza o cliente sobre o que é promessa real e o que é conto.
 **Modelo pra adaptar:** *"Faz todo sentido avaliar. Me diz: o que você espera encontrar nos outros que talvez não tenha visto aqui? ... [ouve] Isso aqui eu entrego. Agora, se prometerem [promessa irreal] pra você, fica esperto, porque isso ninguém entrega de verdade, é o tipo de coisa que vira frustração depois."* Calibra a expectativa pra realidade, sem citar nem atacar concorrente.
-*(origem: DWXICbFDURr, DYkvtokP7d1)*
 
 ### "Preciso ver o contrato" (a formalização é reflexo, não o resultado)
 **Diálogo real (ida e volta):**
@@ -235,4 +236,54 @@ As 30 acima resolvem em uma tacada (a IDA). No campo, o lead quase nunca aceita 
 > Closer: "Pois é. Eu nem gosto de chamar de contrato, gosto de chamar de formalização. A gente só formaliza o que acordou aqui. Tudo que estiver lá fora do que falamos, você me aponta e a gente ajusta, te dou três, quatro revisões até você assinar. Mas a segurança de verdade é a gente entrar junto nesse desafio."
 **Por que funciona:** "preciso ver o contrato" parece objeção técnica, mas no fundo é medo de se comprometer e cair num golpe. Confrontar com a escolha ("resultado OU papel que te protege?") expõe que o papel nunca foi o que ele quer de verdade. Reposicionar contrato como "formalização" (reflexo do acordo, não fonte do resultado) tira o peso jurídico que estava sendo usado pra adiar. E a pergunta "das outras vezes o contrato te resguardou?" usa a experiência dele pra provar que o papel não entrega segurança real, quem entrega é a relação. Oferecer revisões livres remove o último álibi sem ceder o fechamento.
 **Modelo pra adaptar:** *"Você quer resultado, ou um papel que te proteja? Porque o contrato só vai rebater o que a gente combinou aqui, ele não é o resultado. Das outras vezes que deu errado pra você, o contrato te resguardou de alguma coisa de verdade? Eu prefiro chamar de formalização: a gente só formaliza o que acordou. O que estiver fora, você aponta e a gente revisa quantas vezes precisar. A segurança real é a gente entrar junto nisso, não o papel."* Acolhe a necessidade de formalizar (legítima), tira o papel do lugar de obstáculo.
-*(origem: DXfnbrOjQcd)*
+
+### "Me manda uma proposta" (a fuga que parece avanço)
+**Fuga típica:** pedir o PDF é o jeito educado de encerrar a call sem decidir: a proposta vira o lugar onde a venda vai morrer em silêncio.
+**Diálogo real (ida e volta):**
+> Lead: "Gostei. Me manda uma proposta por escrito que eu analiso."
+> Closer: "Mando sim. Antes, me ajuda: o que exatamente você quer analisar na proposta que a gente não consegue resolver aqui agora, com nós dois na conversa?"
+> Lead: "Ah, os valores, o que tá incluso..."
+> Closer: "Isso a gente fecha agora: o investimento é [valor] e resolve [as dores do laudo]. O que mais você precisaria ver no papel? Porque se a resposta é 'nada', o papel é só um jeito confortável de adiar, e adiar custa pro seu [resultado], não pra mim."
+**Por que funciona:** a proposta pedida no fim da call quase nunca é analisada, é arquivada. Perguntar O QUE ele quer analisar expõe se falta informação (aí se resolve ali) ou se é fuga (aí se isola o motivo real). O documento pode existir, mas como FORMALIZAÇÃO do que já foi decidido na conversa, nunca como substituto da decisão.
+**Modelo pra adaptar:** *"Mando sim. Só me diz: o que você quer analisar nela que a gente não resolve aqui agora? ... Se não falta nada, o papel é só adiamento. Vamos decidir aqui e a proposta vira a formalização do que a gente combinou."*
+**Se sobreviveu ao método** (processo real de empresa com rito formal): a proposta sai com validade e compromisso amarrado na call (dia e hora do retorno, condição que expira). É a exceção do follow-up, não a rota.
+
+### "Tô só pesquisando / só dando uma olhada" (o escudo de vitrine)
+**Fuga típica:** manter-se no papel de observador pra não ser vendido. Quase sempre esconde ou interesse real com medo, ou curiosidade sem dor.
+**Diálogo real (ida e volta):**
+> Lead: "Tô só pesquisando por enquanto."
+> Closer: "Boa. Pesquisando pra resolver quando? Porque tem dois tipos de pesquisa: a de quem tem um problema apertando e tá escolhendo o caminho, e a de quem tá só passeando. Qual é a sua?"
+> Lead: "Não, o problema existe, só não sei se é a hora."
+> Closer: "Então a pesquisa já acabou, o que falta é decisão. Me conta: o que precisa acontecer pra virar 'a hora'? Porque [problema] não espera a hora certa, ele cobra todo mês."
+**Por que funciona:** separa o pesquisador com dor (que é lead e merece o diagnóstico) do passeador (que se encerra com leveza). A pergunta "pesquisando pra resolver quando?" força a intenção a aparecer. Quem admite o problema já não está pesquisando, está adiando, e aí o trabalho é a implicação, não a apresentação.
+**Modelo pra adaptar:** *"Pesquisando pra resolver quando? Se o problema existe e aperta, a pesquisa é escolha de caminho, e isso a gente resolve aqui. Se é só curiosidade, sem problema, te falo direto que ainda não é pra você."*
+
+### "Vou passar pro meu jurídico antes" (a autoridade abstrata de última hora)
+**Fuga típica:** transferir a decisão pra uma instância que não participou de nada, ganhando dias de limbo com aparência de diligência.
+**Diálogo real (ida e volta):**
+> Lead: "Preciso passar pro jurídico antes de qualquer coisa."
+> Closer: "Faz sentido o jurídico revisar o documento, e ele vai. Agora me diz: o jurídico decide SE você resolve [problema], ou só confere COMO fica escrito? Porque são duas coisas diferentes."
+> Lead: "Decidir sou eu, óbvio."
+> Closer: "Então vamos fazer na ordem certa: você decide aqui, a gente firma o compromisso, e o documento vai pro jurídico revisar ANTES de assinar, com quantas revisões precisar. O que eu não posso é deixar a decisão esperando uma revisão de texto. Alguém já enriqueceu com contrato? O contrato formaliza; quem resolve é o trabalho."
+**Por que funciona:** separa o papel do jurídico (revisar forma) do papel do decisor (decidir mérito). O compromisso se firma na call; a revisão acontece DEPOIS do compromisso e ANTES da assinatura, com abertura total de ajustes. Se o lead insiste que "o jurídico decide", o decisor real não está na conversa, e aí vale a regra do decisor ausente (não se apresenta preço pra quem não decide).
+**Modelo pra adaptar:** *"O jurídico revisa o texto, claro, quantas vezes precisar. Mas ele decide se você resolve [problema], ou confere como fica escrito? Então decide aqui comigo, e o papel vai pra revisão antes de assinar. Decisão é sua; forma é dele."*
+
+### Reunião sem decisor (não entra na métrica, não devia acontecer)
+**Fuga típica:** o interlocutor "vai levar pra quem decide", e você vira um telefone sem fio: sua apresentação chega distorcida e sem calor a quem nunca te viu.
+**Diálogo real (ida e volta):**
+> Lead: "Eu anoto tudo e apresento pro meu sócio, ele que bate o martelo."
+> Closer: "Então deixa eu te poupar: se quem bate o martelo é ele, essa conversa precisa dele dentro. Por que o teu sócio não tá aqui? Ele é incompetente? ... Não, né. Então por que a decisão é dele e a conversa é contigo? O que eu mostro aqui, você não vai conseguir mostrar lá do mesmo jeito, e a decisão vai ser tomada em cima de um resumo. Vamos marcar 30 minutos com vocês dois, e aí sim eu abro tudo, plano e condição."
+**Por que funciona:** apresentar pra não-decisor queima a apresentação (chega de segunda mão) e cria o follow-up infinito. Confrontar com respeito ("por que ele não tá aqui?") expõe o absurdo da estrutura e reposiciona a call certa como benefício pro lead. Preço NUNCA se abre sem decisor presente; reunião sem decisor nem entra na métrica de conversão (ver `funil-e-metricas.md`).
+**Modelo pra adaptar:** *"Se quem decide é [pessoa], essa conversa precisa dela. O que eu te mostro aqui não chega lá do mesmo jeito num resumo. Bora marcar com vocês dois? Aí eu abro plano e condição de uma vez."*
+
+---
+
+## As objeções que NÃO se aceitam (confronta ou encerra)
+
+Três situações onde a resposta "compreensiva" é erro técnico. Nelas, ou se confronta com respeito, ou se encerra com dignidade. Aceitar é treinar o mercado a te enrolar:
+
+1. **"Preciso ver meu financeiro" VAGO** (sem número, sem prazo). Todo mundo sabe, na leitura, quanto tem no banco e quanto cabe. O protocolo dos 3 atos (acima) existe pra isso: é falsa ou real? → quanto cabe? → plano B. Se a pessoa se recusa a dar QUALQUER número mesmo depois do protocolo, não há negociação acontecendo: *"sem um número, eu não consigo te ajudar; quando você tiver a sua leitura, a gente conversa."*
+2. **"Vou passar pro jurídico" ANTES de decidir.** Jurídico revisa forma, não decide mérito (protocolo acima). Insistiu que o jurídico decide = a conversa está com a pessoa errada; remarca com o decisor real.
+3. **Reunião sem decisor.** Não se apresenta preço, não se faz o pitch de segunda mão, não entra na métrica. Remarca com o decisor dentro. A prevenção é melhor que a cura: o convite-aula ("tem mais alguém que seria importante participar?") atrai o decisor sem plantar a objeção.
+
+**E o limite ético que fecha o banco:** não se vende pra quem o dinheiro é TUDO que a pessoa tem. Medo dessa magnitude paralisa a execução e vira cancelamento, não resultado. Pouco recurso com decisão firme compra e executa; recurso na conta com pavor não. O closer Soft filtra: é proteção do cliente e do caixa do dono ao mesmo tempo.

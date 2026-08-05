@@ -54,9 +54,9 @@ A maioria das skills de copy entrega **texto bruto** que o cliente precisa diagr
 | Discurso Base aprovado · cliente pediu Carta | ✅ Ativa este modo |
 | Cliente pediu Carta direto sem briefing | Roteia primeiro pra `discurso-base-7-passos.md` (briefing) |
 | Cliente pediu landing page completa com VSL | Roteia pra a skill `soft-funil-landing` |
-| Cliente pediu webinar | Roteia pra skill `soft-webinar-plano` |
+| Cliente pediu webinar | Roteia pra skill `soft-webinar` |
 | Cliente quer versão em vídeo da Carta | Roteia pra a skill `soft-funil-miniwebinar` (alternativa à Carta) |
-| Ticket alto · cliente quer aprofundar | Considerar Webinar (skill `soft-webinar-plano`) ou Reunião Soft (conversão) como complemento |
+| Ticket alto · cliente quer aprofundar | Considerar Webinar (skill `soft-webinar`) ou Reunião Soft (conversão) como complemento |
 
 ### Faixa de ticket, Carta basta?
 
@@ -493,7 +493,7 @@ Pré-leitura recomendada antes de publicar: 1 leitura completa em silêncio cron
 | Aplicação nos 7 passos | `shared-references/crivo/05-premissas-mestras.md` |
 | Versão em vídeo (alternativa à Carta) | a skill `soft-funil-miniwebinar` |
 | Landing page com VSL ou multimídia | a skill `soft-funil-landing` |
-| Webinar ao vivo ou perpétuo | skill `soft-webinar-plano` |
+| Webinar ao vivo ou perpétuo | skill `soft-webinar` |
 
 
 ## Gate de saída obrigatório, o Crivo (bloqueante)
@@ -501,6 +501,6 @@ Pré-leitura recomendada antes de publicar: 1 leitura completa em silêncio cron
 Antes de mostrar a peça, ela passa pelo Crivo embutido em `shared-references/crivo/`, nesta ordem:
 1. **Ancoragem** (`crivo/01-entrada-verbatim.md`), na entrada e na checagem: toda fala entre aspas é verbatim literal da fonte real do cliente, e o ângulo-mãe tem N. Aspa que não bate na fonte reprova.
 2. **Simulação na pele do avatar** (`crivo/02-simulacao-cliente.md`): onde ele larga, onde se reconhece, o teste dos 2 segundos.
-3. **Gate CUB bloqueante + as 3 perguntas do gate** (`crivo/03-gate-cub.md`): imprime a tabela, o veredito é o pior bloco, peça que falha não sai, volta pra reescrita.
+3. **Gate CUB bloqueante + as 3 perguntas do Harry** (`crivo/03-gate-cub.md`): imprime a tabela, o veredito é o pior bloco, peça que falha não sai, volta pra reescrita.
 
 O anti-IA limpa o robô; o Crivo dá a força. Limpo não é forte. Os dois, nessa ordem. **Sem a tabela do Crivo impressa junto, a peça não foi entregue.**

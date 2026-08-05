@@ -1,6 +1,6 @@
 # Gate CUB: reprova o que não tem força
 
-> Passo 3 do Crítico. Bloqueante. Espelha o gate do design (`soft-designer/references/auditoria-pre-preview.md`), que já provou funcionar: o modelo é OBRIGADO a preencher um artefato visível antes de mostrar a peça, e peça que falha não sai.
+> Passo 3 do Crítico. Bloqueante. Espelha o gate do design (reference `auditoria-pre-preview.md` da skill `soft-designer`, quando instalada), que já provou funcionar: o modelo é OBRIGADO a preencher um artefato visível antes de mostrar a peça, e peça que falha não sai.
 
 ## Por que é bloqueante e não "uma dica"
 
@@ -71,7 +71,7 @@ E para **cada headline ou capa**, as 3 perguntas do crivo (gate extra, todas tê
 - **Consciente da solução / do produto** (já conhece o caminho): abre pela DIFERENÇA do teu mecanismo e pela PROVA, não pela existência dele.
 - **Mercado saturado (E4-E5, o nicho do perfil de exemplo):** promessa direta soa igual a todo concorrente. Abre por mecanismo nomeado + identificação ("isso explica o que eu vivo"), nunca por promessa gasta. O default "mecanismo sempre" só vale aqui; pro leitor inconsciente ele mata a abertura.
 
-**Passada 3-bis, Proprietário (headline, capa, CTA).** Teste de substituição-de-autor: troca o nome do cliente pelo do concorrente direto na frase. Se a frase sobrevive (o rival podia assinar igual), é genérica, NOTA de conserto. A frase de assinatura é a que SÓ sobrevive na boca DESTE cliente, porque carrega um bordão, uma cena-assinatura ou o mecanismo nomeado da Biblioteca de Assinatura (`soft-plano-posicionamento/references/bloco-5-fundacao-headlines.md`, item 5). Aprofunda o "só eu posso dizer" do o crivo: não basta não ser frase de guru, tem que ser inconfundivelmente do cliente.
+**Passada 3-bis, Proprietário (headline, capa, CTA).** Teste de substituição-de-autor: troca o nome do cliente pelo do concorrente direto na frase. Se a frase sobrevive (o rival podia assinar igual), é genérica, NOTA de conserto. A frase de assinatura é a que SÓ sobrevive na boca DESTE cliente, porque carrega um bordão, uma cena-assinatura ou o mecanismo nomeado da Biblioteca de Assinatura (reference `bloco-5-fundacao-headlines.md`, item 5, da skill `soft-plano-posicionamento`, quando instalada). Aprofunda o "só eu posso dizer" do o crivo: não basta não ser frase de guru, tem que ser inconfundivelmente do cliente.
 
 3 sins, passa. 1 não, reescreve. Standalone, este bloco JÁ É o teste construtivo completo (as 3 perguntas do crivo são o corte anti-genérico). Se a skill da vez tiver o `shared-references/filtro-anti-ia/teste-construtivo.md` local (toda skill que produz peça tem, é cópia sincronizada da fonte), abre lá pra mais detalhe e exemplos; o resultado é o mesmo.
 

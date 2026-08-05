@@ -120,4 +120,4 @@ Quatro arquiteturas validadas. Cada uma resolve um cenário específico de produ
 
 ## Gate de saída obrigatório, o Crivo (bloqueante)
 
-A peça adaptada passa pelo Crivo embutido (`shared-references/crivo/`) ANTES de entregar, IGUAL à peça-âncora: ancoragem (aspa literal real) → simulação na pele do avatar → gate CUB bloqueante (Confuso, Inacreditável, Boring, + 3 perguntas do gate + Ação/CTA com destino) → anti-IA. Peça que falha não sai. Adaptar de formato não dispensa o gate.
+A peça adaptada passa pelo Crivo embutido (`shared-references/crivo/`) ANTES de entregar, IGUAL à peça-âncora: ancoragem (aspa literal real) → simulação na pele do avatar → gate CUB bloqueante (Confuso, Inacreditável, Boring, + 3 perguntas do Harry + Ação/CTA com destino) → anti-IA. Peça que falha não sai. Adaptar de formato não dispensa o gate.

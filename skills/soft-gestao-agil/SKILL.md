@@ -1,6 +1,6 @@
 ---
 name: soft-gestao-agil
-description: "Skill OPERACIONAL de gestao agil pra QUALQUER negocio dentro do LEON. Cobre 7 camadas encadeadas: ESTRATEGIA (OKR), PRIORIZACAO, KANBAN, SCRUM (rituais), GTD (individual), ROTINAS e BRIEFING. Uma skill mae unica que roda o pipeline completo por Q&A guiado retomavel, do zero ao plano executavel: identifica a camada certa pela dor do dono, conduz as perguntas na ordem, mostra preview a cada 5 respostas e entrega o plano com OKR, iniciativas, kanban, roteiro de rituais e revisao semanal. Base: metodo autoral de gestao agil destilado de um curso completo, somado a GTD, Scrum classico e Kanban Lean. Use quando o dono pedir organizar rotina do time, planejar trimestre, montar OKR, priorizar backlog, definir briefing, sprint, review, retro, produtividade pessoal, planejamento agil, ou 'me ajuda a nao esquecer nada'. NAO use pra copy nem conteudo (soft-conteudo), funil ou venda (soft-funil-*, soft-vendas-*), financeiro (soft-financeiro), nem webinar (soft-webinar-plano)."
+description: "Skill OPERACIONAL de gestao agil pra QUALQUER negocio dentro do LEON. Cobre 7 camadas encadeadas: ESTRATEGIA (OKR), PRIORIZACAO, KANBAN, SCRUM (rituais), GTD (individual), ROTINAS e BRIEFING. Uma skill mae unica que roda o pipeline completo por Q&A guiado retomavel, do zero ao plano executavel: identifica a camada certa pela dor do dono, conduz as perguntas na ordem, mostra preview a cada 5 respostas e entrega o plano com OKR, iniciativas, kanban, roteiro de rituais e revisao semanal. Base: metodo autoral de gestao agil destilado de um curso completo, somado a GTD, Scrum classico e Kanban Lean. Use quando o dono pedir organizar rotina do time, planejar trimestre, montar OKR, priorizar backlog, definir briefing, sprint, review, retro, produtividade pessoal, planejamento agil, ou 'me ajuda a nao esquecer nada'. NAO use pra copy nem conteudo (soft-conteudo), funil ou venda (soft-funil-*, soft-vendas-*), financeiro (soft-financeiro), nem webinar (soft-webinar)."
 ---
 
 # soft-gestao-agil, Gestao Agil OPERACIONAL (skill mae)
@@ -35,7 +35,7 @@ Ancorado na arquitetura de 3 camadas do Denisson (Estrategica, Tatica, Operacion
 
 - UMA pergunta por vez. Nunca despeje 3 perguntas juntas.
 - Sugerir 2-3 OPCOES em cada decisao (nunca uma so). Dono escolhe.
-- ZERO default do dono. Exemplos ilustrativos, nunca o produto/naming do dono como padrao.
+- ZERO default do Leo. Exemplos ilustrativos, nunca o produto/naming do Leo como padrao.
 - Preview a cada 5 respostas: "olha o que ja da pra montar com o que voce me deu".
 - Retomabilidade: estado salvo em `/tmp/soft-gestao-agil-<slug>-<epoch>.json` a cada resposta.
 - Anti-IA lint no output final antes de fechar.
@@ -93,7 +93,7 @@ Referencias: `references/_metodo-visao.md` (Canvas Divisao, aula 2) + `reference
 
 #### PRIORIZACAO (Matriz + Canva 3P)
 
-Referencias: `references/_metodo-priorizacao.md` (Matriz Esforco x Impacto, aula 4) + `references/_metodo-3p.md` (Canva 3P, aula 5)
+Referencias: `references/_metodo-priorizacao.md` (Matriz Esforco x Impacto, aula 4) + `references/_metodo-canva-3p.md` (Canva 3P, aula 5)
 
 1. "Me lista tudo que esta na sua fila hoje, mesmo que meio-desorganizado. Uma coisa por linha."
 2. Aplica o filtro do metodo: pra cada item, "esse item MOVE algum KR do trimestre?" Se nao move, sai (regra de ouro do Denisson: sem OKR, esta fora do escopo).
@@ -189,7 +189,7 @@ Se aprovado: exporta em Google Doc via `gog drive upload --convert` e devolve a 
 
 Antes de fechar QUALQUER output pro dono:
 ```
-python3 ~/.claude/skills/soft-critico-copy/scripts/lint_copy.py <arquivo>
+python3 /home/cloud/.claude/skills/soft-critico-copy/scripts/lint_copy.py <arquivo>
 ```
 Se falhar hard (exit 1), reescreve e roda de novo. Vale pra .md do plano, brief exportado, tudo.
 
@@ -229,7 +229,7 @@ Se qualquer NAO, revisa antes de entregar.
 - Nao empurrar OKR quando a dor eh individual (GTD resolve).
 - Nao empurrar Scrum puro em pequeno/medio negocio (o pipeline Denisson chega).
 - Nao criar quadro/ritual sem envolver o dono no desenho (senao ninguem usa).
-- Nao usar naming do dono (Mesa de Operacao, Sistema Soft, etc) como default. Sao exemplos ilustrativos apenas.
+- Nao usar naming do Leo (Mesa de Operacao, Sistema Soft, etc) como default. Sao exemplos ilustrativos apenas.
 - Nao pular a Tatica (Briefing + Backlog Duas Dimensoes). Erro mais comum do empresario.
 - Nao deixar FAZENDO sem limite WIP.
 - Nao rodar Kanban sem Revisao sexta.

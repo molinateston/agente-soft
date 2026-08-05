@@ -9,7 +9,7 @@ Ativado quando o usuário traz números, gargalo, pipeline, time comercial, fore
 | Métrica | Fórmula | Diagnóstico quando ruim |
 |---|---|---|
 | **Conversão por etapa** | leads etapa N+1 ÷ leads etapa N | Gargalo = etapa com maior queda |
-| **Win Rate** | deals fechados ÷ deals qualificados | <20% = qualificação fraca (checklist de qualificação) ou apresentação ruim |
+| **Win Rate (a régua-mãe)** | PAGAMENTOS ÷ aprovados no diagnóstico | ≤20% péssimo · 30% sinal de vida · 40% no jogo · 50% bom (2 aprovados → 1 paga) · acima = domínio |
 | **CAC** | gasto em aquisição ÷ clientes novos | Alto = tráfego errado ou funil furado |
 | **LTV** | ticket × retenção × margem | Baixo = falta recorrência/upsell |
 | **LTV/CAC** | LTV ÷ CAC | Saudável ≥ 3x |
@@ -18,6 +18,11 @@ Ativado quando o usuário traz números, gargalo, pipeline, time comercial, fore
 | **Ticket médio** | receita ÷ deals | Baixo = posicionamento ruim ou desconto demais |
 | **No-show rate** | reuniões não realizadas ÷ agendadas | Alto = lead frio ou copy de agendamento fraca |
 | **Taxa de termômetro positivo** | leads que passam F3 ÷ leads totais | Baixa = Carta filtrando errado |
+
+**As 3 regras da medição (antes de calcular qualquer coisa):**
+1. **Conversão = PAGAMENTO.** Dinheiro ou sinal na conta. Contrato assinado e "fechou verbal" são pipeline, não conversão.
+2. **A base do win rate é o APROVADO NO DIAGNÓSTICO** (passou o diagnóstico, verbalizou compromisso, recebeu o pit), nunca "call feita". Medir de call feita mistura filtro (que é acerto) com perda (que é erro) e cega o diagnóstico.
+3. **Reunião sem decisor não entra na métrica** e não devia ter acontecido; conta como defeito de agendamento (do SDR ou do convite), não como perda do closer.
 
 ---
 
@@ -59,6 +64,10 @@ Quando o usuário disser "meu time":
 - **Gestor comercial** → foco em forecast, scorecard do checklist de qualificação, coaching de reps. Sucesso = previsibilidade do pipeline.
 
 Se o usuário não disse o perfil, pergunta: *"É pra você sozinho ou tem time? Se tem, qual perfil, SDR, closer, gestor?"*.
+
+**Comissão de SDR (as duas moedas):** SDR ganha por reunião ACONTECIDA (não agendada: acontecida) + bônus maior por fechamento. Só por venda = SDR sem controle sobre o próprio ganho, desanima; só por reunião = SDR que empurra lead ruim pro closer. As duas moedas juntas fazem ele controlar o próprio esforço E torcer pela qualidade.
+
+**A rotina de gestão que não se negocia:** o gestor assiste **1 call por semana de cada closer** (régua na `caixa-de-ferramentas-closer.md`). Coordenador de vendas que não assiste call é cego: gerencia o placar sem ver o jogo.
 
 ---
 

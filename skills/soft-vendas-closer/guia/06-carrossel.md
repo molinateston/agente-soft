@@ -164,7 +164,7 @@ A capa boa tem duas camadas ao mesmo tempo: é **concreta** (a imagem que o cér
 
 **Card 8. Convite Natural (CTA)**
 
-> Se isso bateu, o caminho é a Implementação Soft:
+> Se isso bateu, o caminho é o [PROGRAMA PRINCIPAL do dono]:
 > · 3 sessões individuais
 > · Carta no ar
 > · Sistema rodando em 60 dias

@@ -20,6 +20,21 @@ continua no olho, via teste-voz-alta.md e teste-construtivo.md.
 """
 import sys
 import re
+import unicodedata
+
+
+def _fold(s):
+    """Remove acento (NFKD + descarta marca combinante). Usado pra pegar cliche
+    de IA em peca que chega SEM acento (carrossel exportado em ASCII, por ex.:
+    'nao e sorte, e pilotagem' tem que reprovar igual a 'nao e sorte, e pilotagem')."""
+    return ''.join(c for c in unicodedata.normalize('NFKD', s) if not unicodedata.combining(c))
+
+
+def _fold_pattern(rx):
+    """Recompila um regex com os literais acentuados do proprio padrao sem acento,
+    pra rodar contra texto ja sem-acento (_fold do texto). Sintaxe de regex
+    (\\s, \\b, chaves, colchetes) nao tem acento, entao so os literais mudam."""
+    return re.compile(_fold(rx.pattern), rx.flags)
 
 # ── HARD: bloqueia o export/entrega ──────────────────────────────────────────
 HARD = [
@@ -41,7 +56,7 @@ HARD = [
     (re.compile(r'n[aã]o\s+é\.\s+(?:É|Falta|Faltou|Sobrou)\b', re.I),
      '"Nao e." pelado + virada (molde de IA; complete a frase sem o truque)'),
     # Antítese-nominal telegráfica → HARD (antes era WARN). Mesma régua: polos de 1 palavra,
-    # clause-anchored. Fala real do dono com sujeito/verbo ou cauda de +1 palavra escapa.
+    # clause-anchored. Fala real do Léo com sujeito/verbo ou cauda de +1 palavra escapa.
     (re.compile(
         r'(?:(?<=[.!?])\s+|^)\s*(?:isso\s+)?'
         r'(?:n[aã]o\s+(?:é|foi)\s+[\wáéíóúâêôãõç]+\s*,\s*(?:é|foi)\s+[\wáéíóúâêôãõç]+'
@@ -73,7 +88,7 @@ HARD = [
         r')',
         re.I),
      'muleta de swipe/proximo-slide (contexto fora do slide; a seta ja basta — feche a tensao AQUI)'),
-    # Personificação Soft Soft (o dono 13/jul): caixa/renda/algoritmo/mês/janela com verbo de humano
+    # Personificação Soft Soft (Léo 13/jul): caixa/renda/algoritmo/mês/janela com verbo de humano
     (re.compile(
         r'(?:'
         r'(?:o\s+)?caixa\s+(?:ainda\s+)?'
@@ -128,11 +143,17 @@ COUNT = [
 ]
 
 
+HARD_FOLDED = [(_fold_pattern(rx), label) for rx, label in HARD]
+
+
 def lint(text):
     """Retorna (hard, warn): listas de (label, trecho)."""
     hard, warn = [], []
-    for rx, label in HARD:
+    folded_text = _fold(text)
+    for (rx, label), (frx, _) in zip(HARD, HARD_FOLDED):
         hits = rx.findall(text)
+        if not hits:
+            hits = frx.findall(folded_text)
         if hits:
             ex = hits[0] if isinstance(hits[0], str) else hits[0][0]
             hard.append((label, f'{len(hits)}x (ex: "{ex}")'))
@@ -192,7 +213,7 @@ def _self_test():
     assert _hard('Enquanto a renda pede câmera todo dia, você não tem folga.', 'personificacao'), 'renda pede'
     assert _hard('O algoritmo come. O mês não fecha.', 'personificacao'), 'algoritmo come'
 
-    # ── falas REAIS do dono: NÃO podem ser HARD de antítese ────────────────────
+    # ── falas REAIS do Léo: NÃO podem ser HARD de antítese ────────────────────
     reais = [
         'vender não é convencer, é conduzir',
         'educar não vende',
@@ -211,8 +232,20 @@ def _self_test():
                or 'Nao e X' in l or 'nao e sobre' in l]
         assert not ant, f'FALSO-POSITIVO HARD em fala real: {r!r} -> {ant}'
 
+    # ── mesmos padroes, texto SEM ACENTO (carrossel as vezes exporta em ASCII) ──
+    assert _hard('Isso nao e sorte, e pilotagem.', 'antitese-nominal'), 'ASCII: Nao e X, e Y'
+    assert _hard('Nao e sorte. E pilotagem.', 'Nao e X. E Y'), 'ASCII: Nao e X. E Y'
+    assert _hard('Nao e sobre o preco, e sobre profundidade.', 'nao e sobre'), 'ASCII: nao e sobre'
+    ascii_reais = [_fold(r) for r in reais]
+    for r in ascii_reais:
+        hh, _ = lint(r)
+        ant = [l for l, _ in hh if 'antitese' in l or 'dupla' in l or 'pelado' in l
+               or 'Nao e X' in l or 'nao e sobre' in l]
+        assert not ant, f'FALSO-POSITIVO HARD em fala real SEM ACENTO: {r!r} -> {ant}'
+
     print('lint_copy.py self-test OK — HARD (em-dash, travar, dupla nao-e, antitese, '
-          'nao-e-sobre, muleta, personificacao) + falas REAIS do dono passam limpas.')
+          'nao-e-sobre, muleta, personificacao) + falas REAIS do Léo passam limpas, '
+          'com e sem acento.')
     print('uso: python3 scripts/lint_copy.py peca.txt   |   echo "..." | python3 scripts/lint_copy.py -')
 
 

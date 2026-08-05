@@ -1,26 +1,7 @@
 ---
 name: soft-launch
-description: "Operadora do SOFT LAUNCH, o degrau 3 (topo) da escada de funis Soft (Funil Soft, Webinar Soft, Soft Launch). Funil de LANÇAMENTO COMPLETO: evento com sequência, carrinho que abre e fecha, escassez honesta, tráfego e Comercial 1:1 pra high-ticket. O TIPO DE ENTRADA é só um parâmetro, a engenharia é a mesma: PAGA (Sala Secreta, evento/desafio com ingresso) OU GRATUITA (aula/CPL/desafio grátis) OU híbrida (intercala as duas). Combina Sala Secreta e LPSG; 4 modos (diagnóstico, plano, debriefing, crise). Use quando envolver Soft Launch, lançamento pago OU gratuito, Sala Secreta, LPSG, desafio de 5 dias, CPL, aula de captura, ingresso, carrinho, lote, escassez, ROAS, CAC zero, comparecimento baixo, debriefing. NÃO use pra carrossel/reel/stories (soft-conteudo-*), carta ou VSL do Funil Soft (soft-funil-carta/-landing), webinar perpétuo degrau 2 (soft-webinar-plano), posicionamento (soft-plano-posicionamento), tráfego operado na plataforma (soft-trafego-meta), ou venda/objeção/fechamento 1:1 (soft-vendas-closer)."
+description: "O degrau 3 (topo) da escada de funis Soft (Funil Soft, Webinar Soft, Soft Launch). Funil de LANÇAMENTO COMPLETO: evento com sequência, carrinho que abre e fecha, escassez honesta, tráfego e Comercial 1:1 pra high-ticket. O TIPO DE ENTRADA é só um parâmetro, a engenharia é a mesma: PAGA (Sala Secreta, evento/desafio com ingresso) OU GRATUITA (aula/CPL/desafio grátis) OU híbrida (intercala as duas). Combina Sala Secreta e LPSG; 4 modos (diagnóstico, plano, debriefing, crise). Use quando envolver Soft Launch, lançamento pago OU gratuito, Sala Secreta, LPSG, desafio de 5 dias, CPL, aula de captura, ingresso, carrinho, lote, escassez, ROAS, CAC zero, comparecimento baixo, debriefing. NÃO use pra carrossel/reel/stories (soft-conteudo-*), carta ou VSL do Funil Soft (soft-funil-carta/-landing), webinar perpétuo degrau 2 (soft-webinar), posicionamento (soft-plano-posicionamento), tráfego operado na plataforma (soft-trafego-meta), ou venda/objeção/fechamento 1:1 (soft-vendas-closer)."
 ---
-
-> 🔴 **REGRA DURA DE FRASE , "TODA FRASE SE EXPLICA SOZINHA"** (vale em TUDO que esta skill escrever pro público)
->
-> Copy Soft é **frase que gera IMAGEM na cabeça de quem lê frio**. Não pode assumir que o leitor já sabe o assunto, o produto, a categoria, o método, o mecanismo ou o antes/depois. Toda frase que você escrever precisa se sustentar sozinha, sem depender do slide anterior, da bio, do título, ou do que "obviamente é". Frase curta que "soa punchy" e deixa o entendimento pro contexto é reprovada.
->
-> **Teste antes de aprovar CADA frase:** "se essa frase caísse solta no scroll de uma pessoa que nunca ouviu falar do produto, ela entenderia O QUÊ + PRA QUEM + O RESULTADO CONCRETO?" Se não, REESCREVE nomeando explícito: qual é o objeto ("dieta", "calorias", "conta de calorias", não só "conta"), qual é o público ("mulher que já tentou emagrecer de todas as formas", não só "mulher que já tentou de tudo"), qual é o resultado concreto ("para de recomeçar a dieta", não só "para de recomeçar).
->
-> **Ex reprovado →** *"Você come o que ama, um agente faz a conta do seu dia e você para de recomeçar."*
-> **Ex aprovado →** *"Você passa a comer o que ama, um agente faz a conta de calorias do seu dia inteiro e não te deixa escorregar, e você para de recomeçar a dieta toda vez do zero."*
->
-> Adicionar as 3-5 palavras que ancoram o contexto é MELHOR que a frase curta ambígua. Copy boa não é curta , é **inequívoca e imagética**. Frase que precisa de contexto pra ser entendida = frase quebrada, refaz.
-
-> **REGRA-IRMÃ · "NENHUM VERBO ÓRFÃO" (cérebro preguiçoso do leitor):** o leitor tem cérebro preguiçoso e NÃO vai completar sua frase pra você. Todo verbo precisa vir com seu OBJETO NOMEADO na mesma frase, senão vira frase média. Verbos-armadilha que exigem complemento explícito: cortar (**cortar o quê?**), recomeçar (**recomeçar o quê?**), parar (**parar de quê?**), mudar, melhorar, escapar, largar, controlar, ajustar, resolver, virar, transformar. Sempre nomeia o objeto concreto (arroz, pão, doce, dieta, treino, agenda, cliente, valor), NUNCA deixa aberto.
->
-> **Ex ✅ BOA (verbos ancorados + objetos nomeados):** *"Você come arroz, pão e o que ama, e uma ferramenta minha conta as calorias de tudo por você todo dia, pra você emagrecer sem viver de dieta."* , "come" tem objeto (arroz, pão), "conta" tem objeto (calorias), "emagrecer" tem contexto ("sem viver de dieta").
->
-> **Ex ⚠️ MÉDIA (verbo órfão no fim):** *"…pra você emagrecer comendo o que gosta em vez de cortar."* , "cortar O QUÊ?" ficou pro leitor completar. Cérebro preguiçoso não completa, desiste. Correto: *"…em vez de cortar arroz, pão e doce."*
->
-> Antes de aprovar a frase, sublinha mentalmente cada verbo e confere: cada um tem OBJETO nomeado? Não? Nomeia agora.
 
 # Soft Launch, o degrau 3 da escada de funis (lançamento pago OU gratuito)
 
@@ -36,6 +17,9 @@ O que **não muda** entre pago e gratuito: a sequência (gerar demanda antes →
 
 > Como todo funil Soft, é **+ Comercial**: o lançamento QUALIFICA o lead (gera o "sim do produto"); o fechamento 3k+ é no 1:1 (`soft-vendas-closer`), nunca no checkout. O marketing entrega quente; a venda é da `soft-vendas-closer`. A operação que materializa isso está em `references/aplicacao-e-comercial-operado-por-ia.md`.
 
+## REGRA DE BLOQUEIO (le ANTES de qualquer etapa)
+O Modo A (diagnostico das 6 variaveis + veredito) e BLOQUEANTE: roda primeiro, mostra o veredito e PARA esperando o OK. Entregar as etapas em lote, sem gate e sem STOP, e defeito que REPROVA a entrega inteira: refaz do Modo A. Cada etapa desce ao chao (denso), nunca 2-4 linhas adiando conteudo.
+
 ## Princípio raiz
 > **Lançamento é ferramenta, não estratégia. Funciona muito aplicado certo (pago ou gratuito), destrói o negócio quando vira repetição cega.**
 
@@ -45,7 +29,7 @@ Para cliente Soft, o Soft Launch é **injeção pontual** sobre o sistema, nunca
 
 ## Output Contract (o que você entrega)
 - **Modo A**: diagnóstico em 6 variáveis + **recomendação de tipo de entrada** (pago / gratuito / híbrido) com veredito verde/amarelo/vermelho. Não recusa.
-- **Modo B**: o plano (formato, entrada, página, criativos, tráfego, narrativa, carrinho/escassez, pós-venda, order bumps), **uma etapa por vez**, cada peça de leitor final com o GATE preenchido.
+- **Modo B**: o plano (formato, entrada, página, criativos, tráfego, narrativa, carrinho/escassez, recuperação de carrinho, remarketing da janela, pós-venda, order bumps), **uma etapa por vez**, cada peça de leitor final com o GATE preenchido.
 - **Modo C**: debriefing por etapa + plano de ajuste + (se Soft) integração de volta.
 - **Modo D**: diagnóstico em 1 linha + ação imediata. Sem aula.
 - Você **nunca inventa fala nem número do cliente** e **nunca entrega peça que falhou no GATE**.
@@ -54,7 +38,7 @@ Para cliente Soft, o Soft Launch é **injeção pontual** sobre o sistema, nunca
 ## ⚠️ ENTREGA = UM doc MD, SEMPRE (nunca pingar a peça no chat)
 Regra dura, vale mesmo pra copy curta: o RESULTADO desta skill sai como **UM documento markdown consolidado**. No **claude.ai**, um **artifact de markdown** (o dono abre, copia, baixa); no **Claude Code**, um arquivo `.md`. No **agente/Telegram**, gera o doc como arquivo `.md` e cita o path completo na resposta (vira anexo); a condução vai em mensagens curtas, sem markdown pesado (sem `##`, sem tabela `|` no texto ao usuário; o doc leva isso). A CONDUÇÃO (perguntas de contexto, escolhas, os STOPs de aprovação) acontece no chat; a PEÇA/COPY em si mora no DOC. Ao parar num STOP, você mostra ou atualiza o DOC e pergunta "ajusto?"; você NUNCA reescreve a peça em pedaços no corpo da conversa. Sem o doc entregue, a skill não terminou.
 
-> **O DOC INTEIRO é livre de travessão e da família "emperrar", não só a copy de leitor final.** Este `.md` É o entregável que o DONO lê: títulos, prosa de condução, justificativa de formato, rótulos de opção (ex.: "Opção A: Sala Secreta"), recomendação e header contam igual. Antes de emitir o doc consolidado (qualquer modo, qualquer etapa, inclusive o Modo A que só recomenda), roda o CTRL+F de "," e de "emperrar/empacado/desemperrar" sobre o `.md` inteiro. Travessão "," em qualquer lugar do doc = REFAZ. No Claude Code, roda `python3 scripts/lint_copy.py doc.md` sobre o arquivo consolidado inteiro (não só sobre a copy final) antes de entregar; em-dash e "emperrar" são HARD (exit 1), achou não sai. O teste anti-IA de olho (voz-alta + itens 10/14 "não é X, é Y" no máximo 1x no texto inteiro) também vale pro doc de trabalho, não só pro criativo.
+> **O DOC INTEIRO é livre de travessão e da família "travar", não só a copy de leitor final.** Este `.md` É o entregável que o DONO lê: títulos, prosa de condução, justificativa de formato, rótulos de opção (ex.: "Opção A: Sala Secreta"), recomendação e header contam igual. Antes de emitir o doc consolidado (qualquer modo, qualquer etapa, inclusive o Modo A que só recomenda), roda o CTRL+F de "—" e de "travar/travado/destravar" sobre o `.md` inteiro. Travessão "—" em qualquer lugar do doc = REFAZ. No Claude Code, roda `python3 scripts/lint_copy.py doc.md` sobre o arquivo consolidado inteiro (não só sobre a copy final) antes de entregar; em-dash e "travar" são HARD (exit 1), achou não sai. O teste anti-IA de olho (voz-alta + itens 10/14 "não é X, é Y" no máximo 1x no texto inteiro) também vale pro doc de trabalho, não só pro criativo.
 
 ## Passo 0, sempre: lê o perfil do usuário (NÃO PULE)
 Lê `shared-references/crivo/00-perfil-do-usuario.md`. Avatar, fonte de VoC, banco de provas, voz e nicho são DELE, nunca os do autor do método (que é só perfil de exemplo). Usuário sem perfil (cold start) vai pro onboarding (Plano na `soft-plano-posicionamento` + mineração de VoC no `01-entrada-verbatim.md`) antes de produzir.
@@ -97,9 +81,14 @@ Entrega, **uma etapa por vez, com STOP entre elas**:
 3. **Narrativa de pontos-cegos** (o conversor da aula, anti-genérico) → `narrativa-pontos-cegos.md`. **Sempre.**
 4. **Página do evento + 4 criativos + tráfego** → `paginas-criativos-trafego.md`. Se pago: ingresso 20-30x mais barato que o produto, é **compromisso, NÃO CPL**. Se gratuito: página de captura que qualifica, canhão de base, sem cara de "live grátis" jogada fora.
 5. **Carrinho + escassez honesta** (virada de lote, abertura e fechamento do carrinho, prazo real, sem falso timer) → `lancamento-pago-operacao.md`. **Sempre.** A escassez é REAL (lote que vira, carrinho que fecha de verdade), nunca inventada.
-6. **Pós-venda do ingresso / lead** (CRM, manifesto 48h antes, área de membros, lead scoring, indicações) → `pos-venda-ingresso.md`.
-7. **Order bumps pra CAC zero** (Q&A, gravação, método ancorado) → `order-bumps-cac-zero.md`. Ativo sobretudo na entrada paga; no gratuito, o low-ticket de fronte faz o mesmo papel.
-8. **+ Comercial** (aplicação no lugar de checkout, lead score, não-fechar-carrinho, ligação 1:1, comercial operado por IA) → `aplicacao-e-comercial-operado-por-ia.md`. **Sempre.**
+6. **Recuperação de carrinho** (a máquina que corre atrás de quem parou no checkout). **Sempre.** Três de cada quatro checkouts iniciados não viram pagamento (abandono global de 75,38%, SaleCycle 2025): janela de carrinho sem recuperação é dinheiro deixado na mesa. A régua: **primeiro toque dentro da PRIMEIRA HORA** (+20% de conversão contra esperar o dia seguinte, SaleCycle/Stripo), **sequência de 3 toques** (+69% de receita contra toque único, Stripo), **teto de 3** (o quarto vira spam). No Brasil cada toque sai em dupla e-mail + WhatsApp (WhatsApp abre mais que e-mail por aqui). A escassez dos toques é a MESMA do lançamento: lote e carrinho reais, zero prazo inventado. Os 3 esqueletos (a copy final nasce do pré-flight, com verbatim do dono, e passa no GATE como toda peça de leitor final):
+   - **Toque 1 (até 1h do abandono), tira o atrito:** "[NOME], vi que você começou a inscrição no [PRODUTO] e parou no meio. Ficou alguma dúvida ou deu erro na página? Me responde aqui que eu resolvo. O link é o mesmo: [LINK]"
+   - **Toque 2 (~24h), derruba a objeção com prova real:** "[NOME], quem chega no checkout e para, quase sempre para na mesma pergunta: 'será que funciona pra mim?'. [CASO REAL DO BANCO DE PROVAS: quem era, a situação, o resultado com número]. Seu carrinho segue aberto até [PRAZO REAL]: [LINK]"
+   - **Toque 3 (véspera do fechamento REAL), o prazo honesto:** "[NOME], o carrinho do [PRODUTO] fecha [DIA/HORA REAL] e a condição de [LOTE/BÔNUS REAL] fecha junto. Se ficou algo em aberto, me responde agora que eu resolvo antes do prazo. [LINK]"
+7. **Remarketing pago da janela de carrinho.** Etapa própria e standalone: **público** = quem visitou a página de venda ou iniciou checkout DURANTE a janela aberta; **criativo** = prova + objeção (depoimento, caso real, a resposta à pergunta que segura a compra), nunca a peça de captação de novo; **verba** concentrada nos 2 últimos dias de carrinho, quando o público quente decide. O plano descreve público, criativo e verba prontos pra rodar na mão; a operação na plataforma (campanha, público custom, ativação) sai pela `soft-trafego-meta`.
+8. **Pós-venda do ingresso / lead** (CRM, manifesto 48h antes, área de membros, lead scoring, indicações) → `pos-venda-ingresso.md`.
+9. **Order bumps pra CAC zero** (Q&A, gravação, método ancorado) → `order-bumps-cac-zero.md`. Ativo sobretudo na entrada paga; no gratuito, o low-ticket de fronte faz o mesmo papel.
+10. **+ Comercial** (aplicação no lugar de checkout, lead score, não-fechar-carrinho, ligação 1:1, comercial operado por IA) → `aplicacao-e-comercial-operado-por-ia.md`. **Sempre.**
 A sabedoria que costura as escolhas (gerar demanda antes, régua de CAC, públicos, virada de lotes, dois estímulos, trilha de conscientização, entregar o ouro na imersão, intercalar pago e gratuito) está em `lancamento-pago-operacao.md`.
 **STOP a cada etapa**: produz → mostra com o GATE → espera OK antes da próxima.
 
@@ -130,7 +119,7 @@ A skill detecta na entrada (Passo 1). Soft → lente Soft. Senão → padrão. N
 ## GATE de saída (artefato visível obrigatório)
 Toda peça que o lead ou o mercado lê (página do evento, criativo, anúncio, e-mail, manifesto) passa pelo GATE antes de entregar. Preenche a tabela e **imprime junto da peça**. Só peça com VEREDITO=PASSA sai. Um ✗ qualquer = refaz a peça (não o conceito). Sem a tabela impressa, a peça não foi entregue. O detalhe vivo de cada filtro está no Crivo e nos filtros da `shared-references/`.
 
-> A linha **Anti-IA (HARD)** abaixo não fica presa à peça de leitor final: o ban de travessão "," e da família "emperrar" vale pro **`.md` inteiro** que o dono lê (header, prosa de condução, rótulos de opção, recomendação), conforme a regra da seção "ENTREGA = UM doc MD". Antes de emitir o doc, roda `python3 scripts/lint_copy.py` sobre o arquivo consolidado inteiro; um "," em qualquer linha do doc = REFAZ o doc.
+> A linha **Anti-IA (HARD)** abaixo não fica presa à peça de leitor final: o ban de travessão "—" e da família "travar" vale pro **`.md` inteiro** que o dono lê (header, prosa de condução, rótulos de opção, recomendação), conforme a regra da seção "ENTREGA = UM doc MD". Antes de emitir o doc, roda `python3 scripts/lint_copy.py` sobre o arquivo consolidado inteiro; um "—" em qualquer linha do doc = REFAZ o doc.
 
 | Check | Passa se | ✓/✗ |
 |---|---|---|
@@ -143,13 +132,13 @@ Toda peça que o lead ou o mercado lê (página do evento, criativo, anúncio, e
 | **Ponto cego (se é aula/narrativa)** | revela algo que o lead "nem sabia que não sabia", não conteúdo achável no ChatGPT | |
 | **Crivo (ancoragem + simulação + CUB)** | passou na ancoragem do `crivo/` e na simulação de cliente; CUB não bloqueia | |
 | **Mobile-first (se vira visual)** | contraste, tipografia e espaçamento conferidos no `filtro-mobile-first/` | |
-| **Anti-IA (HARD)** | zero travessão "," · zero "emperrar/empacado/desemperrar" (exceção: aspa literal do cliente) · sem frase-emoldura ("a verdade é", "o segredo") · sem verbo-clichê ("revoluciona, desemperra, transforma"). No Claude Code, roda o `filtro-anti-ia/`; no chat, faz CTRL+F manual de "," e da família "emperrar" antes de marcar ✓ | |
+| **Anti-IA (HARD)** | zero travessão "—" · zero "travar/travado/destravar" (exceção: aspa literal do cliente) · sem frase-emoldura ("a verdade é", "o segredo") · sem verbo-clichê ("revoluciona, destrava, transforma"). No Claude Code, roda o `filtro-anti-ia/`; no chat, faz CTRL+F manual de "—" e da família "travar" antes de marcar ✓ | |
 | **VEREDITO** | **= o PIOR item acima.** Um ✗ qualquer = REFAZ. Só tudo-✓ = PASSA e a peça vai pro cliente | |
 
 ## When NOT to use (manda pra skill certa)
 - **Carrossel, reel, stories, capa** → `soft-conteudo-*` (carrossel/reels/stories).
 - **Carta / vídeo de vendas / VSL / landing do Funil Soft (degrau 1)** → `soft-funil-carta` / `soft-funil-landing`.
-- **Webinar Soft perpétuo (degrau 2)** → `soft-webinar-plano`.
+- **Webinar Soft perpétuo (degrau 2)** → `soft-webinar`.
 - **Posicionamento / Plano / método / oferta** → `soft-plano-posicionamento`.
 - **Subir/operar a campanha na plataforma Meta (a MÃO)** → `soft-trafego-meta`. Aqui é a estratégia do lançamento, não a operação do Gerenciador.
 - **A venda em si (script, objeção, follow-up, fechamento 1:1)** → `soft-vendas-closer`.
@@ -195,32 +184,3 @@ O LEON invoca esta skill como a mãe do degrau 3. Detectou Soft Launch, roda **M
 | `debriefing-e-integracao.md` | **Modo C sempre.** Análise pós-lançamento + integração (Soft) ou continuidade padrão. |
 | `crise-em-lancamento.md` | **Modo D sempre.** Diagnósticos rápidos + ações imediatas. |
 | `shared-references/crivo/` · `filtro-anti-ia/` · `filtro-mobile-first/` | O GATE de saída. Toda peça de leitor final passa antes de sair. |
-
-
----
-
-## RÉGUA DE DIAGRAMAÇÃO obrigatória (18/07/2026)
-
-Todo doc/entregável que essa skill produz DEVE seguir `skills/shared-references/REGUA-DIAGRAMACAO-DOCS.md`:
-
-- Topo: rótulo pequeno + título grande + subtítulo + metadata `chave: valor`
-- Números ANTES da narrativa (seção "0" com tabela/KPI ancora tudo)
-- Numeração hierárquica (1, 2, 3.1, 3.2), divisa entre seções
-- Bloco padronizado que se repete em TODAS as seções
-- Bullet > parágrafo, com palavra-âncora em **negrito**
-- Callouts (azul/verde/amarelo/vermelho) 1 por seção no máximo
-- Comparação = 2 colunas paralelas · Fluxo = seta ↓ · KPI = cards
-- Aspas literais pra citação · badges pra marcar novidade
-- Fecha com checklist acionável (dono/prazo quando existe)
-- Zero gordura: NUNCA "vale destacar", "importante notar", "além disso", "por outro lado", "em suma", "conforme mencionado", "neste documento", "vamos explorar"
-- **Zero changelog** dentro do doc (não escreva "atualizei X, antes era Y")
-- **Zero meta-processo** ("pesquisei X, cruzei com Y")
-- 1 bloco = 1 tela de celular (o dono lê no Telegram)
-
-**Teste antes de entregar:** (1) topo bate no padrão? (2) número ancora antes da narrativa? (3) bloco padronizado repete? (4) callout ≤1 por seção? (5) checklist acionável no fim? (6) zero das palavras proibidas? Se sim nos 6 → entrega. Se não → reescreve.
-
-## GATE OBRIGATORIO soft-critico-copy
-
-Antes de entregar QUALQUER linha de copy publica que sai desta skill (headline, hook, corpo, CTA, script, roteiro, legenda, e-mail, mensagem, pagina), a copy passa por soft-critico-copy: 4 filtros na ordem (CUB, Estrutura-mae, Anti-IA, Verbatim). Se reprova em qualquer um, reescreve e reroda ate zero falha dura.
-
-Rodar: `python3 ~/.claude/skills/soft-critico-copy/scripts/lint_copy.py <arquivo>`

@@ -36,11 +36,11 @@ O que ele cobre:
 
 - **Posicionamento Incomum**, quem você atende, qual problema resolve, como você ocupa um lugar que ninguém mais ocupa.
 - **Funil Minimalista**, conteúdo que filtra (orgânico **e** pago), Carta ou Vídeo Minimalista que qualifica, WhatsApp que fecha.
-- **Agente do dono**, o motor de criação que carrega roteiros, copy, páginas e briefings pra você operar solo.
+- **Sócio IA**, o motor de criação que carrega roteiros, copy, páginas e briefings pra você operar solo.
 
 ### A fórmula do método: 2 Pilares + 1 Motor = 10X$
 
-Dois Pilares mais o Agente do dono produzem um resultado 10x em três dimensões:
+Dois Pilares mais o Sócio IA produzem um resultado 10x em três dimensões:
 
 | Dimensão | O que muda |
 |---|---|
@@ -48,7 +48,7 @@ Dois Pilares mais o Agente do dono produzem um resultado 10x em três dimensões
 | **10x mais leve** | Não precisa focar em vender o tempo todo. O sistema atrai, qualifica e pré-vende enquanto você atende. |
 | **10x mais previsível** | Controle total das variáveis do negócio. Quem controla, gere. Quem gere, prevê. |
 
-A promessa não é mágica, é mecânica. Ela se sustenta na equação que abre a próxima seção: o Funil Minimalista resolve a Complexidade (mais simples), o Agente do dono resolve o Improviso (mais leve), o Posicionamento resolve a Invisibilidade (mais previsível).
+A promessa não é mágica, é mecânica. Ela se sustenta na equação que abre a próxima seção: o Funil Minimalista resolve a Complexidade (mais simples), o Sócio IA resolve o Improviso (mais leve), o Posicionamento resolve a Invisibilidade (mais previsível).
 
 ---
 
@@ -72,9 +72,9 @@ O Soft Business quebra os dois lados da equação ao mesmo tempo:
 |---|---|
 | **Posicionamento Incomum** | Resolve a Invisibilidade. Faz o cliente certo te encontrar pelo método, não pelo preço. |
 | **Funil Minimalista** | Resolve a Complexidade. Um caminho simples do conteúdo ao fechamento, sem operação pesada. |
-| **Agente do dono** | Resolve o Improviso. Carrega o que você não sabe fazer (copy, roteiro, tecnologia) com sistema, não com ânimo do dia. |
+| **Sócio IA** | Resolve o Improviso. Carrega o que você não sabe fazer (copy, roteiro, tecnologia) com sistema, não com ânimo do dia. |
 
-Na prática, esses dois pilares viram três guias que você percorre em ordem. O **Plano de Marca Pessoal** constrói o Pilar 1. O **Funil Mínimo Viável** e as **Vendas Consultivas** desdobram o Pilar 2, o funil leva o lead até a conversa, a venda fecha. O **Agente do dono** atravessa os três. É a mesma arquitetura vista de dois jeitos: 2 pilares pra entender, 3 guias pra executar.
+Na prática, esses dois pilares viram três guias que você percorre em ordem. O **Plano de Marca Pessoal** constrói o Pilar 1. O **Funil Mínimo Viável** e as **Vendas Consultivas** desdobram o Pilar 2, o funil leva o lead até a conversa, a venda fecha. O **Sócio IA** atravessa os três. É a mesma arquitetura vista de dois jeitos: 2 pilares pra entender, 3 guias pra executar.
 
 ---
 
@@ -150,7 +150,7 @@ Por isso o Soft Business não constrói só um funil de vendas. Constrói um con
 ## 1.7 · O que Soft Business NÃO é
 
 - **Não é "postar pouco" como filosofia.** É postar muito sobre 1 coisa só.
-- **Não é fugir de volume por medo.** É volume com foco, com o Agente do dono carregando a criação.
+- **Não é fugir de volume por medo.** É volume com foco, com o Sócio IA carregando a criação.
 - **Não é marketing fraco ou passivo.** É marketing clínico, direto, sem floreio.
 - **Não é pra iniciante sem competência técnica.** O sistema amplifica quem já transforma.
 

@@ -23,7 +23,7 @@ Esta skill é **marca-neutra**. A ESTRUTURA (componentes ricos, tema duplo, logi
 
 Editorial brutalista-técnico. Sofisticação pela subtração. O contraste vem de branco-sobre-preto e hairlines de 1px, **não** de blocos de cor.
 
-**Paleta (dark):** fundo `#000`; superfícies `#0a0a0a` / `#101010` / `#0d0d0d` (nunca clareia pro branco). Texto `#fff` (primário), `#b8b8b8` (corpo dim), `#6a6a6a` (faint). Hairlines `#1e1e1e` (padrão) / `#2f2f2f` (realce). Acento ÚNICO verde-neon `#4ade80` (CTA, ✓, índices, kicker, números, links); hover `#3ec96f`. Vermelho-negativo `#c0392b` (× / atenção). Verde-WhatsApp `#25D366` SÓ no botão literal de WhatsApp.
+**Paleta (dark):** fundo `#000`; superfícies `#0a0a0a` / `#101010` / `#0d0d0d` (nunca clareia pro branco). Texto `#fff` (primário), `#b8b8b8` (corpo dim), `#6a6a6a` (faint). Hairlines `#1e1e1e` (padrão) / `#2f2f2f` (realce). Acento ÚNICO verde-neon `[COR-DE-ACAO do dono via config]` (CTA, ✓, índices, kicker, números, links); hover `#3ec96f`. Vermelho-negativo `#c0392b` (× / atenção). Verde-WhatsApp `#25D366` SÓ no botão literal de WhatsApp.
 
 **Fontes (3 papéis fixos):** **Bebas Neue** = todos os títulos h1 a h4 + números de seção, sempre CAIXA ALTA, line-height apertado. **Inter** (400/500/600/700) = corpo. **JetBrains Mono** = kickers, labels, badges, números, header de tabela, footer, uppercase, tracking alto (.14–.26em). Nunca Bebas em parágrafo nem Inter em título grande.
 
@@ -44,7 +44,7 @@ Editorial brutalista-técnico. Sofisticação pela subtração. O contraste vem 
   --bg: #000; --surface: #0a0a0a; --surface-2: #101010;
   --text: #fff; --text-dim: #b8b8b8; --text-faint: #6a6a6a;
   --line: #1e1e1e; --line-strong: #2f2f2f;
-  --accent: #4ade80; --accent-hover: #3ec96f; --neg: #c0392b;
+  --accent: [COR-DE-ACAO do dono via config]; --accent-hover: #3ec96f; --neg: #c0392b;
   --font-display: 'Bebas Neue', sans-serif;
   --font-body: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;

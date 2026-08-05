@@ -213,7 +213,7 @@ Quem responde "umas 40h" sem pensar quase sempre tem 22 a 28 reais. Faz preenche
 
 Tocar · Analisar · Melhorar. Sempre nesta ordem.
 
-**Tocar.** Produz o conteúdo, com o Agente do dono carregando a parte braçal. Mantém o funil no ar. Conduz as conversas que o funil já qualificou. Uma oferta ativa por semana, não cinco, quem toca cinco não consegue ler qual funcionou.
+**Tocar.** Produz o conteúdo, com o Sócio IA carregando a parte braçal. Mantém o funil no ar. Conduz as conversas que o funil já qualificou. Uma oferta ativa por semana, não cinco, quem toca cinco não consegue ler qual funcionou.
 
 **Analisar.** Lê os números contra o próprio padrão, não contra benchmark de fora. Subiu ou caiu em relação a você mesmo da semana passada. Quem lê isso toda semana gere; quem gere, otimiza; quem otimiza, prevê.
 

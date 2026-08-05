@@ -38,7 +38,7 @@ Cliente posta sobre tudo um pouco "pra ver o que pega". Skill bloqueia: *"Mês 1
 
 ### Mês 2, Validar gancho
 
-**Foco único:** descobrir qual ângulo prende atenção do público real. Refinar embalagens (skill `soft-conteudo-headlines`) baseado em dados M1.
+**Foco único:** descobrir qual ângulo prende atenção do público real. Refinar embalagens (skill `soft-conteudo`) baseado em dados M1.
 
 **KPI primário:** Engajamento qualificado (salvar + compartilhar / alcance)
 - **Meta M2:** 3% (faixa baixa Soft)
@@ -135,12 +135,12 @@ Cliente vê peça com 100 likes orgânicos e turbina. Skill bloqueia: *"Validaç
 - Cliente em Escalar/Estabilizar pode subir 10-20% ticket no M5.
 
 **Armadilha vigiada:** reunião grátis virando sessão estratégica
-Cliente faz call de 1h "pra entender melhor" e vira terapeuta. Skill aponta: *"conversão confirma o que Carta vendeu. Não convence. Reunião que dura 1h sem chegar em Apresentação = você tá fazendo desejo disfarçada. Volta pra `soft-vendas-closer`."*
+Cliente faz call de 1h "pra entender melhor" e vira terapeuta. Skill aponta: *"conversão confirma o que Carta vendeu. Não convence. Reunião que dura 1h sem chegar em Apresentação = você tá fazendo desejo disfarçada. Volta pra `soft-vendas`."*
 
 **Ações concretas M5:**
 1. Gravar 5 reuniões Soft completas e auditar contra as 7 fases
 2. Identificar fase que mais falha (geralmente Implicação ou Isolamento)
-3. Treinar refinamento dessa fase específica (skill `soft-vendas-closer`, reference scripts)
+3. Treinar refinamento dessa fase específica (skill `soft-vendas`, reference scripts)
 4. Testar subir ticket Principal em 10-20% nas próximas 5 reuniões e medir taxa
 5. Documentar objeções recorrentes e respostas calibradas
 

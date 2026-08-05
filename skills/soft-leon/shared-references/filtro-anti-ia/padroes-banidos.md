@@ -1,6 +1,6 @@
 # Padrões Banidos
 
-Os padrões universais que sempre cheiram a IA. Aplicar em qualquer texto. Os 13 primeiros são o núcleo mais frequente na copy Soft; do 14 ao 28 estão os tells que a IA planta com mais disfarce (paralelismo negativo, aforismo, faixa falsa, franqueza fingida, gerúndio de análise, importância inflada e a família do chatbot). O que NÃO corrigir mora em `falsos-positivos.md`, pra o filtro não reprovar prosa autoral legítima.
+Os 12 padrões universais que sempre cheiram a IA. Aplicar em qualquer texto.
 
 ---
 
@@ -25,21 +25,6 @@ Antes de cortar o que cheira a IA, garante o positivo: cada frase **simples, cla
 - 11. Adverbiais de ênfase enfileirados
 - 12. Aspas decorativas em palavras comuns
 - 13. Falsa agência (coisa que não pensa, com verbo de quem pensa)
-- 14. Paralelismo negativo "não só X, mas Y" (e a negação grudada no rabo)
-- 15. Fórmula de aforismo ("X é a linguagem/moeda de Y")
-- 16. Faixa falsa ("de X a Y" fora de escala)
-- 17. Clichê de autoridade ("a real questão é", "no fundo")
-- 18. Anúncio do que vai fazer ("vamos mergulhar", "aqui vai o que você precisa saber")
-- 19. Abertura de falsa franqueza ("Sinceramente?", "vou ser honesto")
-- 20. Fuga do verbo ser ("serve como", "firma-se como", "ostenta")
-- 21. Gerúndio de análise superficial no rabo da frase
-- 22. Atribuição vaga ("especialistas apontam", "estudos mostram" sem fonte)
-- 23. Importância inflada ("marca um momento decisivo", "reflete algo maior")
-- 24. Troca de sinônimo por medo de repetir (variação elegante)
-- 25. Hesitação empilhada ("poderia-se possivelmente argumentar")
-- 26. Conclusão positiva genérica ("o futuro é promissor")
-- 27. Resíduo de chatbot ("espero que ajude", "quer que eu…")
-- 28. Drama em staccato (fragmentos curtos empilhados)
 - Padrões adicionais menores
 - Padrões visuais (carrosséis, slides, anúncios)
 - Padrões de abertura de peça (banidos)
@@ -228,183 +213,6 @@ Por quê: dar vontade, intenção ou cuidado a uma coisa inanimada (método, est
 
 ---
 
-## 14. Paralelismo negativo "não só X, mas Y" (e a negação grudada no rabo)
-
-❌ "Não é só sobre vender. É sobre transformar vidas."
-❌ "Não é só um método, é um jeito novo de enxergar."
-✅ "O método muda como você enxerga o problema, e por isso a venda fica mais fácil."
-
-Negação clipada no fim da frase, o mesmo vício por outro ângulo:
-❌ "As opções vêm do próprio perfil, sem chute."
-✅ "As opções vêm do próprio perfil, então você não precisa chutar."
-
-Por quê: a construção "não só… mas…" e o fragmento de negação no rabo ("sem chute", "sem esforço perdido") criam contraste barato. Diferente do item 10 ("Não é X. É Y." em série), aqui o alvo é a forma "não só… mas…" e a negação que devia virar uma oração de verdade. Vira oração completa ou corta.
-
----
-
-## 15. Fórmula de aforismo ("X é a linguagem/moeda de Y")
-
-❌ "Consistência é a linguagem da confiança."
-❌ "Atenção é a nova moeda."
-❌ "Simplicidade é a arquitetura do resultado."
-
-✅ Troca pela afirmação concreta que a frase tenta gesticular: "quem posta toda semana no mesmo tema constrói confiança mais rápido."
-
-Por quê: a IA vira afirmação comum em aforismo reutilizável pra soar profundo sem ganhar precisão. Soa citável, não diz nada. Fala a coisa direta.
-
----
-
-## 16. Faixa falsa ("de X a Y" fora de escala)
-
-❌ "Do medo de cobrar à liberdade de escolher cliente."
-❌ "Do zero absoluto ao topo do mercado."
-
-✅ Diz o que cobre de fato: "você aprende a definir preço e a recusar cliente errado."
-
-Por quê: a IA usa "de X a Y" onde X e Y não estão numa escala real, só pra dar um arco poético. É moldura vazia. Substitui pela lista concreta do que a peça cobre.
-
----
-
-## 17. Clichê de autoridade ("a real questão é", "no fundo")
-
-❌ "A real questão é se você tá disposto a mudar."
-❌ "No fundo, o que realmente importa é a consistência."
-❌ "O cerne da questão é o posicionamento."
-
-✅ "A pergunta é se você tá disposto a mudar de hábito. É aí que a maioria empaca."
-
-Por quê: a frase finge cortar o ruído rumo a uma verdade mais funda, e aí só repete o óbvio com cerimônia. Corta a moldura e fala o ponto.
-
----
-
-## 18. Anúncio do que vai fazer ("vamos mergulhar", "aqui vai o que você precisa saber")
-
-❌ "Vamos mergulhar em como o método funciona."
-❌ "Vamos destrinchar isso."
-❌ "Aqui vai o que você precisa saber:"
-
-✅ Só faz. Começa pelo conteúdo: "o método tem 3 passos. O primeiro é definir o cliente que você quer."
-
-Por quê: anunciar o que vai fazer, em vez de fazer, deixa a copy lenta e com cara de tutorial. Meta-comentário é enrolação. (Parente do conectivo "sem mais delongas" do item 6, aqui o foco é o anúncio-do-próximo-passo.)
-
----
-
-## 19. Abertura de falsa franqueza ("Sinceramente?", "vou ser honesto")
-
-❌ "Sinceramente? Depende de quanto você aplica."
-❌ "Vou ser honesto com você: isso dá trabalho."
-❌ "A verdade é a seguinte:"
-
-✅ "Depende de quanto você aplica." (fala a coisa direto)
-
-Por quê: o gancho de falsa franqueza fabrica intimidade antes de entregar uma frase banal. O sinal é a pausa teatral (uma palavra, e aí a resposta "de verdade"). Quem é sincero de verdade só fala. (Diferente do item 4: aqui é a franqueza fingida, não a revelação prometida.)
-
----
-
-## 20. Fuga do verbo ser ("serve como", "firma-se como", "ostenta")
-
-❌ "O método serve como uma base pro seu negócio."
-❌ "A mentoria firma-se como o caminho mais rápido."
-❌ "A oferta ostenta 3 bônus."
-
-✅ "O método é a base do seu negócio."
-✅ "A oferta tem 3 bônus."
-
-Por quê: a IA troca o verbo de ligação simples (é, tem, faz) por construção pomposa. O verbo simples é mais forte e mais honesto.
-
----
-
-## 21. Gerúndio de análise superficial no rabo da frase
-
-❌ "O método organiza sua semana, garantindo mais foco e refletindo disciplina."
-❌ "A oferta entrega os 3 passos, evidenciando o cuidado com o aluno."
-
-✅ "O método organiza sua semana. Você ganha foco porque para de decidir na hora."
-
-Por quê: a IA gruda uma oração de gerúndio no fim (garantindo…, refletindo…, evidenciando…, contribuindo pra…) pra simular profundidade. Quase sempre é enchimento. Corta ou vira frase própria com sujeito.
-
----
-
-## 22. Atribuição vaga ("especialistas apontam", "estudos mostram" sem fonte)
-
-❌ "Especialistas apontam que consistência é tudo."
-❌ "Estudos mostram que quem posta todo dia cresce mais."
-❌ "Muita gente do mercado concorda que…"
-
-✅ Ou cita a fonte real ("num teste com meus 12 alunos, quem postou 4x/semana dobrou o alcance"), ou fala em primeira pessoa ("na minha experiência com X clientes…"), ou corta.
-
-Por quê: atribuir a autoridade vaga finge respaldo que não existe. Se você tem o dado, mostra de quem é. Se não tem, não inventa a plateia de "especialistas".
-
----
-
-## 23. Importância inflada ("marca um momento decisivo", "reflete algo maior")
-
-❌ "Esse método marca uma virada na forma de vender."
-❌ "Isso reflete uma mudança maior no mercado digital."
-❌ "Representa um ponto de inflexão na sua jornada."
-
-✅ Fala o que muda de concreto: "com esse método você para de depender de indicação e passa a atrair pelo conteúdo."
-
-Por quê: a IA infla qualquer coisa dizendo que ela representa/contribui pra um tema mais amplo. Enche o peito, não diz nada. Troca a grandiosidade pela mudança real e verificável.
-
----
-
-## 24. Troca de sinônimo por medo de repetir (variação elegante)
-
-❌ "O cliente enfrenta desafios. O consumidor supera obstáculos. O comprador vence as barreiras. O público chega ao topo."
-
-✅ "O cliente enfrenta vários problemas, mas com o método ele resolve e chega no resultado." (repete "cliente" sem medo)
-
-Por quê: a IA tem medo de repetir a mesma palavra e sai trocando por sinônimo a cada frase (cliente → consumidor → comprador → público). Cansa e confunde. Repetir a palavra certa é mais claro que caçar sinônimo.
-
----
-
-## 25. Hesitação empilhada ("poderia-se possivelmente argumentar")
-
-❌ "Isso poderia potencialmente talvez ajudar em alguns casos."
-❌ "De certa forma, é possível que talvez funcione pra você."
-
-✅ "Isso funciona pra quem aplica. Pra quem não aplica, não."
-
-Por quê: empilhar qualificador (poderia, potencialmente, talvez, de certa forma) tira toda a força da frase. Copy que vende crava. Se tem ressalva real, faz UMA, direta.
-
----
-
-## 26. Conclusão positiva genérica ("o futuro é promissor")
-
-❌ "O futuro é promissor pra quem começa agora."
-❌ "Tempos empolgantes vêm por aí nessa jornada rumo ao topo."
-❌ "É um grande passo na direção certa."
-
-✅ Fecha com fato ou CTA concreto: "quem entra nessa turma começa a postar na segunda-feira que vem."
-
-Por quê: final vago e otimista é o jeito da IA fechar quando não tem o que dizer. Troca por um próximo passo concreto ou uma frase-síntese do método.
-
----
-
-## 27. Resíduo de chatbot ("espero que ajude", "quer que eu…")
-
-❌ "Espero que isso ajude!"
-❌ "Quer que eu detalhe algum ponto?"
-❌ "Aqui está o carrossel que você pediu:"
-❌ "Claro! Com certeza!"
-
-✅ Entrega a peça e para. Sem moldura de conversa, sem oferecer o próximo passo dentro da própria copy.
-
-Por quê: texto que era pra ser conversa de chatbot vaza colado na peça. Na copy final pro leitor, isso é tell na hora. (No fluxo com o autor do método, a pergunta de próximo passo vem FORA da peça entregue, nunca dentro dela.)
-
----
-
-## 28. Drama em staccato (fragmentos curtos empilhados)
-
-❌ "Aí o método chegou. Sem enrolação. Sem fórmula mágica. Sem promessa vazia. As velhas regras caíram."
-
-✅ "O método chegou sem fórmula mágica e sem promessa vazia, e isso derrubou as regras antigas."
-
-Por quê: uma frase curta isolada pra cravar um ponto é boa. Uma SEQUÊNCIA de fragmentos curtos empilhados fabrica drama e soa artificial. Uma frase clipada: ok. Cinco em fila: refaz. (Ver o falso positivo correspondente em `falsos-positivos.md`.)
-
----
-
 ## Padrões adicionais menores
 
 ### Excesso de "tudo"
@@ -512,16 +320,14 @@ Não pula. Esse é o filtro final.
 
 ## Automação em código (o gate roda, não fica só no olho)
 
-O passo 2 ("CTRL+F cada padrão") agora tem um linter executável que toda skill de peça carrega na própria pasta: **`scripts/lint_copy.py`**. Roda igual em toda execução, não depende do agente lembrar.
+O passo 2 ("CTRL+F cada padrão") agora tem um linter executável na `soft-conteudo`: **`scripts/lint_copy.py`**. Roda igual em toda execução, não depende do agente lembrar.
 
 ```bash
-python3 scripts/lint_copy.py peca.txt    # na pasta da skill; ou:  echo "texto" | python3 scripts/lint_copy.py -
+python3 soft-conteudo/scripts/lint_copy.py peca.txt    # ou:  echo "texto" | python3 .../lint_copy.py -
 ```
 
 - **HARD (reprova, exit 1):** em-dash "—" e a família **"travar"** - os dois de zero-tolerância. Achou, não entrega.
 - **WARN (revisar no olho):** conectivo formal, frase-emoldura, verbo de transformação, frase dramática, abertura/fechamento banido, emoji decorativo, excesso de "literalmente/absolutamente/verdadeiro", "Não é X. É Y." em série.
-- **Continua no olho** (código não pega sem falso-positivo): tricolon, simetria de listas, adjetivação dupla decorativa, abstrato-virando-promessa, falsa agência, e a leva 14-28 (paralelismo negativo, aforismo, faixa falsa, franqueza fingida, fuga do verbo ser, gerúndio de análise, atribuição vaga, importância inflada, variação elegante, hesitação empilhada, conclusão genérica, resíduo de chatbot, drama em staccato). Pra esses, `teste-voz-alta.md` + `teste-construtivo.md`, e sempre cruzando com `falsos-positivos.md` antes de reprovar.
+- **Continua no olho** (código não pega sem falso-positivo): tricolon, simetria de listas, adjetivação dupla decorativa, abstrato-virando-promessa, falsa agência. Pra esses, `teste-voz-alta.md` + `teste-construtivo.md`.
 
 Rodar o linter NÃO substitui ler em voz alta. Ele garante que os 2 tells assassinos (em-dash e "travar") nunca passem por esquecimento; o resto é leitura. É o equivalente, no lado da copy, do `craft.py` no lado do design (anti-órfã + contraste).
-
-**Antes de reprovar qualquer coisa:** roda a checagem de falso positivo. Prosa autoral legítima bate em vários desses padrões sem nenhuma IA envolvida (uma frase curta pra cravar, uma repetição de propósito, uma abertura de carta). Reprova por AGLOMERADO de tells, nunca por um sinal isolado. A régua completa do que NÃO corrigir está em `falsos-positivos.md`.

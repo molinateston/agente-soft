@@ -1,6 +1,6 @@
-# Anatomia da Carta Longa de Resposta Direta (mapeada sobre o APSD)
+# Anatomia da Carta Longa de Resposta Direta (mapeada sobre o ADMA)
 
-A espinha da carta de vendas longa de resposta direta (a sales letter completa), mapeada SOBRE o arco APSD do método Soft. É o que faz a skill escalar da Mini-Carta de 4-7min até a sales letter de 15-25min de leitura sem virar landing nem AIDA. Esta ref carrega a ESTRUTURA (a ordem dos blocos, o porquê de cada um, em qual fase APSD cada bloco mora); a copy de cada bloco está em `blocos-copy.md`.
+A espinha da carta de vendas longa de resposta direta (a sales letter completa), mapeada SOBRE o arco ADMA do método Soft. É o que faz a skill escalar da Mini-Carta de 4-7min até a sales letter de 15-25min de leitura sem virar landing nem AIDA. Esta ref carrega a ESTRUTURA (a ordem dos blocos, o porquê de cada um, em qual fase ADMA cada bloco mora); a copy de cada bloco está em `blocos-copy.md`.
 
 **Leia esta ref no Passo 2-bis** (pra escolher o lead e o comprimento) **e no Passo 3** ao escrever a Longa (pra a ordem dos blocos, o duplo mecanismo, o value stack ancorado e o P.S. triplo).
 
@@ -10,11 +10,11 @@ A espinha da carta de vendas longa de resposta direta (a sales letter completa),
 
 ## Índice
 
-1. A regra-mãe do comprimento (APSD é a espinha, a Longa é a APSD com músculo)
+1. A regra-mãe do comprimento (ADMA é a espinha, a Longa é a ADMA com músculo)
 2. Os 5 estágios de consciência (Schwartz) e a sofisticação de mercado
-3. Os 6 tipos de lead (Masterson & Forde) casados com a consciência + a função da lead (abaixar a guarda)
-4. A espinha canônica de 17 blocos da DR (tabela: trabalho que faz + fase APSD)
-5. O DUPLO MECANISMO (problema antes da solução) + expande na solução, nunca na oportunidade + a anatomia de um ponto lógico
+3. Os 6 tipos de lead (Masterson & Forde) casados com a consciência
+4. A espinha canônica de 17 blocos da DR (tabela: trabalho que faz + fase ADMA)
+5. O DUPLO MECANISMO (problema antes da solução)
 6. A slippery slide de Sugarman (a física da leitura solitária)
 7. O value stack ancorado (lente Soft)
 8. Reversão de risco, bônus-mata-objeção, urgência honesta
@@ -25,7 +25,7 @@ A espinha da carta de vendas longa de resposta direta (a sales letter completa),
 
 ## 1. A regra-mãe do comprimento
 
-APSD é a espinha (Atenção, Problema, Solução, Decisão). A Carta Longa não é um arco diferente: **é a mesma APSD com mais músculo dentro de cada fase.** Os blocos clássicos da resposta direta não são blocos novos jogados fora do arco. Cada bloco mora dentro de uma das 4 fases, e a ordem deles é uma escada psicológica: **cada bloco abre exatamente a objeção que o próximo bloco precisa encontrar aberta.**
+ADMA é a espinha (Atenção, Diagnóstico, Mecanismo, Ação). A Carta Longa não é um arco diferente: **é a mesma ADMA com mais músculo dentro de cada fase.** Os blocos clássicos da resposta direta não são blocos novos jogados fora do arco. Cada bloco mora dentro de uma das 4 fases, e a ordem deles é uma escada psicológica: **cada bloco abre exatamente a objeção que o próximo bloco precisa encontrar aberta.**
 
 Pensa numa pessoa lendo. Ela não decide comprar de uma vez; ela atravessa uma fila de "sim" pequenos. O bloco da agitação faz ela admitir que o problema dói. O mecanismo do problema faz ela parar de se culpar. O mecanismo da solução faz ela acreditar que existe saída. A prova faz ela acreditar que a saída funciona para gente como ela. A oferta faz ela ver o que recebe. A garantia tira o medo de errar. Cada degrau só funciona porque o anterior preparou o terreno.
 
@@ -35,7 +35,7 @@ Quando você embaralha a ordem (joga a oferta antes da agitação, ou a garantia
 
 | Comprimento | Nº de blocos | Minutos de leitura | Quando usar |
 |---|---|---|---|
-| **Mini** | 4 (um por fase APSD, enxutos) | 4-7 min | Leitor mais-consciente, ticket conhecido, tráfego quente (base, retargeting). O default e o mais usado. |
+| **Mini** | 4 (um por fase ADMA, enxutos) | 4-7 min | Leitor mais-consciente, ticket conhecido, tráfego quente (base, retargeting). O default e o mais usado. |
 | **Média** | 8-10 (agitação, mec. solução, prova, oferta, garantia, FAQ curto) | 8-14 min | Consciente da solução ou do produto, ticket médio, tráfego morno. |
 | **Longa** | 14-17 (a espinha completa da DR, seção 4) | 15-25 min | Inconsciente ou consciente do problema, ticket alto, tráfego frio de anúncio. |
 
@@ -98,28 +98,13 @@ O "lead" é o começo da carta (o primeiro bloco, o que decide se o leitor fica)
 
 Note como cada lead já planta a Rule of One e já abre a curiosidade do bloco seguinte. O Story acima termina em "deixa eu explicar": é a semente de curiosidade (seção 6) puxando o próximo bloco.
 
-### A função da lead: abaixar a guarda (não só reter)
-
-O tipo de lead (a tabela acima) escolhe a porta; a FUNÇÃO da lead é a mesma em qualquer porta: **abaixar a guarda do leitor.** O tráfego é uma guerra de cartas e vídeos disputando os mesmos olhos, e o leitor chega com o escudo em pé, esperando ser vendido. A lead que converte faz você soar amigo que avisa, não vendedor que empurra, e o escudo desce. Enquanto o escudo está em pé, nenhuma prova entra.
-
-Daí uma consequência que parece contra-intuitiva: **duas leads com a MESMA retenção convertem diferente.** Retenção mede quantos ficam; conversão depende também do TOM EMOCIONAL com que quem ficou chega na oferta. Uma lead pode segurar o leitor e deixá-lo morno; outra segura o mesmo tanto de gente e a deixa sentindo a urgência de resolver. Quem chega urgente compra; quem chega morno lê a mesma oferta e adia. Por isso a otimização começa pela frente (o lead), e você testa 3 ângulos sobre a mesma carta, não só medindo retenção, mas o tom em que o leitor desagua na oferta.
-
-**Encapsular a promessa.** A lead mais forte comprime a carta inteira numa frase, um spoiler do destino: "algo inquestionável aconteceu e isso pode mudar a sua vida." O anti-padrão é **enterrar a lead**: gastar as 3-4 primeiras linhas em contexto morno e esconder o gancho embaixo. Corta o começo e sobe o gancho pra a primeira frase.
-
-**Exemplo de nicho fictício (nutrição), duas leads de mesma retenção, tom diferente.**
-
-- Lead morna: "Você já tentou várias dietas e nenhuma segurou. Isso é mais comum do que parece, e tem explicação." (segura, mas conforta; o leitor chega relaxado.)
-- Lead urgente: "Cada fim de semana que passa, o teu corpo desfaz a semana inteira de treino, e você nem percebe. Faz oito meses que isso acontece." (segura o mesmo tanto, mas instala a urgência; o leitor chega querendo estancar a perda.)
-
-Mesma promessa, mesma retenção provável, tom de chegada oposto. A segunda tende a converter mais porque desagua o leitor na oferta já querendo agir.
-
 ---
 
 ## 4. A espinha canônica de 17 blocos da DR
 
-Esta é a sequência completa da carta longa de resposta direta. Nem toda Longa usa os 17; a Média usa um subconjunto. Mas a ORDEM é fixa, porque é a escada psicológica. A coluna "trabalho que faz" diz o PORQUÊ do bloco (que objeção ele abre); a coluna "fase APSD" diz onde ele mora.
+Esta é a sequência completa da carta longa de resposta direta. Nem toda Longa usa os 17; a Média usa um subconjunto. Mas a ORDEM é fixa, porque é a escada psicológica. A coluna "trabalho que faz" diz o PORQUÊ do bloco (que objeção ele abre); a coluna "fase ADMA" diz onde ele mora.
 
-| # | Bloco | Trabalho que faz (o porquê) | Fase APSD |
+| # | Bloco | Trabalho que faz (o porquê) | Fase ADMA |
 |---|---|---|---|
 | 1 | **Headline** | Para o scroll, promete o que o leitor vai entender, filtra quem não é. | A |
 | 2 | **Pre-head / Sub-head** | Diz pra quem é (o filtro) e amplia a promessa sem repetir a headline. | A |
@@ -139,7 +124,7 @@ Esta é a sequência completa da carta longa de resposta direta. Nem toda Longa 
 | 16 | **FAQ** | Derruba as últimas objeções uma a uma, em formato de pergunta. | A |
 | 17 | **Fecho + P.S. triplo** | Recapitula, repete o convite único pro 1:1, e o P.S. comprime oferta+garantia+urgência. | A |
 
-**Como a Mini colapsa isso:** a Mini-Carta usa só os blocos 1, 4, 7 e (parte do) 11+17. Um por fase APSD. A Longa abre TODOS, porque o leitor frio precisa de mais degraus pra atravessar.
+**Como a Mini colapsa isso:** a Mini-Carta usa só os blocos 1, 4, 7 e (parte do) 11+17. Um por fase ADMA. A Longa abre TODOS, porque o leitor frio precisa de mais degraus pra atravessar.
 
 **Exemplo de nicho fictício (advocacia trabalhista, Longa).** Headline: "Verbas que a empresa não pagou, recuperadas sem você pisar no fórum." Agitação: a cena do trabalhador que assinou a rescisão com medo e ficou com a sensação de que levou menos. Mecanismo do problema: "você aceitou o valor porque ninguém te explicou que horas extras habituais entram no cálculo, e o RH conta com isso". Mecanismo da solução: o método "Auditoria Reversa de Rescisão" que recalcula a verba devida a partir do espelho de ponto. Prova: três casos com nome, valor recuperado e prazo. Oferta: a análise + a ação + o acompanhamento. Garantia: "se eu não encontrar diferença a recuperar na análise, você não paga nada". FAQ: "e se a empresa já fechou?". Fecho: o convite pra conversa de 20 minutos no WhatsApp. P.S.: recapitula que a análise inicial é sem custo e que o prazo prescricional corre.
 
@@ -165,32 +150,6 @@ Existem DOIS mecanismos, e a ordem importa:
 Repare: o mecanismo do problema realoca a culpa (da cozinha do dono pra um método de precificação herdado), e SÓ ENTÃO o Mapa de Margem aparece como o encaixe daquela causa. Inverter a ordem (apresentar o Mapa de Margem antes de revelar a causa) faria o leitor pensar "lá vem mais um consultor com método da moda".
 
 **Anti-erro:** mecanismo-solução só ROTULADO (você dá um nome bonito mas não explica POR QUE funciona) ou AUSÊNCIA do mecanismo-problema reprovam no gate "Duplo mecanismo" da Longa. Nome sem explicação é rótulo, não mecanismo.
-
-### Expande na SOLUÇÃO, nunca na oportunidade
-
-Quando o mecanismo precisa de mais profundidade pra convencer, a tentação é esticar a promessa (a oportunidade, "o resultado é ainda maior do que você imagina"). Errado: esticar a oportunidade abre dois caminhos na cabeça do leitor (o que você prometeu e o que ele já queria) e confunde. Você aprofunda o COMO da solução, um caminho só, mais afiado.
-
-Há dois níveis de sofisticação da solução:
-
-- **Nível 1 (o óbvio):** "o problema é falta de X, então reponha X." O leitor pouco cético compra assim.
-- **Nível 2 (o que separa a peça que escala):** "o jeito comum de repor X NÃO funciona, e por isso você já tentou e falhou; o certo é atacar a causa por outro caminho." 
-
-**Exemplo de nicho fictício (beleza/pele).** Nível 1: "sua pele perde firmeza porque falta colágeno, então tome colágeno." Nível 2: "tomar colágeno quase não firma a pele, porque o corpo digere e distribui pra onde ele quer, não pra onde você precisa; o que firma é estimular a própria produção no rosto com [método nomeado]." O nível 2 aprofunda a SOLUÇÃO (o como certo), não a promessa. Se em vez disso você inflasse a oportunidade ("e além da firmeza você ainda emagrece, dorme melhor e..."), abriria frentes demais e diluiria a única promessa (Rule of One).
-
-### A anatomia de um ponto lógico (a corrente por dentro)
-
-O mecanismo é uma corrente de 5 a 8 pontos lógicos (SKILL.md, Passo 3). Cada elo tem a mesma anatomia: **começa pelo que o leitor já aceita, afirma, prova na dose certa, e tempera com uma consequência emocional.** O primeiro elo é sempre um "sim" fácil (algo que ele já acredita ou que se prova sem sombra de dúvida): dado o primeiro sim, a guarda desce e os elos seguintes encontram menos resistência. O esforço maior de prova vai nos primeiros elos, não no fecho, e você conquista a crença final bandeirinha por bandeirinha, nunca de uma vez.
-
-**Exemplo de nicho fictício (nutrição), a corrente elo a elo** (cada linha marca afirmação · prova dosada · consequência emocional):
-
-1. "Você treina certo e come certo de segunda a sexta." → afirmação que ele JÁ acredita (1º sim, prova zero, ele mesmo confirma). Consequência: alívio, "esse cara me entende".
-2. "Mesmo assim, a gordura não sai faz meses." → afirmação da dor, prova = a própria experiência dele. Consequência: frustração nomeada.
-3. "O motivo não é disciplina: é que no fim de semana o corpo recompõe o que a semana queimou." → afirmação ousada (contra o que ele culpava), prova mais pesada aqui (é o elo que exige mais: um dado, uma explicação fisiológica simples). Consequência: exoneração, "não era culpa minha".
-4. "Existe como fechar essa janela sem cortar mais nenhuma refeição." → promessa da solução, prova = a lógica dos elos anteriores encaixando. Consequência: esperança.
-
-Repare: o elo mais ousado (o 3) carrega a prova mais forte (Sagan), e os elos fáceis carregam prova leve. A prova é escolhida pelo que ESTE público aceita (um público técnico pediria o estudo; um público leigo aceita a analogia). Ninguém é convencido na marra: a corrente leva o leitor a concluir sozinho, e é aí que ele acredita.
-
-**Aberturas ruins do 1º elo:** começar longe da vida dele (fácil de abrir a venda, mas exige elos demais até chegar nele, e confunde) ou começar com algo óbvio a ponto de ser sem graça (não prende). O 1º elo certo casa baixa fricção com relevância: fácil de aceitar E dentro do que já ocupa a cabeça dele.
 
 ---
 
@@ -331,7 +290,7 @@ O risco número um da Carta Longa é virar landing page. As duas são grandes e 
 
 ## Apêndice A: a carta Longa inteira, bloco a bloco (nicho fictício)
 
-Pra ver a escada psicológica funcionando ponta a ponta, segue uma Carta Longa esqueletada no nicho fictício de **consultoria de gestão para dono de restaurante** (ticket alto, tráfego frio, leitor inconsciente do mecanismo real). Cada item marca o bloco da seção 4, a fase APSD e o trabalho que ele faz. Os trechos são esboço de copy, não a peça final diagramada.
+Pra ver a escada psicológica funcionando ponta a ponta, segue uma Carta Longa esqueletada no nicho fictício de **consultoria de gestão para dono de restaurante** (ticket alto, tráfego frio, leitor inconsciente do mecanismo real). Cada item marca o bloco da seção 4, a fase ADMA e o trabalho que ele faz. Os trechos são esboço de copy, não a peça final diagramada.
 
 - **[1 Headline · A]** "O restaurante vive cheio e o mês fecha no zero. A conta que sangra não está na cozinha."
   *Para o scroll, promete o entendimento, filtra quem não é dono de restaurante.*

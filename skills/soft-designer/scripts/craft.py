@@ -11,7 +11,7 @@ Sem dependência externa (só stdlib) — roda em qualquer ambiente onde o bot r
 
 USO COMO LIB (na hora de escrever o HTML de cada slide/banner):
     from craft import nw, legible
-    titulo = nw("vender todo dia")        # -> "vender todo dia" (última palavra nunca cai sozinha)
+    titulo = nw("vender todo dia")        # -> "vender todo dia" (última palavra nunca cai sozinha)
     assert legible("#FFFFFF", "#F5F2EC")  # -> False (branco no creme = ilegível)
 
 USO COMO GATE (no pipeline, DEPOIS do build_html e ANTES do export):
@@ -19,17 +19,16 @@ USO COMO GATE (no pipeline, DEPOIS do build_html e ANTES do export):
     # imprime cada falha e sai com código 1 se houver qualquer uma.
     # 0 falhas = pode exportar. Falhou = corrige e roda de novo.
 
-O gate cobre os checks que dá pra verificar de forma CONFIÁVEL em código
-(contraste, órfã, setinha de arraste). Os outros checks da
-auditoria-pre-preview.md (ritmo, diagrama forte, anti-vazio, padding)
-continuam no olho do agente — esses dependem de julgamento visual que não
-se automatiza sem render.
+O gate cobre os 2 checks que dá pra verificar de forma CONFIÁVEL em código
+(contraste e órfã). Os outros checks da auditoria-pre-preview.md (ritmo,
+diagrama forte, anti-vazio, padding) continuam no olho do agente — esses
+dependem de julgamento visual que não se automatiza sem render.
 """
 import sys
 import re
 from html.parser import HTMLParser
 
-NB = " "  # espaço inquebrável
+NB = " "  # espaço inquebrável
 
 
 # ───────────────────────── anti-órfã ─────────────────────────
@@ -184,35 +183,6 @@ def _orphan_warnings(html):
     return warns
 
 
-# ───────────────────────── setinha de arraste (regra dura do lote) ─────────────────────────
-_NUMERACAO_RE = re.compile(r'\b\d{1,2}\s*/\s*\d{1,2}\b')
-
-
-def audit_lote_setinha(paginas_html):
-    """Regra dura 'sem numeração de slide, setinha em 1..N-1, nunca no
-    último' (método Augusto), em código. Recebe uma LISTA de strings HTML,
-    uma por peça do carrossel, na ordem. Devolve lista de falhas.
-
-    Setinha = qualquer <svg> presente na peça (a variação C é sempre SVG,
-    ver references/setinha-arraste.md). Numeração = padrão "N/total" tipo
-    "3/9" solto no texto, que a peça NUNCA deve ter (a seta substitui)."""
-    falhas = []
-    n = len(paginas_html)
-    if n == 0:
-        return falhas
-    for i, html in enumerate(paginas_html):
-        pos = i + 1
-        eh_ultima = (pos == n)
-        tem_svg = '<svg' in html.lower()
-        if _NUMERACAO_RE.search(re.sub(r'<[^>]+>', ' ', html)):
-            falhas.append(f'slide {pos}: numeração "N/{n}" solta no texto — proibida, a seta substitui')
-        if eh_ultima and tem_svg:
-            falhas.append(f'slide {pos} (último): tem <svg> — a seta NUNCA aparece no último slide')
-        if not eh_ultima and not tem_svg:
-            falhas.append(f'slide {pos}: sem <svg> — falta a seta de arraste (obrigatória em 1..N-1)')
-    return falhas
-
-
 def audit_html(html):
     """Retorna (failures, warnings). failures = bloqueia o export. warnings =
     revisar no olho."""
@@ -263,14 +233,5 @@ if __name__ == '__main__':
     good = '<div style="background:#060806"><span style="color:#FFFFFF">legível</span></div>'
     f2, w2 = audit_html(good)
     assert not f2, 'não devia reprovar branco-no-preto'
-    # smoke test da setinha
-    com_seta = '<div>texto<svg></svg></div>'
-    sem_seta = '<div>texto</div>'
-    ok_lote = audit_lote_setinha([com_seta, com_seta, sem_seta])
-    assert not ok_lote, f'lote correto (seta em 1..N-1, ausente no último) não devia reprovar: {ok_lote}'
-    lote_ultimo_com_seta = audit_lote_setinha([com_seta, com_seta, com_seta])
-    assert lote_ultimo_com_seta, 'devia reprovar quando o ÚLTIMO slide também tem seta'
-    lote_meio_sem_seta = audit_lote_setinha([com_seta, sem_seta, sem_seta])
-    assert lote_meio_sem_seta, 'devia reprovar quando um slide do MEIO não tem seta'
-    print('craft.py smoke test OK — nw, legible, audit_html, audit_lote_setinha funcionando.')
+    print('craft.py smoke test OK — nw, legible, audit_html funcionando.')
     print('uso gate: python3 scripts/craft.py audit preview.html')

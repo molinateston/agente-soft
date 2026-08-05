@@ -6,8 +6,6 @@ O formato não é detalhe estético. Ele muda a taxa de conversão e muda quem v
 
 Toda regra Soft continua valendo em qualquer formato: a isca é amostra do mecanismo (não dica solta), guarda o como, e CASA com o avatar do usuário. Marca-neutra: os exemplos abaixo são de **nichos fictícios** (uma agência de viagens de bem-estar, um personal de mulheres na menopausa, um escritório de arquitetura de interiores, um software de gestão pra oficinas mecânicas, um professor de espanhol pra executivos). O usuário traz a própria oferta, o próprio avatar, o próprio verbatim.
 
-> **Regra dura da marca-neutra:** se a isca que você escolheu se parece com QUALQUER exemplo deste catálogo (mesmo nicho, mesmo tema, mesma promessa, mesmo formato aplicado ao mesmo problema), DESCARTA. É sinal de que você copiou a ilustração em vez de partir do verbatim do cliente. O formato é da lista; a promessa e o avatar saem SÓ da fundação real dele.
-
 ---
 
 ## 1. As 5 famílias por função psicológica

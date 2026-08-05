@@ -7,7 +7,7 @@
 ## Índice
 
 - Os 4 cânones combinados
-- Bloco 1, Output management (alavancagem, delegação, o gargalo)
+- Bloco 1, Output management
 - Bloco 2, Liderança Nível 5
 - Bloco 3, Os 5 sistemas de qualquer empresa
 - Bloco 4, Cultura como sistema
@@ -57,12 +57,6 @@ Alavancagem = output gerado ÷ input pessoal investido. Atividades de alta alava
 | Você executando tarefa que diretor faria | Negativa | Tira você de decisão e treina mal o diretor |
 
 **Regra:** se a tarefa pode ser feita por outra pessoa, **delega imediatamente**. CEO que executa tarefa operacional está furtando alavancagem da empresa.
-
-**A delegação de verdade libera TEMPO DE PENSAR.** O ganho maior de delegar o operacional vai além de fazer a mesma coisa mais rápido: abre espaço mental pra pensar, o único trabalho que ninguém faz no teu lugar. Responder lead o dia inteiro, apagar incêndio de suporte, ajustar detalhe operacional enche o dia e passa sensação de produtividade, mas ocupado não é produtivo. Essas horas não pagam a hora do dono. Quem sai de 6 pra 7 dígitos quase nunca sai trabalhando MAIS no operacional. Sai porque delegou o operacional (o suporte, o atendimento repetido) e gastou o espaço que sobrou pra ter A ideia (um novo ângulo de criativo, uma oferta nova, um plano de contingência) que muda a escala do negócio. A conta fecha assim: a hora que você tira do operacional só vale se volta como pensamento de alta alavancagem, não como outra tarefa operacional.
-
-**A alavancagem tem endereço: o gargalo.** Delegar libera o tempo de pensar; o gargalo diz ONDE aquele pensamento (e todo esforço de crescimento) tem que cair. Toda operação tem, a cada momento, UM gargalo, a etapa mais fraca da corrente, que limita o faturamento inteiro. A pergunta que muda o jogo não é "o que eu faço pra crescer?" (essa espalha esforço em tudo), é **"o que está PARANDO meu crescimento?"**. Acha o gargalo, resolve, e o teto sobe até o PRÓXIMO gargalo aparecer; então repete, pra sempre. Melhorar qualquer coisa que NÃO seja o gargalo é ilusão de progresso: consome energia e não move o faturamento, porque a corrente ainda arrebenta no mesmo elo. Se as vendas param por falta de leads, contratar mais vendedor não faz nada; se o gargalo é a entrega, gerar mais lead só piora a fila.
-
-Pra enxergar o gargalo, o dono olha a empresa **de cima, como o mapa de um jogo de estratégia**: um sistema de entradas e saídas onde cada etapa passa o resultado pra próxima (atenção → lead → conversa → venda → entrega → caixa). O gargalo é a etapa que segura a fila, e é lá que a alavancagem do dono vai TODA primeiro. Isso casa direto com o Bloco 3 (os 5 sistemas): "o sistema mais fraco define o teto da empresa" é a mesma lei, e o gargalo é justamente esse sistema mais fraco no momento. Lastro citável: Goldratt (A Meta, a teoria das restrições).
 
 **2. Indicadores antecipados > atrasados.**
 
@@ -359,7 +353,6 @@ Prontos pra puxar em qualquer momento:
 |---|-----------|--------|
 | 1 | Output > input | Output gerencial |
 | 2 | Alavancagem é tudo | Output gerencial |
-| 2b | A alavancagem vai pro gargalo: pergunta "o que PARA o crescimento?", resolve, repete | Output gerencial (Goldratt) |
 | 3 | Indicadores antecipados > atrasados | Output gerencial |
 | 4 | Humildade pessoal + vontade profissional | Empresas que duram |
 | 5 | Janela quando bem, espelho quando mal | Empresas que duram |

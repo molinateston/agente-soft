@@ -104,7 +104,7 @@ Frases que existem só pra "respirar" o leitor, sem carregar informação ou fun
 | "único", "exclusivo", "premium" | Soa caro · vende barato |
 | "poderoso", "estratégico" | Inflado |
 
-**Substituição:** adjetivo concreto ou número. "Transformador" → "fechou 8 dígitos com 5 pessoas em 2 anos."
+**Substituição:** adjetivo concreto ou número. "Transformador" → "fechou R$13M com 5 pessoas em 2 anos."
 
 ### 5. Repetição da ideia em paráfrase
 

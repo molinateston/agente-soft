@@ -145,27 +145,6 @@ Mas mesmo aqui o default não é regra. Variações possíveis:
 - Palavras-chave em ACCENT (handle, palavra-código, "DM")
 - Sem botão necessariamente, o passo-a-passo já é o CTA
 
-### Infográfico-Lousa (peça inteira num slide só, alta taxa de salvamento)
-
-Não é um slide de carrossel, é uma **peça única** que resume um conteúdo inteiro numa página de caderno/quadro. Estoura de salvamento no feed porque parece humano, escaneável e "anotado à mão". Onde a Manuscrito Cru padrão é print de tweet ou diagrama pontual, o Infográfico-Lousa é a **folha cheia**: título grande no topo, 5 a 7 pontos resumidos, números circulados, setas ligando ideias, marca-texto no que importa.
-
-**Anatomia:**
-- `make_symmetric_slide(bg_color="#FFFFFF" ou creme "#F5F2EC", max_width=900, text_align="left")` (fundo claro é o default; a lousa é folha de papel).
-- **Título** no topo: 60-72px / 800, com sublinhado manuscrito curvo (stroke 6px, ACCENT) embaixo de 1-2 palavras.
-- **5 a 7 pontos**, cada um ≤10 palavras, em lista com número circulado à mão (círculo desenhado stroke 5px ACCENT em volta do número) OU marcador manuscrito. Palavra-chave de cada ponto em ACCENT ou com marca-texto (fundo ACCENT a 25% de opacidade atrás da palavra).
-- **Setas curvas** (stroke 5-6px ACCENT) ligando 2 pontos quando há relação de causa/sequência; nunca mais de 2 setas (senão vira poluição, a regra de 1-elemento-por-slide vira "1 tipo de elemento").
-- **Números/estatística**: se houver, desenhe grande com círculo ou caixa manuscrita em volta.
-- **Rodapé** de compartilhamento: uma linha curta no fim, escrita na voz do cliente (ver "reforço de compartilhamento" abaixo), no mesmo traço manuscrito.
-
-**Dois jeitos de renderizar (o trade-off):**
-- **(a) HTML nosso** (default): fonte manuscrita (Caveat, já no `assets/fonts`) + textura leve de papel via CSS + SVGs manuscritos de `elementos-manuscritos.md`. Determinístico, editável, exporta PNG, na marca do cliente. A textura de caderno em HTML chega perto, não idêntica.
-- **(b) prompt de imagem-IA** (quando o cliente quer a textura fotográfica de caderno de verdade): herda o branch de imagem-IA do `processo-design.md`. A copy-visual passa pelo Crivo ANTES; o prompt descreve a lousa manuscrita com os pontos já escritos. Fica com textura real, mas NÃO é editável (mudar uma palavra = regenerar). Documente esse trade-off pro cliente na hora de escolher.
-
-**Reforço de compartilhamento (na voz do cliente, nunca o "♻️ Reposte" cru):**
-O último elemento pode ser um empurrão de distribuição escrito à mão ("salva pra não perder", "manda pro sócio que precisa ver"). Mas passa pelo **anti-IA** como qualquer copy: o "Reposte ♻️" genérico é banido; reescreve na voz do cliente, ancorado no que o público dele realmente faria. Sem emoji-muleta se a voz do cliente não usa emoji.
-
-**Quando NÃO usar Infográfico-Lousa:** conteúdo premium/oferta cara (Editorial Preto tem mais autoridade); peça de tráfego pago que precisa de copy editável A/B (fica no HTML das 3 famílias, não na versão imagem-IA); conteúdo sem 5+ pontos pra resumir (uma tese só vira slide de afirmação pura, não lousa cheia).
-
 ## Elementos permitidos
 
 - Avatar bloco no topo (foto + nome + @handle + selo verificado)

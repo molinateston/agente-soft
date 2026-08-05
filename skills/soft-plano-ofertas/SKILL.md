@@ -1,26 +1,7 @@
 ---
 name: soft-plano-ofertas
-description: "EMPACOTA e precifica qualquer oferta do método Soft como STACK: destila a PUV, calibra a Equação de Valor, monta entregáveis (cada um matando UMA objeção), acha o entregável-tese, empilha a prateleira e o bônus sem preço, escolhe a garantia e precifica pela régua 10x. Âncora, EMPACOTAR a OFERTA como stack (régua 10x, ancoragem, garantia) = ofertas; a conta/margem/markup/ponto de equilíbrio/imposto (por CÁLCULO) = soft-financeiro. Cobre 6 tipos como MODOS (mentoria, consultoria, curso, comunidade, feito-pra-você, entrada). Marca-neutra: números e preço são do dono. Use pra desenhar/empacotar/precificar oferta, montar a stack, PUV, bônus, garantia, ou auditar oferta que não fecha. NÃO use pra precificação por CÁLCULO/markup/margem (soft-financeiro); posicionamento/nomear o método (soft-plano-posicionamento); oferta DENTRO do webinar (soft-webinar-plano); script/fechamento (soft-vendas-closer); proposta pós-call (soft-proposta-comercial); carta/VSL/landing (soft-funil); contrato (soft-contratos-consultoria)."
+description: "EMPACOTA e precifica qualquer oferta do método Soft como STACK: destila a PUV, calibra a Equação de Valor, monta entregáveis (cada um matando UMA objeção), acha o entregável-tese, empilha a prateleira e o bônus sem preço, escolhe a garantia e precifica pela régua 10x. Âncora, EMPACOTAR a OFERTA como stack (régua 10x, ancoragem, garantia) = ofertas; a conta/margem/markup/ponto de equilíbrio/imposto (por CÁLCULO) = soft-financeiro. Cobre 6 tipos como MODOS (mentoria, consultoria, curso, comunidade, feito-pra-você, entrada). Marca-neutra: números e preço são do dono. Use pra desenhar/empacotar/precificar oferta, montar a stack, PUV, bônus, garantia, ou auditar oferta que não fecha. NÃO use pra precificação por CÁLCULO/markup/margem (soft-financeiro); posicionamento/nomear o método (soft-plano-posicionamento); oferta DENTRO do webinar (soft-webinar); script/fechamento (soft-vendas-closer); proposta pós-call (soft-vendas-proposta); carta/VSL/landing (soft-funil); contrato (soft-vendas-contratos)."
 ---
-
-> 🔴 **REGRA DURA DE FRASE , "TODA FRASE SE EXPLICA SOZINHA"** (vale em TUDO que esta skill escrever pro público)
->
-> Copy Soft é **frase que gera IMAGEM na cabeça de quem lê frio**. Não pode assumir que o leitor já sabe o assunto, o produto, a categoria, o método, o mecanismo ou o antes/depois. Toda frase que você escrever precisa se sustentar sozinha, sem depender do slide anterior, da bio, do título, ou do que "obviamente é". Frase curta que "soa punchy" e deixa o entendimento pro contexto é reprovada.
->
-> **Teste antes de aprovar CADA frase:** "se essa frase caísse solta no scroll de uma pessoa que nunca ouviu falar do produto, ela entenderia O QUÊ + PRA QUEM + O RESULTADO CONCRETO?" Se não, REESCREVE nomeando explícito: qual é o objeto ("dieta", "calorias", "conta de calorias", não só "conta"), qual é o público ("mulher que já tentou emagrecer de todas as formas", não só "mulher que já tentou de tudo"), qual é o resultado concreto ("para de recomeçar a dieta", não só "para de recomeçar").
->
-> **Ex reprovado →** *"Você come o que ama, um agente faz a conta do seu dia e você para de recomeçar."*
-> **Ex aprovado →** *"Você passa a comer o que ama, um agente faz a conta de calorias do seu dia inteiro e não te deixa escorregar, e você para de recomeçar a dieta toda vez do zero."*
->
-> Adicionar as 3-5 palavras que ancoram o contexto é MELHOR que a frase curta ambígua. Copy boa não é curta, é **inequívoca e imagética**. Frase que precisa de contexto pra ser entendida = frase quebrada, refaz.
-
-> **REGRA-IRMÃ · "NENHUM VERBO ÓRFÃO" (cérebro preguiçoso do leitor):** o leitor tem cérebro preguiçoso e NÃO vai completar sua frase pra você. Todo verbo precisa vir com seu OBJETO NOMEADO na mesma frase, senão vira frase média. Verbos-armadilha que exigem complemento explícito: cortar (**cortar o quê?**), recomeçar (**recomeçar o quê?**), parar (**parar de quê?**), mudar, melhorar, escapar, largar, controlar, ajustar, resolver, virar, transformar. Sempre nomeia o objeto concreto (arroz, pão, doce, dieta, treino, agenda, cliente, valor), NUNCA deixa aberto.
->
-> **Ex ✅ BOA (verbos ancorados + objetos nomeados):** *"Você come arroz, pão e o que ama, e uma ferramenta minha conta as calorias de tudo por você todo dia, pra você emagrecer sem viver de dieta."* , "come" tem objeto (arroz, pão), "conta" tem objeto (calorias), "emagrecer" tem contexto ("sem viver de dieta").
->
-> **Ex ⚠️ MÉDIA (verbo órfão no fim):** *"…pra você emagrecer comendo o que gosta em vez de cortar."* , "cortar O QUÊ?" ficou pro leitor completar. Cérebro preguiçoso não completa, desiste. Correto: *"…em vez de cortar arroz, pão e doce."*
->
-> Antes de aprovar a frase, sublinha mentalmente cada verbo e confere: cada um tem OBJETO nomeado? Não? Nomeia agora.
 
 # Plano de Ofertas, a engenharia da oferta como stack
 
@@ -28,7 +9,7 @@ Oferta que fecha não é uma lista de itens com preço. É a **tese virando prod
 
 > **A doutrina-mãe (rege tudo):** a oferta é a Oferta que o cliente vai VENDER de fato. Posicionamento raso ainda atrai; **oferta rasa não fecha.** Se um bloco merece exaustão, é este. Cada entregável tem que ser **coerente com o mecanismo** do posicionamento: o que contradiz a tese sai, por mais que "venda bem". Método "sem reunião" não tem oferta com quatro reuniões; método de autonomia não tem pacote que cria dependência. A coerência não é estética, é o que sustenta a venda.
 
-> **Regra de prioridade (40/40/20):** num resultado de venda, o PÚBLICO pesa ~40%, a OFERTA ~40%, a COPY ~20%. Acertar pra quem se vende e o que se empacota domina o jogo: dá pra vender sem ser gênio de texto quando o público está faminto e a oferta é forte, e nenhuma copy salva oferta rasa jogada pro público errado. Isso é regra de PRIORIDADE, não licença: **tempera o cuidado com a copy, não anula.** Os 20% decidem no detalhe e o gate anti-IA continua obrigatório em toda frase. O que muda é a ORDEM do esforço, primeiro se amarra o público e a oferta (é o que esta skill faz), depois se lapida a frase (soft-funil, soft-conteudo). Lastro citável: a "multidão faminta" de Halbert (o mercado com fome vale mais que o anúncio genial), e a leitura de Kurtz de que a lista/público responde pela maior fatia isolada do resultado. **Implicação pra esta skill:** oferta fraca com copy linda é o pior negócio; antes de caprichar na frase da PUV, confira se a stack de fato move a Equação e se o avatar tem fome real do resultado.
+> **Regra de prioridade (40/40/20):** num resultado de venda, o PÚBLICO pesa ~40%, a OFERTA ~40%, a COPY ~20%. Acertar pra quem se vende e o que se empacota domina o jogo: dá pra vender sem ser gênio de texto quando o público está faminto e a oferta é forte, e nenhuma copy salva oferta rasa jogada pro público errado. Isso é regra de PRIORIDADE, não licença: **tempera o cuidado com a copy, não anula.** Os 20% decidem no detalhe e o gate anti-IA continua obrigatório em toda frase. O que muda é a ORDEM do esforço, primeiro se trava o público e a oferta (é o que esta skill faz), depois se lapida a frase (soft-funil, soft-conteudo). Lastro citável: a "multidão faminta" de Halbert (o mercado com fome vale mais que o anúncio genial), e a leitura de Kurtz de que a lista/público responde pela maior fatia isolada do resultado. **Implicação pra esta skill:** oferta fraca com copy linda é o pior negócio; antes de caprichar na frase da PUV, confira se a stack de fato move a Equação e se o avatar tem fome real do resultado.
 
 **Como o método trata número e exemplo:** a mecânica abaixo é a regra do caminho, em voz própria. Onde aparece um exemplo, ele vem em **nicho fictício rotulado** (mostra o formato, nunca é molde pra copiar). Nenhum número (ticket, valor de mercado, resultado, faturamento) é afirmação universal do método: ou vira **princípio sem número**, ou vira **SLOT do dono** preenchido COM ele, falsificável, marcado `[A CONFIRMAR]` até validar. Números de MECÂNICA (a régua ~2x, a régua 10x, 12x) ficam, porque são parâmetro do processo.
 
@@ -57,8 +38,6 @@ Oferta que fecha não é uma lista de itens com preço. É a **tese virando prod
 ## ⚠️ ENTREGA = UM doc MD, SEMPRE (nunca pingar a peça no chat)
 
 Regra dura: o RESULTADO desta skill sai como **UM documento markdown consolidado**. No **claude.ai**, um **artifact de markdown** (o dono abre, copia, baixa); no **Claude Code**, um arquivo `.md`; no **agente/Telegram**, gera o doc como arquivo e cita o path completo na resposta (o bridge anexa), com a condução em mensagens curtas, sem markdown pesado (sem `##`, sem tabela `|` no texto ao usuário). A CONDUÇÃO (perguntas de contexto, escolhas, os STOPs de aprovação) acontece no chat; a PEÇA (PUV, stack, Mapa, garantia, preço) mora no DOC. Ao parar num STOP, você mostra ou atualiza o DOC e pergunta "ajusto?"; NUNCA reescreve a peça em pedaços soltos no corpo da conversa. Sem o doc entregue, a skill não terminou.
-
-**🔴 O DOC NASCE NO PRIMEIRO TURNO E É O PREVIEW VIVO.** Antes da 1ª pergunta de condução, CRIA o arquivo `.md` do plano com o esqueleto INTEIRO preenchido com `[A CONFIRMAR]` em cada campo, e cita o path no primeiro turno. A partir daí, cada resposta do dono num STOP, você EDITA a seção correspondente do arquivo (troca o `[A CONFIRMAR]` por conteúdo real) e responde no chat SÓ *"atualizei a Seção X, olha o doc; ajusto?"*. **O `.md` é a FONTE DE VERDADE, não o chat:** o dono pode EDITAR direto o arquivo (VS Code, editor local, quem quiser), e no próximo turno você LÊ a versão atualizada dele antes de continuar (nunca sobrescreve edição do dono sem confirmar). NUNCA despeja seção montada no corpo da conversa "pra ele ver antes"; o lugar de ver é o doc. Chat = perguntas curtas + confirmações. Peça inteira despejada no chat = paredão que ninguém aproveita e reprova o output.
 
 **No app sem artifact nativo:** o doc vai num único bloco de código markdown fechado (uma cerca que abre e fecha), separado da condução. O texto de bastidor (que Passo você detectou, que modo está ativo, o que o OK autoriza) NUNCA entra no doc nem no chat: o usuário quer o doc limpo e a próxima pergunta. Condução curta fora do bloco; peça inteira dentro do bloco.
 
@@ -214,7 +193,7 @@ Profundidade em `references/ancoragem-e-precificacao.md` (cardápio de garantia 
 
 **Terceiro uso da âncora (destino comercial).** Até ~R$2.000 a oferta fecha no **checkout direto**. Acima de ~R$2.000 a mesma âncora alta muda de ALVO: deixa de mirar a compra e mira a **conversa** ("ancora em 20k, vende a porta da conversa por 2k"), destino = WhatsApp/aplicação. **High-ticket (3k+) fecha no 1:1, nunca no checkout** (a condução é da `soft-vendas-closer`; o formulário de aplicação inverte o desejo, "se eu não te chamar, você não foi aceito"). Escolher o ticket é escolher a engenharia inteira em cascata.
 
-**A ordem de APRESENTAR o bloco de oferta (variação, não sobrescreve o desenho).** Os Passos P0-P7 são a ordem de DESENHAR (destila PUV, calibra Equação, monta stack, ancora, precifica). A ordem de APRESENTAR a oferta pronta na copy/palco é outra, e um molde testado de resposta direta sequencia assim: apresentação do produto → benefícios → o que tem dentro (SEXY, via fascinations) → **pra quem é / pra quem NÃO é** → ancoragem → preço → CTA → garantia → bônus → recap → **fecho de 2 caminhos** (*"você aplica isto sozinho e leva meses, ou pega aqui pronto e aprende em horas"*). Duas peças aí são acréscimo tático útil: o **pra quem NÃO é** (filtra e sobe o desejo de quem se encaixa) e o **fecho de 2 caminhos** (contrasta o custo de fazer sozinho contra o atalho da oferta). Onde essa ordem divergir da doutrina Soft (a stack cai na tela do webinar por ancoragem semeada, não em bloco linear), **vale como VARIAÇÃO de apresentação, a doutrina Soft manda.** A montagem final dessa sequência é handoff: **soft-funil-carta** (na carta/VSL) e **soft-webinar-plano** (no palco).
+**A ordem de APRESENTAR o bloco de oferta (variação, não sobrescreve o desenho).** Os Passos P0-P7 são a ordem de DESENHAR (destila PUV, calibra Equação, monta stack, ancora, precifica). A ordem de APRESENTAR a oferta pronta na copy/palco é outra, e um molde testado de resposta direta sequencia assim: apresentação do produto → benefícios → o que tem dentro (SEXY, via fascinations) → **pra quem é / pra quem NÃO é** → ancoragem → preço → CTA → garantia → bônus → recap → **fecho de 2 caminhos** (*"você aplica isto sozinho e leva meses, ou pega aqui pronto e aprende em horas"*). Duas peças aí são acréscimo tático útil: o **pra quem NÃO é** (filtra e sobe o desejo de quem se encaixa) e o **fecho de 2 caminhos** (contrasta o custo de fazer sozinho contra o atalho da oferta). Onde essa ordem divergir da doutrina Soft (a stack cai na tela do webinar por ancoragem semeada, não em bloco linear), **vale como VARIAÇÃO de apresentação, a doutrina Soft manda.** A montagem final dessa sequência é handoff: **soft-funil-carta** (na carta/VSL) e **soft-webinar** (no palco).
 
 **O racional de curadoria (fecha SEMPRE, o teste final).** Pra cada escolha estruturante, uma linha de "por que é assim, por que deixa de ser outra coisa": por que 12 semanas e não sessão avulsa; por que o nível de baixo tem triagem e não é programa aberto; por que tal entregável existe e não o "pacote óbvio" do nicho. Se o dono não consegue dizer *por que deixa de ser* a alternativa óbvia, a oferta ainda está rasa.
 
@@ -241,7 +220,7 @@ O molde P0-P7 é universal. O TIPO (detectado no P0) calibra o núcleo, o nível
 
 > **Degrau de entrada pra tráfego frio (possibilidade, não novo pilar).** Quando o dono roda tráfego frio, o **produto de entrada** ganha uma versão de ticket doce (**~R$197 a R$497**, com 297/397 costumando ser o ponto ideal) desenhada como porta barata que alimenta a esteira e o webinário. Dois caminhos pra montá-lo sem inventar produto novo: **(a) resumo condensado** do carro-chefe, ou **(b) extrair UM módulo** e vender solto. É **degrau de entrada, não funil substituto**: o webinário-perpétuo continua o funil-mãe do ecossistema, e este produto barato é uma das portas que abastecem o topo, não um funil de VSL rival. O modo completo fica em `references/tipos-de-oferta.md` (tipo 6).
 
-Profundidade em `references/tipos-de-oferta.md` (cada tipo com o modo completo: núcleo, entregável-tese típico, prateleira típica, garantia, canal). O tipo **mentoria** aprofunda em `references/mentoria-operacional.md`; a apresentação de palco é da `soft-webinar-plano`.
+Profundidade em `references/tipos-de-oferta.md` (cada tipo com o modo completo: núcleo, entregável-tese típico, prateleira típica, garantia, canal). O tipo **mentoria** aprofunda em `references/mentoria-operacional.md`; a apresentação de palco é da `soft-webinar`.
 
 ---
 
@@ -269,7 +248,7 @@ Só doc com **VEREDITO=PASSA** vai pro usuário. Um ✗ refaz **o item**, não o
 | **Números são do dono (Lei da fidelidade)** | todo número/valor/case/preço é do dono ou `[A CONFIRMAR]`; número de exemplo nunca virou promessa; zero invenção plausível; zero benchmark nomeado do método no doc |
 | **Tipo respeitado** | o modo do tipo detectado (núcleo, nível, garantia, canal) bate com a tabela dos 6 tipos |
 | **Output DENSO** | tabelas/listas, não prosa; cada oferta fechada em si; zero meta-narração/bastidor; sem tabela de gate na saída |
-| **Anti-IA (HARD)** | zero em-dash (travessão longo, U+2014) · zero família "emperrar/empacado/desemperrar" (exceto aspa literal) · sem frase-emoldura · sem verbo-clichê de hype · sem tricolon performático · PT-BR com acentuação correta. Ver o bloco de reescrita abaixo. |
+| **Anti-IA (HARD)** | zero em-dash (travessão longo, U+2014) · zero família "travar/travado/destravar" (exceto aspa literal) · sem frase-emoldura · sem verbo-clichê de hype · sem tricolon performático · PT-BR com acentuação correta. Ver o bloco de reescrita abaixo. |
 | **VEREDITO** | **= o PIOR item.** Um ✗ = REFAZ o item. Só tudo-✓ = PASSA. |
 
 **Reescrita obrigatória do em-dash (o furo mais provável, o modelo usa por reflexo na prosa PT-BR densa):** o em-dash é o travessão longo, U+2014. **Não basta "buscar e refazer": REESCREVA de fato cada ocorrência.** Travessão de aposto no meio da frase vira **vírgula**; travessão que anuncia consequência ou lista vira **dois-pontos**; travessão que separa duas ideias inteiras vira **ponto**. Faça isto ANTES de marcar o item ✓.
@@ -278,7 +257,7 @@ Só doc com **VEREDITO=PASSA** vai pro usuário. Um ✗ refaz **o item**, não o
 - **ANTES:** `custo invisível [travessão] a âncora primária` · **DEPOIS:** `custo invisível: a âncora primária`
 - **ANTES:** `número inventado mata a credibilidade [travessão] na dúvida, subestime` · **DEPOIS:** `número inventado mata a credibilidade. Na dúvida, subestime`
 
-**Verificação real antes do ✓ (declarar ✓ sem buscar é gate falso, o erro mais grave):** no Code roda `grep -oaP "\xe2\x80\x94" no-doc-final | wc -l` (tem que dar 0) e o mesmo pra família "emperrar"; no chat/app varre o texto inteiro procurando o travessão longo caractere a caractere. Achou um, reescreve pela regra acima e varre de novo.
+**Verificação real antes do ✓ (declarar ✓ sem buscar é gate falso, o erro mais grave):** no Code roda `grep -oaP "\xe2\x80\x94" no-doc-final | wc -l` (tem que dar 0) e o mesmo pra família "travar"; no chat/app varre o texto inteiro procurando o travessão longo caractere a caractere. Achou um, reescreve pela regra acima e varre de novo.
 
 O filtro anti-IA completo (12 padrões banidos, teste em voz alta) mora na `soft-anti-ia`: invoque-a na última checagem de qualquer copy da oferta (PUV, falas de garantia, nomes). Ancoragem e prova (número de Mapa, case, garantia) só entram se vierem do briefing real; sem isso, viram placeholder marcado.
 
@@ -321,12 +300,12 @@ Repare: cada item mata uma objeção nomeada; o entregável-tese materializa a t
 
 ## When NOT to use
 - **Posicionamento / nomear o método/mecanismo único / avatar do zero / PUV embrionária** → **soft-plano-posicionamento** (esta skill DESTILA a PUV do posicionamento pronto, não o cria).
-- **A OFERTA DENTRO do webinar + apresentação de palco (ancoragem ao vivo, queda em degraus, "combinado não sai caro", escassez no ar, stack semeada na aula)** → **soft-webinar-plano** (esta skill desenha a oferta como ativo; lá ela cai na tela do webinar).
+- **A OFERTA DENTRO do webinar + apresentação de palco (ancoragem ao vivo, queda em degraus, "combinado não sai caro", escassez no ar, stack semeada na aula)** → **soft-webinar** (esta skill desenha a oferta como ativo; lá ela cai na tela do webinar).
 - **Profundidade operacional da mentoria (extração de conhecimento, mapa em 4, as 4 ferramentas de acompanhamento, Ficha Técnica, doc de 2 páginas)** → esta mesma skill, em `references/mentoria-operacional.md` (o TIPO mentoria por dentro). A **estratégia de lançamento e escala** da mentoria (vender antes de montar, founding, 1:1 → grupo, micro-oferta, esteira) → **soft-vendas-estrategias**.
 - **Script de venda 1:1 / objeção / fechamento na DM / follow-up** → **soft-vendas-closer**; **prospecção/lead frio** → **soft-vendas-sdr**.
-- **Proposta comercial pós-call pra um cliente específico (HTML premium)** → **soft-proposta-comercial**.
+- **Proposta comercial pós-call pra um cliente específico (HTML premium)** → **soft-vendas-proposta**.
 - **Carta / VSL / landing / isca** → **soft-funil-***.
-- **Contrato / termo de adesão / cláusulas** → **soft-contratos-consultoria**.
+- **Contrato / termo de adesão / cláusulas** → **soft-vendas-contratos**.
 - "Por onde começo / próximo passo / valida isso" → **soft-leon**.
 
 ## Anti-Patterns (sintoma → correção)
@@ -355,210 +334,10 @@ Repare: cada item mata uma objeção nomeada; o entregável-tese materializa a t
 | Doc com prosa/meta-narração | Tabelas e listas; cada oferta fechada em si; corta bastidor |
 
 ## Handoff
-Plano de Ofertas aprovado alimenta: **soft-funil-carta** e **soft-funil-landing** (a oferta virando carta/página), **soft-vendas-closer** (a oferta virando conversa/script), **soft-vendas-estrategias** (como e quando lançar a oferta, founding, esteira), **soft-webinar-plano** (a oferta caindo na tela do webinar por ancoragem de palco), **soft-proposta-comercial** (a oferta pra um cliente específico), **soft-contratos-consultoria** (o contrato do ciclo). É doc vivo: muda a oferta principal → revisa carta, script e páginas. Nomes/posicionamento pendentes = **soft-plano-posicionamento**.
+Plano de Ofertas aprovado alimenta: **soft-funil-carta** e **soft-funil-landing** (a oferta virando carta/página), **soft-vendas-closer** (a oferta virando conversa/script), **soft-vendas-estrategias** (como e quando lançar a oferta, founding, esteira), **soft-webinar** (a oferta caindo na tela do webinar por ancoragem de palco), **soft-vendas-proposta** (a oferta pra um cliente específico), **soft-vendas-contratos** (o contrato do ciclo). É doc vivo: muda a oferta principal → revisa carta, script e páginas. Nomes/posicionamento pendentes = **soft-plano-posicionamento**.
 
 ## References (o corpo carrega o método; estas guardam a profundidade dirigida)
 - `references/desenho-da-stack.md`: aprofunda P1-P4 (a escolha e reembalagem do mecanismo com a régua 80/20 e o framework maximizar/minimizar/remover; PUV com anatomia e teste; Equação de Valor Hormozi com o mapa tipo→variável; engenharia de valor percebido em P2b; entregáveis com as 5 perguntas e o entregável-tese; cardápio de componentes, régua de bônus, mapa de objeções, bônus sem preço e surpresa) com exemplos em nicho fictício. Lida nos P1 a P4 (e no P0 pra escolha do mecanismo).
 - `references/ancoragem-e-precificacao.md`: aprofunda P5-P7 (Mapa de Valor e as 2 âncoras, os três registros da âncora, a régua ~2x, o custo invisível; cardápio de garantia campo a campo + a garantia antecipada; régua 10x e condições de pagamento; níveis de acesso; ancoragem abre-pelo-alto, espectro de ticket R$497→R$50k, esteira, canal por faixa). Lida nos P5 a P7.
 - `references/tipos-de-oferta.md`: os 6 tipos (mentoria, consultoria, curso, comunidade/grupo, serviço feito-pra-você, produto de entrada), cada um com o modo completo (núcleo, nível natural, entregável-tese típico, garantia, canal, PUV). Lida no P0 e sempre que o tipo calibrar um passo.
 - `references/mentoria-operacional.md`: o tipo MENTORIA por dentro (a Extração de Conhecimento com a tabela dos 5 critérios, o Mapa da Transformação em 4, o formato 1:1, as 4 ferramentas de acompanhamento com moldes de perguntas, a Ficha Técnica de 11 itens com fichas preenchidas, o doc de 2 páginas campo a campo). Lida quando o tipo detectado no P0 é mentoria e o dono quer o operacional.
-
-
----
-
-## RÉGUA DE DIAGRAMAÇÃO obrigatória (18/07/2026)
-
-Todo doc/entregável que essa skill produz DEVE seguir `skills/shared-references/REGUA-DIAGRAMACAO-DOCS.md`:
-
-- Topo: rótulo pequeno + título grande + subtítulo + metadata `chave: valor`
-- Números ANTES da narrativa (seção "0" com tabela/KPI ancora tudo)
-- Numeração hierárquica (1, 2, 3.1, 3.2), divisa entre seções
-- Bloco padronizado que se repete em TODAS as seções
-- Bullet > parágrafo, com palavra-âncora em **negrito**
-- Callouts (azul/verde/amarelo/vermelho) 1 por seção no máximo
-- Comparação = 2 colunas paralelas · Fluxo = seta ↓ · KPI = cards
-- Aspas literais pra citação · badges pra marcar novidade
-- Fecha com checklist acionável (dono/prazo quando existe)
-- Zero gordura: NUNCA "vale destacar", "importante notar", "além disso", "por outro lado", "em suma", "conforme mencionado", "neste documento", "vamos explorar"
-- **Zero changelog** dentro do doc (não escreva "atualizei X, antes era Y")
-- **Zero meta-processo** ("pesquisei X, cruzei com Y")
-- 1 bloco = 1 tela de celular (o dono lê no Telegram)
-
-**Teste antes de entregar:** (1) topo bate no padrão? (2) número ancora antes da narrativa? (3) bloco padronizado repete? (4) callout ≤1 por seção? (5) checklist acionável no fim? (6) zero das palavras proibidas? Se sim nos 6 → entrega. Se não → reescreve.
-
-## GATE OBRIGATORIO soft-critico-copy
-
-Antes de entregar QUALQUER linha de copy publica que sai desta skill (headline, hook, corpo, CTA, script, roteiro, legenda, e-mail, mensagem, pagina), a copy passa por soft-critico-copy: 4 filtros na ordem (CUB, Estrutura-mae, Anti-IA, Verbatim). Se reprova em qualquer um, reescreve e reroda ate zero falha dura.
-
-Rodar: `python3 ~/.claude/skills/soft-critico-copy/scripts/lint_copy.py <arquivo>`
-
-
-============================================================
-MODO PIPELINE Q&A GUIADO RETOMÁVEL (mold soft-webinar-plano), 2026-07-23
-============================================================
-
-Esta skill agora OPERA em Q&A guiado retomável, no mesmo molde da
-soft-webinar-plano. O corpo acima é a FONTE DE MÉTODO (os frameworks,
-as tabelas, as fórmulas, os anti-patterns, os checks do gate). O
-pipeline abaixo é a EXPERIÊNCIA que conduz o dono pelo método,
-uma pergunta por vez, com preview e retomabilidade.
-
-Ordem sempre: (a) chega pedido, (b) roda M0 pra identificar sub-caso,
-(c) roda P0 pra importar o que já existe e pular perguntas cobertas,
-(d) roda as Fases numeradas, cada uma UMA pergunta por vez com 2-3
-opções cruzando com o método do corpo, (e) preview a cada 5 respostas,
-(f) fecha com o gate.
-
-
-REGRAS TRANSVERSAIS DURAS (valem em TODOS os blocos)
-
-1) UMA PERGUNTA POR VEZ. Nunca despejar 5 perguntas juntas. Nunca
-   continuar antes da resposta anterior.
-
-2) SUGERE 2-3 OPÇÕES depois das perguntas cruas. Nunca sugestão única
-   (vira empurrão). As opções vêm cruzando a resposta do dono com o
-   método do corpo acima. Ele escolhe, edita, ou pede mais.
-
-3) PREVIEW a cada 5 respostas. Bloco curto: "com o que você me deu
-   até agora, o esqueleto ta assim: [3-4 linhas]. seguimos?".
-
-4) ZERO DEFAULT DO DONO DO MÉTODO (o dono). Exemplos do produto do dono
-   (Operação SOFT, Mesa de Operação, Call de Arquitetura) só entram
-   como REFERÊNCIA marcada "(exemplo, não copia)". Naming do dono da
-   skill é SEMPRE aberto: ele escolhe o nome. A skill NUNCA impõe.
-
-5) RETOMABILIDADE. A cada resposta o state cai em
-   /tmp/<skill>-<slug>-<epoch>.json. Se o dono chamar de novo (ou
-   sair e voltar), a skill lê o state mais recente e pergunta
-   "quer continuar de onde parou ou começar novo?".
-
-6) SAIR/PAUSAR SALVA. "sai", "pausa", "amanhã" → salva state, avisa
-   o path, encerra limpo.
-
-7) PULAR = "[A CONFIRMAR]". Se o dono digitar "pula" ou "depois", a
-   resposta vira [A CONFIRMAR - <bloco>] no state e o pacote final
-   marca esses pontos pra ele afinar.
-
-8) RESPOSTA RASA = REFAZ A PERGUNTA. Se o dono responde em 3 palavras
-   algo que precisa contexto, devolve UMA pergunta específica pra
-   abrir mais.
-
-9) ZERO INVENTAR DADO DO DONO. Preço, número, case, nome de cliente,
-   fala do avatar: se não respondeu, pergunta. Nunca chuta.
-
-10) NAMING USER-FRIENDLY. Nomes internos (canonico/high_ticket, tipo
-    A/B/C) nunca aparecem na cara do dono. Perguntar sempre pelo
-    resultado que ele quer.
-
-
-COMO OPERA (o loop)
-
-Passo 1 - CHECA state antigo
-   Lê /tmp/<skill>-*.json. Se encontrou, pergunta "vi um trabalho
-   de {data} sobre {tese}. continua ou começa novo?".
-
-Passo 2 - RODA a fase atual
-   Uma pergunta por vez. Salva resposta no state. Cruza com o método
-   do corpo. Devolve 2-3 sugestões. Dono escolhe ou edita.
-
-Passo 3 - PREVIEW a cada 5 respostas
-   Bloco curto de progresso.
-
-Passo 4 - AVANÇA pra próxima fase quando fecha a atual
-   Anuncia em uma linha: "beleza, agora vou pra {nome amigável}".
-
-Passo 5 - NA FASE DE GERAÇÃO
-   Monta o entregável usando o método do corpo (as fórmulas dos
-   blocos, o gate, os anti-patterns).
-
-Passo 6 - ENTREGA
-   Google Doc (via gog drive upload --convert) OU artefato específico
-   da skill + resumo curto + lista de [A CONFIRMAR] pendentes.
-
-
-ESTADO EM /tmp
-
-Arquivo: /tmp/<skill>-<slug>-<epoch>.json
-
-Formato mínimo:
-{
-  "skill": "<nome>",
-  "slug": "<slug curto>",
-  "epoch": <unix>,
-  "criado_em": "<ISO>",
-  "atualizado_em": "<ISO>",
-  "fase_atual": "M0|P0|F1|F2|...|Fn|entrega",
-  "sub_caso": "<valor de M0>",
-  "pecas_prontas": {},
-  "respostas": {},
-  "pendentes_a_confirmar": []
-}
-
-
-
-============================================================
-M0 / P0 / FASES, soft-plano-ofertas
-============================================================
-
-M0. MODO, UMA pergunta abre o sub-caso:
-"o que você quer agora com as ofertas?
- (a) desenhar a esteira completa (isca até high-ticket)
- (b) empacotar UMA oferta (PUV, garantia, bônus, preço)
- (c) reposicionar oferta que já roda mas empacou
- (d) desenhar upsell/downsell/cross-sell em cima do que existe
- (e) só nomear a oferta e o mecanismo dela"
-
-Grava state.sub_caso.
-
-
-P0. IMPORT DE PEÇAS PRONTAS, UMA pergunta com checklist:
-"marca com sim/não:
-
-- Plano de posicionamento (soft-plano-posicionamento rodado)
-- Mecanismo nomeado (método próprio)
-- Cases reais + prints
-- Ticket-alvo + margem
-- Verbatim do avatar (dores/desejos com N)
-- Ofertas atuais rodando (com métricas: conversão, ticket médio)
-- Concorrência já mapeada (preço, PUV)
-- Nada, começo do zero"
-
-Salva em state.pecas_prontas.
-
-
-FASES
-
-F1. BRIEFING DA OFERTA, avatar, entregável, ticket-alvo,
-    canal de venda.
-
-F2. PUV, Promessa Única de Valor em 1 frase. 3 opções cruzando
-    verbatim + tese-mãe. Dono escolhe.
-
-F3. EQUAÇÃO DE VALOR, Sonho × Certeza / Esforço × Tempo. Cada
-    fator com decisão consciente.
-
-F4. ENTREGÁVEIS, o quê exatamente entrega, em que ordem, com
-    que forma (aula/mentoria/comunidade/ferramenta).
-
-F5. ENTREGÁVEL-TESE, o item que sustenta a promessa toda. Se
-    tirar, oferta cai. Nomeia.
-
-F6. ANCORAGEM + PREÇO, âncora explícita → preço-âncora → preço
-    real → parcelamento. Justifica a escada.
-
-F7. GARANTIA + BÔNUS + URGÊNCIA, reversão de risco, bônus com
-    valor percebido nomeado, urgência honesta.
-
-F8. NOMEAR A OFERTA, engenharia de nomeação. 3 opções. Dono
-    escolhe.
-
-F9. GATE INTERNO, auditoria silenciosa.
-
-F10. ENTREGA Google Doc com oferta empacotada bloco a bloco +
-     tabela de preços/escada + argumento-mãe pra copy.
-
-Sub-caso (a) esteira: roda F1-F10 uma vez por nível (isca,
-front-end, core, high-ticket) preservando consistência da tese.
-
-State: /tmp/soft-plano-ofertas-<slug>-<epoch>.json
-

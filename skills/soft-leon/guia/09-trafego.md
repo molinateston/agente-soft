@@ -7,7 +7,7 @@
 
 ## 9.1 · Tráfego é parte do funil, orgânico e pago
 
-O método Soft tem dois pilares, Posicionamento e Funil, e um motor, o Agente do dono. O **Funil (Pilar 2) é orgânico e pago**: o orgânico prova, o pago escala. Tráfego não é um acelerador que você liga "se sobrar", é parte do funil. A regra é simples: o orgânico testa, e o que passa no teste você **impulsiona**. A tendência é sempre turbinar o que converte, principalmente os carrosséis, que costumam puxar mais convicção. O que não se faz é ligar tráfego **antes** de a estrutura estar de pé e de o orgânico provar.
+O método Soft tem dois pilares, Posicionamento e Funil, e um motor, o Sócio IA. O **Funil (Pilar 2) é orgânico e pago**: o orgânico prova, o pago escala. Tráfego não é um acelerador que você liga "se sobrar", é parte do funil. A regra é simples: o orgânico testa, e o que passa no teste você **impulsiona**. A tendência é sempre turbinar o que converte, principalmente os carrosséis, que costumam puxar mais convicção. O que não se faz é ligar tráfego **antes** de a estrutura estar de pé e de o orgânico provar.
 
 A ordem importa, e é inegociável. Tráfego pago não conserta posicionamento fraco, não salva perfil confuso, não cria desejo onde a Carta não criou. Ele só faz uma coisa: pega o que já funciona em pequena escala e mostra pra mais gente. Se a peça já filtra e converte com público orgânico, tráfego multiplica o alcance dela. Se a peça não converte, tráfego multiplica o desperdício, você passa a pagar pra que mais gente veja algo que não vende.
 

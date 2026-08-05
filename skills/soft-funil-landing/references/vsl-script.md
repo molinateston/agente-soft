@@ -83,7 +83,7 @@ Diferença do VSL genérico:
 
 | Currículo | Procedência |
 |---|---|
-| "Tenho 10 anos de experiência em marketing" | "Passei 2 anos gerenciando 8 dígitos em vendas com equipe de 5, sem postar nada. Quando saí e precisei construir sozinho, entendi por que a maioria dos sistemas não escalam." |
+| "Tenho 10 anos de experiência em marketing" | "Passei 2 anos gerenciando R$13M em vendas com equipe de 5, sem postar nada. Quando saí e precisei construir sozinho, entendi por que a maioria dos sistemas não escalam." |
 | "Já atendi 200 clientes" | "O primeiro método que criei funcionou. Só que exigia 6h/dia de operação. Aí entendi que tinha construído um emprego, não um negócio." |
 
 **Formato:** 1–2 minutos. História cênica, não biografia. O momento específico que gerou o insight que virou o método.
@@ -193,6 +193,6 @@ VSL acima de 35 minutos com tráfego frio raramente converte mais que versão ma
 Antes de mostrar a peça, ela passa pelo Crivo embutido em `shared-references/crivo/`, nesta ordem:
 1. **Ancoragem** (`crivo/01-entrada-verbatim.md`), na entrada e na checagem: toda fala entre aspas é verbatim literal da fonte real do cliente, e o ângulo-mãe tem N. Aspa que não bate na fonte reprova.
 2. **Simulação na pele do avatar** (`crivo/02-simulacao-cliente.md`): onde ele larga, onde se reconhece, o teste dos 2 segundos.
-3. **Gate CUB bloqueante + as 3 perguntas do gate** (`crivo/03-gate-cub.md`): imprime a tabela, o veredito é o pior bloco, peça que falha não sai, volta pra reescrita.
+3. **Gate CUB bloqueante + as 3 perguntas do Harry** (`crivo/03-gate-cub.md`): imprime a tabela, o veredito é o pior bloco, peça que falha não sai, volta pra reescrita.
 
 O anti-IA limpa o robô; o Crivo dá a força. Limpo não é forte. Os dois, nessa ordem. **Sem a tabela do Crivo impressa junto, a peça não foi entregue.**

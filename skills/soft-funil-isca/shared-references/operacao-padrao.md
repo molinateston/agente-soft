@@ -114,14 +114,14 @@ Toda peça passa pelo Crivo embutido (`shared-references/crivo/`) ANTES de ser e
 1. **Ancoragem** (`crivo/01-entrada-verbatim.md`): toda fala entre aspas é verbatim literal da fonte real do cliente E carrega a dor (saudação, monossílabo ou número solto entre aspas não conta). Aspa fabricada ou parafraseada como se fosse fala = FALHA.
 2. **Prova NUNCA é inventada.** Número, case, nome, prazo, print, depoimento só entram se vierem do briefing real. Sem prova real, vira placeholder explícito `[CASE: nome + número + prazo a preencher]`, marcado como pendência. Jamais gera número plausível. É o gêmeo da regra anti-verbatim-fabricado.
 3. **Simulação na pele do avatar** (`crivo/02-simulacao-cliente.md`): onde ele larga, onde se reconhece, o teste dos 2 segundos.
-4. **Gate CUB bloqueante + 3 perguntas do crivo** (`crivo/03-gate-cub.md`): imprime a tabela. Inclui a regra-zero (toda tese fecha em chão), a **Ação/CTA com destino real** (peça sem CTA forte FALHA), e o anti-IA.
+4. **Gate CUB bloqueante + 3 perguntas do Harry** (`crivo/03-gate-cub.md`): imprime a tabela. Inclui a regra-zero (toda tese fecha em chão), a **Ação/CTA com destino real** (peça sem CTA forte FALHA), e o anti-IA.
 5. **Mobile-First** (`shared-references/filtro-mobile-first/`) quando a peça vira visual.
 
-Os 5 movimentos de persuasão e os anti-padrões do formato viram **pré-filtro** (a peça já nasce neles). A auditoria de FORÇA que recusa é o Crivo. A pergunta "se eu apagasse o nome, qualquer um do nicho escreveria?" é a 3ª pergunta do o crivo, dentro do gate. A auditoria é interna; o usuário recebe só o output limpo + a tabela do gate.
+Os 5 movimentos de persuasão e os anti-padrões do formato viram **pré-filtro** (a peça já nasce neles). A auditoria de FORÇA que recusa é o Crivo. A pergunta "se eu apagasse o nome, qualquer um do nicho escreveria?" é a 3ª pergunta do Harry, dentro do gate. A auditoria é interna; o usuário recebe só o output limpo + a tabela do gate.
 
 ### 5b. Skills que só orquestram (não exportam peça)
 
-Se a skill apenas conduz a jornada e invoca a skill-mãe certa (ex: `soft-leon`), ela **não exporta peça**, então **não tem pasta `crivo/` própria nem roda este gate aqui dentro**. O Crivo bloqueante vive na **skill de peça invocada** (`soft-plano-posicionamento`, as atômicas de conteúdo `soft-conteudo-*`, a família de funil `soft-funil-*`, `soft-vendas`, a família de webinar `soft-webinar-*`), cada uma rodando o próprio `shared-references/crivo/` + `scripts/lint_copy.py` antes de devolver o ativo. Nenhuma peça sai sem passar lá.
+Se a skill apenas conduz a jornada e invoca a skill-mãe certa (ex: `soft-leon`), ela **não exporta peça**, então **não tem pasta `crivo/` própria nem roda este gate aqui dentro**. O Crivo bloqueante vive na **skill de peça invocada** (`soft-posicionamento`, `soft-conteudo`, `soft-funil`, `soft-vendas`, `soft-webinar`), cada uma rodando o próprio `shared-references/crivo/` + `scripts/lint_copy.py` antes de devolver o ativo. Nenhuma peça sai sem passar lá.
 
 ---
 
@@ -146,14 +146,3 @@ Se uma frase pode ser cortada sem perda, corta. Se uma seção pode ser comprimi
 A skill mais leve é a skill mais útil - porque sobra token pra você trabalhar em lote.
 
 Esse princípio vale pra escrita da skill E pro arquivo que ela entrega: o `.md` de output segue a Lei 6 da Seção 0 (enxuto pros 2 leitores). Mesma régua, dois alvos.
-
----
-
-## 8. Melhor resultado com as ferramentas que o usuário TEM (adaptação por ferramenta)
-
-A skill NUNCA trava por falta de ferramenta. Entrega o MELHOR resultado possível com o que o usuário tem AGORA. Vale nos 3 ambientes (app, Code, agente) e pra qualquer ferramenta.
-
-1. **Detecta ou pergunta o que ele tem.** Ferramenta conectada, acesso, dado, credencial. Usa o MELHOR caminho disponível.
-2. **Ferramenta ideal presente = executa.** Se dá pra rodar (ex.: pipeboard pro Meta Ads, imagegen pra arte, CRM/GHL pro SDR, Whisper pra transcrever, Cloudflare pra publicar), usa e entrega o resultado EXECUTADO, não só o plano.
-3. **Ferramenta ausente = entrega pronto pra executar na mão.** Mesma qualidade de método: o plano completo, a copy, o passo-a-passo exato de onde clicar. Nunca um stub, nunca "não consigo".
-4. **Fecha em 1 linha** dizendo o que ele DESTRAVARIA com a ferramenta, pra ele escolher pegar. Sem empurrar.

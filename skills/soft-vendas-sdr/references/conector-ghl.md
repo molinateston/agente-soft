@@ -1,6 +1,6 @@
-# Conector GHL — o manual de operação da API
+# Conector GHL: o manual de operação da API
 
-As chamadas REAIS que o SDR usa pra operar dentro do GoHighLevel (GHL / LeadConnector). Endpoints confirmados no repositório OpenAPI oficial (`GoHighLevel/highlevel-api-docs`) — não são chute. GHL é o primeiro conector; a arquitetura da skill aceita outros (o fluxo do `fluxo-sdr-autonomo.md` é o mesmo, só troca a camada de API).
+As chamadas REAIS que o SDR usa pra operar dentro do GoHighLevel (GHL / LeadConnector). Endpoints confirmados no repositório OpenAPI oficial (`GoHighLevel/highlevel-api-docs`), não são chute. GHL é o primeiro conector; a arquitetura da skill aceita outros (o fluxo do `fluxo-sdr-autonomo.md` é o mesmo, só troca a camada de API).
 
 ## Base e autenticação (toda chamada)
 
@@ -11,9 +11,9 @@ Headers:   Authorization: Bearer {{GHL_API_KEY}}
            Content-Type: application/json
 ```
 
-`{{GHL_API_KEY}}` = o Private Integration Token da location (ver `setup-conexao.md`). `{{GHL_LOCATION_ID}}` = o ID da sub-conta. Ambos vêm do `.env` do projeto — **o SDR NUNCA ecoa esses valores em nenhuma mensagem.**
+`{{GHL_API_KEY}}` = o Private Integration Token da location (ver `setup-conexao.md`). `{{GHL_LOCATION_ID}}` = o ID da sub-conta. Ambos vêm do `.env` do projeto. **O SDR NUNCA ecoa esses valores em nenhuma mensagem.**
 
-O agente faz as chamadas via `Bash` (`curl`). Todo `curl` abaixo é modelo — o SDR adapta os valores.
+O agente faz as chamadas via `Bash` (`curl`). Todo `curl` abaixo é modelo; o SDR adapta os valores.
 
 ## 1. Contatos
 
@@ -38,7 +38,7 @@ curl -s -X PUT "https://services.leadconnectorhq.com/contacts/{{CONTACT_ID}}" \
   -d '{"assignedTo":"{{USER_ID}}","tags":["qualificado"]}'
 ```
 
-**Tag** — adicionar `POST /contacts/{id}/tags` · remover `DELETE /contacts/{id}/tags` (mesmo path, verbo DELETE, body `{"tags":["..."]}`).
+**Tag**: adicionar `POST /contacts/{id}/tags` · remover `DELETE /contacts/{id}/tags` (mesmo path, verbo DELETE, body `{"tags":["..."]}`).
 
 **Nota** (registrar o diagnóstico pro closer): `POST /contacts/{id}/notes` body `{"body":"resumo do diagnóstico...","userId":"..."}`.
 
@@ -52,7 +52,7 @@ curl -s "https://services.leadconnectorhq.com/conversations/search?locationId={{
   -H "Authorization: Bearer {{KEY}}" -H "Version: 2021-07-28"
 ```
 
-**Ler o histórico** (contexto antes de responder — NUNCA responde sem ler): `GET /conversations/{conversationId}/messages` (`limit` default 20, `lastMessageId` pagina).
+**Ler o histórico** (contexto antes de responder; NUNCA responde sem ler): `GET /conversations/{conversationId}/messages` (`limit` default 20, `lastMessageId` pagina).
 
 **Enviar mensagem** (a resposta do SDR ao lead):
 ```bash
@@ -74,7 +74,7 @@ curl -s "https://services.leadconnectorhq.com/calendars/{{CALENDAR_ID}}/free-slo
   -H "Authorization: Bearer {{KEY}}" -H "Version: 2021-07-28"
 ```
 
-**Criar o appointment** (agendar a sessão — o objetivo do SDR):
+**Criar o appointment** (agendar a sessão, o objetivo do SDR):
 ```bash
 curl -s -X POST "https://services.leadconnectorhq.com/calendars/events/appointments" \
   -H "Authorization: Bearer {{KEY}}" -H "Version: 2021-07-28" -H "Content-Type: application/json" \
@@ -95,7 +95,7 @@ curl -s -X POST "https://services.leadconnectorhq.com/opportunities/" \
   -d '{"pipelineId":"{{PIPE}}","locationId":"{{LOC}}","name":"...","contactId":"{{CONTACT_ID}}","status":"open","pipelineStageId":"{{STAGE_NOVO}}","monetaryValue":3000,"assignedTo":"{{USER_ID}}"}'
 ```
 
-**Mover de stage** (avançar o card conforme a qualificação — NÃO há endpoint dedicado, é o update geral): `PUT /opportunities/{id}` body `{"pipelineStageId":"{{NOVO_STAGE}}"}`.
+**Mover de stage** (avançar o card conforme a qualificação; NÃO há endpoint dedicado, é o update geral): `PUT /opportunities/{id}` body `{"pipelineStageId":"{{NOVO_STAGE}}"}`.
 
 **Mudar status** (endpoint DEDICADO, separado): `PUT /opportunities/{id}/status` body `{"status":"won"}` (enum: `open`/`won`/`lost`/`abandoned`; se `lost`, passe `lostReasonId`).
 
@@ -106,15 +106,28 @@ O que faz o SDR acordar quando o lead escreve. **Duas rotas** (detalhe operacion
 1. **Recomendada pra quem tem só o Private Integration Token:** um **Workflow interno da GHL** com trigger "Customer Replied" + ação **"Send Webhook"** (Custom Webhook outbound) que faz POST pra uma URL do nosso agente. Não exige app OAuth. O workflow empurra o evento; a PIT é usada pra responder.
 2. **App OAuth Marketplace** (mesmo privado) com Webhooks configurados → evento nativo `InboundMessage` (dispara em qualquer canal). Payload: `{type, locationId, contactId, conversationId, messageType, body, direction, dateAdded, ...}`. Só compensa se já houver app OAuth.
 
-Sem webhook, o fallback é **polling** (`GET /conversations/search?status=unread` a cada N minutos) — funciona, mas é mais lento e gasta chamada. Webhook é o padrão.
+Sem webhook, o fallback é **polling** (`GET /conversations/search?status=unread` a cada N minutos): funciona, mas é mais lento e gasta chamada. Webhook é o padrão.
 
-## Rate limits (respeitar — o SDR não faz tempestade de chamadas)
+## Rate limits (respeitar: o SDR não faz tempestade de chamadas)
 - **Burst:** 100 req / 10s por location.
 - **Diário:** 200.000 req/dia por location.
 - Headers de resposta pra monitorar: `X-RateLimit-Daily-Remaining`, `X-RateLimit-Remaining`. Se bater no limite, o SDR espaça (backoff), não martela.
 
 ## O que NÃO tem API (não prometer ao cliente)
-Sem endpoint: Blogs, Social Planner/postagem, Companies. **Só leitura:** Workflows/automações (não cria/edita por API — só interface). **Só interface visual:** builder de funnels/sites, templates de WhatsApp. Se o cliente pedir algo daqui, o SDR/agente orienta a fazer pela interface — não finge que faz por API.
+Sem endpoint: Blogs, Social Planner/postagem, Companies. **Só leitura:** Workflows/automações (não cria/edita por API, só interface). **Só interface visual:** builder de funnels/sites, templates de WhatsApp. Se o cliente pedir algo daqui, o SDR/agente orienta a fazer pela interface, não finge que faz por API.
 
 ## Regra de ouro do conector
-Toda chamada pode falhar (token vencido, rate limit, location errada). O SDR **confere a resposta** e, se falhou, **NÃO finge que respondeu/agendou** — registra e avisa o dono (a doutrina "toda falha avisa"). Um agendamento que não gravou de verdade e o SDR diz "agendei" é a pior quebra de confiança possível.
+Toda chamada pode falhar (token vencido, rate limit, location errada). O SDR **confere a resposta** e, se falhou, **NÃO finge que respondeu/agendou**: registra e avisa o dono (a doutrina "toda falha avisa"). Um agendamento que não gravou de verdade e o SDR diz "agendei" é a pior quebra de confiança possível.
+
+## Achados de campo (defeitos reais de conta real; confira no SEU projeto)
+
+Três armadilhas encontradas operando um motor de verdade numa location real. Os NOMES abaixo são exemplo de mapeamento: cada projeto tem os seus, o onboarding mapeia.
+
+### 1. O horário do evento vem em português (Date.parse devolve NaN)
+Plataformas de webinar gravam o horário escolhido num campo custom do contato **em texto pt-BR** (ex.: `"12 de agosto de 2026, 20:00"`). `Date.parse` disso é `NaN`, e com NaN todo lead cai no estado errado (tudo vira "pré-evento" pra sempre). O motor precisa de um **parser tolerante de data em português** (mapa de meses por nome + hora) antes de comparar com o relógio. Teste com o dado REAL do campo, não com ISO de laboratório.
+
+### 2. Tags de presença: a negativa se confere ANTES da positiva
+Exemplo de família de tags de presença que uma automação de webinar grava: `compareceu_[evento]`, `assistiu100_[evento]`, `nao_compareceu_[evento]`. Defeito clássico: a automação marca positiva E negativa no mesmo contato. Regra do motor: **a negativa ganha** (trata como faltou, o caso conservador: acolher quem compareceu de novo é leve; vender pra quem faltou é queimar). Mapeie os nomes REAIS das tags do projeto no onboarding; não assuma convenção.
+
+### 3. A verdade mora nos campos custom (não no corpo da conversa)
+Horário escolhido, nome do evento e link exclusivo do lead vivem em **campos custom do contato**, não nas mensagens. É de lá que o prompt puxa a "verdade do cadastro" (`fluxo-sdr-autonomo.md`, passo 5). Se o campo não existe ou está vazio, a instrução é NÃO inventar: sem link exclusivo = não manda link nenhum e escala.

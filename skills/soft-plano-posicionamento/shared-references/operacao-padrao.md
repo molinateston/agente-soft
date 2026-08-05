@@ -121,7 +121,7 @@ Os 5 movimentos de persuasão e os anti-padrões do formato viram **pré-filtro*
 
 ### 5b. Skills que só orquestram (não exportam peça)
 
-Se a skill apenas conduz a jornada e invoca a skill-mãe certa (ex: `soft-leon`), ela **não exporta peça**, então **não tem pasta `crivo/` própria nem roda este gate aqui dentro**. O Crivo bloqueante vive na **skill de peça invocada** (`soft-plano-posicionamento`, as atômicas de conteúdo `soft-conteudo-*`, a família de funil `soft-funil-*`, `soft-vendas`, a família de webinar `soft-webinar-*`), cada uma rodando o próprio `shared-references/crivo/` + `scripts/lint_copy.py` antes de devolver o ativo. Nenhuma peça sai sem passar lá.
+Se a skill apenas conduz a jornada e invoca a skill-mãe certa (ex: `soft-leon`), ela **não exporta peça**, então **não tem pasta `crivo/` própria nem roda este gate aqui dentro**. O Crivo bloqueante vive na **skill de peça invocada** (`soft-plano-posicionamento`, as atômicas de conteúdo `soft-conteudo-*`, a família de funil `soft-funil-*`, `soft-vendas`, a `soft-webinar`), cada uma rodando o próprio `shared-references/crivo/` + `scripts/lint_copy.py` antes de devolver o ativo. Nenhuma peça sai sem passar lá.
 
 ---
 

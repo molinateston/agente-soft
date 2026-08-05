@@ -102,6 +102,8 @@ Toda venda Soft passa pelas mesmas 7 fases. O que muda entre formatos é **ritmo
 
 **Sinal de que achou a Problema Avançado:** lead fala com mais emoção, muda ritmo de voz. Anota a frase dele, você vai usar ela na Fase 4.
 
+**Profundidade e fecho da fase (em call):** diagnóstico raso de 20 minutos é bate-papo; o de verdade toma **40-60 minutos de presença total**, com ferramenta visual (doc/mapa que o lead VÊ encher; modelo de laudo na `caixa-de-ferramentas-closer.md`). A fase fecha com o **LAUDO**: um resumo curto e sincero, tom de médico, do que está acontecendo e por quê. O teste de qualidade do diagnóstico: se o lead reage *"isso é pior do que eu imaginava"*, você chegou no nível que ele não via e a venda anda; se ele reage *"é isso que eu já sabia"*, vocês estão no mesmo nível, e ninguém paga por quem está no mesmo nível. Nesse caso, desça mais uma camada antes de seguir.
+
 **Armadilha:** não avançar sem achar a Problema Avançado. Pitch sem Problema Avançado soa genérico.
 
 ---
@@ -158,6 +160,12 @@ Toda venda Soft passa pelas mesmas 7 fases. O que muda entre formatos é **ritmo
 
 **Objetivo:** conectar o programa à situação específica. **Não é pitch completo**, é só o que amarra com o que ele disse. Inclui um reframe (algo que ele não tinha visto).
 
+**Pré-condição dura: NUNCA se apresenta sem saber quanto o lead tem.** Antes desta fase, a leitura de capacidade já aconteceu (o "quanto você se programou?" + as faixas decrescentes da metáfora da Mercedes, ver Fase 2/3 e `comercial-1a1-e-conta-de-padaria.md`). Apresentar sem saber o teto é gastar a melhor munição com quem talvez nunca pagaria, e é chute, não consultoria. A lógica dita pro próprio lead: *"faz sentido eu te mostrar um caminho que não cabe na sua realidade? Não quero gastar teu tempo nem o meu."* A leitura é cuidado, não filtro frio.
+
+**Fórmula de cada item apresentado: ENTREGÁVEL → BENEFÍCIO → DOR QUE RESOLVE.** Entregável solto é característica, e ninguém compra característica (ninguém compra virabrequim; compra o que o carro faz por ele). Cada item amarra numa linha do laudo: *"[parte do método], que faz [benefício], e é isso que desmonta aquele [dor que ele grifou]"*. Se a solução tem 10 partes e o laudo tem 3 dores, apresentam-se 3 partes; o resto é ruído que esfria.
+
+**Engajamento ativo no meio da fase:** *"o que VOCÊ entendeu disso até aqui?"*. O lead verbaliza e se vende; se devolver raso, corrige na hora, antes do preço.
+
 **Formato:** 3–5 pontos curtos, cada um conectando com algo que o lead mencionou na Fase 2.
 
 **Estrutura de cada ponto:**
@@ -185,6 +193,8 @@ Se ele citar <2 elementos, reforça o que ficou faltando.
 
 **Armadilha:** apresentar o método inteiro. Lead desengaja.
 
+**Vocabulário banido da fase (e do fechamento): "faz sentido pra ti?" / "é isso que você busca?".** Médico não pergunta se a cirurgia faz sentido. Essas perguntas de validação pedem aprovação, devolvem o bastão e abrem porta de fuga. No lugar: o engajamento ativo (*"o que você entendeu disso?"*) e a afirmação com convicção (*"isso resolve o que você me falou"*). A confiança nasce no closer e transfere pro lead, nunca o contrário.
+
 ---
 
 ### Fase 6, Isolamento
@@ -192,6 +202,14 @@ Se ele citar <2 elementos, reforça o que ficou faltando.
 **Objetivo:** confirmar que **se valor + entrega + ajuste estão claros, falta só investir**. Filtra objeção real de objeção decorativa.
 
 **Por que essa fase existe:** sem isolamento, qualquer objeção que vier depois da revelação de preço pode ser objeção real OU desculpa. Com isolamento, você sabe.
+
+**A antecipação (o movimento que inverte a fase): mate as objeções clássicas ANTES do preço, enquanto são hipotéticas e baratas.** Depois do número na mesa, toda objeção vira negociação; antes, é só conversa sobre O LEAD. As quatro que se antecipam SEMPRE, nomeadas em voz alta:
+> *"Deixa eu ser sincero: eu detesto chegar no fim de uma conversa boa e ouvir 'preciso ver com meu sócio', 'preciso ver o financeiro', 'vou pensar'. Então me diz agora: tem alguém além de você nessa decisão? [trata] E o investimento, se fizer sentido, sai de onde: caixa, cartão, os dois? [trata] Sobrou alguma coisa que te faria pedir tempo? [trata]"*
+- **Decisor:** sem decisor na conversa, não se avança pra preço (protocolo no `banco-de-objecoes.md`).
+- **Financeiro:** a leitura de capacidade já veio da F5; aqui só se confirma a forma.
+- **"Vou pensar":** o que ficaria pendente se resolve AGORA, dentro da conversa.
+- **Concorrente:** *"tá avaliando mais alguém? O que espera ver lá que não viu aqui?"* (calibra sem atacar).
+É o mesmo princípio do churrasco: *"não vai esquecer a picanha, né?"* se fala ANTES, não quando a picanha já faltou. Antecipada, a objeção morre pequena; no fim, ela mata a venda.
 
 **Pergunta-âncora de isolamento (antes do preço):**
 > *"Antes de eu te passar o investimento: deixa eu confirmar uma coisa. Se a gente conseguir resolver [as dores que ele descreveu] no prazo de [X semanas], com [formato apresentado], e o investimento fizer sentido pra você, faz sentido a gente trabalhar junto?"*
@@ -227,12 +245,21 @@ Quem chegou na Fase 7 já decidiu (você confirmou isso na Fase 6). Sua função
 
 **Princípio do Fechamento Soft:** se você ainda tá vendendo na Fase 7, alguma fase anterior (Descoberta, Implicação, Conexão, Apresentação ou Isolamento) ficou fraca. Volta pra ela na próxima venda.
 
-**Revelação de preço:**
-> *"O investimento é R$[valor] à vista ou [Xx] de R$[parcela] no cartão. [O que inclui em 1 frase]. Faz sentido pra você?"*
+**Revelação de preço (com leveza, emendando no próximo passo; NUNCA "faz sentido pra você?" aqui):**
+> *"O investimento é R$[valor] à vista ou [Xx] de R$[parcela] no cartão. [O que inclui em 1 frase]. E a gente já garante sua entrada pra começar."*
 
-**Se confirmar:** envia link de pagamento, confirma próximos passos (primeira sessão agendada, grupo de suporte adicionado), encerra.
+**A escada de fechamento (fraco → médio → elite):**
+- **Fraco:** *"e aí, bora?"* (pede ânimo, não decisão).
+- **Médio:** *"Pix ou cartão?"* (alternativa fechada, já melhor).
+- **Elite:** usa o número que o PRÓPRIO lead deu na leitura de capacidade: *"você me disse que tem [X] no Pix e [Y] no cartão: faz o [X] no Pix agora e o resto a gente estrutura no cartão."* O fechamento elite não inventa nada, só devolve a conta que o lead abriu. É por isso que a leitura de capacidade (F5, pré-condição) não é opcional.
+
+**Conversão = PAGAMENTO.** Contrato assinado, "fechado!", aperto de mão: nada disso é conversão. Você diz que vai viajar quando compra a passagem, não quando pesquisa o destino. A call só conta como ganha com o dinheiro (ou o sinal) na conta; o resto é pipeline. O sinal de QUALQUER valor sela o compromisso (a mecânica completa da coleta em `comercial-1a1-e-conta-de-padaria.md`).
+
+**Se confirmar:** coleta o sinal/Pix AINDA NA CONVERSA (nunca "te mando o link e você faz depois"), confirma próximos passos (primeira sessão agendada, grupo de suporte adicionado), encerra. O contrato formaliza DEPOIS do compromisso (`soft-vendas-contratos`).
 
 **Se hesitar (objeção real após Isolamento):** uma jogada de encaminhamento, apenas uma, antes de despedir com leveza.
+
+**A condição única, CRIADA dentro da conversa (nunca tabelada):** o motivo real pra decidir agora nem sempre é preço; muitas vezes é um bônus ou ajuste personalizado que nasce do diagnóstico (*"pelo que você me contou de [dor], eu incluo [peça que responde a ela] se a gente firmar aqui"*), amarrado à conversa (*"essa condição existe nessa call; depois dela eu não consigo reabrir"*). **Cuidado que protege o método:** closer que SEMPRE solta condição na call vicia o mercado, o lead entra sabendo que o preço de tabela é mentira. A condição única é criada caso a caso, não é política. Escassez real, nunca teatro.
 
 **Jogadas de encaminhamento (uma por vez, nunca duas juntas):**
 
@@ -257,10 +284,13 @@ Se der o nome: *"Me passa o contato. Te mando uma mensagem que você encaminha p
 ## 4. Regras universais entre fases
 
 - **Nunca apresente antes de entender** (pular F2 = pitch no vazio).
+- **Nunca apresente sem saber quanto o lead tem** (a leitura de capacidade é pré-condição da F5).
 - **Nunca revele preço com dúvida aberta** (pular F6-isolamento = objeção garantida).
+- **Antecipe as objeções clássicas antes do preço** (decisor, financeiro, "vou pensar", concorrente; F6).
 - **Nunca force quem não tem perfil** (encerra na F7 com despedida leve, isso é vitória).
 - **Uma oferta por vez**: Principal → Condicional → Secundária. Nunca duas juntas.
-- **Tom de comando, não de súplica.**
+- **Tom de comando, não de súplica.** E a régua 7-38-55: ~7% do impacto é a palavra, ~38% o tom, ~55% o corpo. O script é só os 7%; a mesma frase dura entra incisiva com tom leve e vira agressão com tom fechado. Em call/vídeo, treine o tom junto com o texto (roleplay na `caixa-de-ferramentas-closer.md`).
+- **O fim do follow-up: lapida-se DENTRO da conversa.** "Vou ver o limite do cartão" vira *"abre o app agora, eu espero"*; "falo com o sócio" vira *"liga pra ele agora"*. O que sai da conversa sem resolver esfria e vira cobrança. Se não fechou: *"o que muda de hoje pra amanhã?"*; sem resposta, encerra com dignidade e libera a energia pro próximo. A exceção única (processo formal de empresa com sinceridade demonstrada) vira proposta com validade e compromisso amarrado na call (a hierarquia completa no Handoff da SKILL.md).
 
 ---
 
@@ -346,7 +376,6 @@ Use estas falas como matéria-prima das 7 fases, não como roteiro fixo lido. A 
 
 > **Se o lead veio pré-qualificado (SDR / WhatsApp):** não emende numa pergunta crua ("me conta qual a maior dificuldade"), isso faz repetir e irrita, ainda mais lead mais rico. Leia o CRM antes e abra ecoando a qualificação, já no diagnóstico: *"[Nome], vi aqui que [contexto + números] e que tu busca [objetivo que deu pro SDR]. É isso mesmo? O que vem acontecendo?"*. A primeira pergunta de Descoberta sai DAÍ, não do zero. Mecanismo completo em `references/conducao-na-pratica.md` ("Receber o bastão do SDR").
 
-*(origem: DVPeHEtjXGo, DZVt_p3Av7C)*
 
 ### Fase 1 · Recuo como autoridade (você ainda não é meu cliente)
 
@@ -355,7 +384,6 @@ Use estas falas como matéria-prima das 7 fases, não como roteiro fixo lido. A 
 
 **Como aplicar:** quando o lead testa ou empurra, devolve o lugar com firmeza calma. *"Olha, eu nem te cobrei nada ainda. Você nem é meu cliente. O que eu já te entreguei aqui foi um raio-x do seu [problema], de graça. Mostrar o resto só faz sentido se eu enxergar que encaixa pra você."*
 
-*(origem: DVTsjw3DQ8B, DXE31_dDiv3)*
 
 ### Fase 1 · Quando o lead resiste ao recuo e força o preço
 
@@ -365,7 +393,6 @@ Use estas falas como matéria-prima das 7 fases, não como roteiro fixo lido. A 
 
 **Como aplicar:** agradece a abertura e devolve pro motivo que trouxe a pessoa. *"Você chegou aqui porque tem dificuldade com [problema], então é disso que a gente precisa falar primeiro. Meu papel é entender a situação antes de qualquer coisa. Falar de preço sem isso seria chute."*
 
-*(origem: DV8qIc_DfY6)*
 
 ---
 
@@ -377,7 +404,6 @@ Use estas falas como matéria-prima das 7 fases, não como roteiro fixo lido. A 
 
 **Como aplicar:** usa quando o lead pede preço cedo. *"Você já foi num restaurante? Eles trazem a conta antes ou primeiro perguntam o que você quer comer, o tamanho da sua fome? Aqui é igual. Não consigo te falar valor sem antes entender o que você precisa. Me conta: hoje, qual é a maior dificuldade no seu [problema]?"*
 
-*(origem: DVjBBCKDRwn, DZAypB4NDmg)*
 
 ### Fase 2 · Cavar a resposta (responder pergunta com pergunta e descer camadas)
 
@@ -388,7 +414,6 @@ Use estas falas como matéria-prima das 7 fases, não como roteiro fixo lido. A 
 
 **Como aplicar:** nunca aceita a primeira resposta de superfície. *"Antes de eu responder, me ajuda a entender: quando você diz [palavra do lead], o que isso significa pra você?"* Cada coisa que ela fala abre a próxima pergunta, camada por camada, até a dor real aparecer. Quem pergunta conduz.
 
-*(origem: DZAypB4NDmg, DZnCyiRuoSD, DWJLAKWjo4w)*
 
 ### Fase 2 · Termômetro de intenção (de 0 a 10, e "por que não é 10?")
 
@@ -399,7 +424,6 @@ Use estas falas como matéria-prima das 7 fases, não como roteiro fixo lido. A 
 
 **Como aplicar:** *"De 0 a 10, o quanto você quer resolver [problema] hoje? ... 7? Mas você acabou de me dizer que [o que ele disse ser importante] importa muito. Como isso é 7?"* Régua Soft: 8-10 segue, abaixo de 7 não vira gancho de pressão, vira filtro. Não negocia o número dele até virar 10; se é morno, devolve pra conteúdo sem ressentimento.
 
-*(origem: DZ7qkJ7ubos, DZ2oQwsuprS)*
 
 ### Fase 2 · "Tirando o preço, o que é mais importante?" (a pergunta que entrega o argumento)
 
@@ -410,7 +434,6 @@ Use estas falas como matéria-prima das 7 fases, não como roteiro fixo lido. A 
 
 **Como aplicar:** logo na Descoberta, depois que ele já abriu o cenário. *"Deixa eu te perguntar uma coisa: tirando o valor, o que é mais importante pra você quando vai resolver [problema]?"* Anota a palavra exata que ele usar (segurança, tempo, previsibilidade, o que for) e devolve ela inteira na apresentação. Não inventa o critério dele, pergunta e usa o que ele mesmo disse.
 
-*(origem: DVpJTmKjUhK)*
 
 ### Fase 2/3 · Predisposição a pagar antes do preço ("quanto você se programou?")
 
@@ -422,7 +445,6 @@ Use estas falas como matéria-prima das 7 fases, não como roteiro fixo lido. A 
 
 **Como aplicar:** quando ele já reconheceu a dor mas ainda não viu o preço. *"Quanto você se programou pra resolver isso? ... Não pensou em nada? Sem problema, vamos pensar junto. Você mesmo me disse que [problema] te custa [valor] por [período]. Pra resolver isso, o que estaria dentro da sua realidade, sendo sincero, pra eu ver até onde eu consigo te ajudar?"* Se o número que ele dá é incompatível com a entrega, você descobre agora, não depois de apresentar. Sempre com o custo real que ele admitiu, nunca um número fabricado.
 
-*(origem: DXheO0bDvLa, DXPqA8Jjb2g)*
 
 ---
 
@@ -437,7 +459,6 @@ Use estas falas como matéria-prima das 7 fases, não como roteiro fixo lido. A 
 
 **Como aplicar:** desce a escada até ele admitir, nunca afirma a dor. *"Hoje, como você lida com [problema]? ... E isso você mede de algum jeito, ou é mais no sentimento? ... Então a gente saiu de 'tá sob controle' pra 'eu não sei direito como tá'. Alguém que você conhece já passou pelo pior cenário disso? Como foi? Imagina isso com você. De 0 a 10, quanto você quer resolver antes de chegar lá?"* Cada resposta vira a próxima pergunta.
 
-*(origem: DYiNFZkB9KB)*
 
 ### Fase 3 · A conta feita junto ("abre comigo aqui")
 
@@ -447,7 +468,6 @@ Use estas falas como matéria-prima das 7 fases, não como roteiro fixo lido. A 
 
 **Como aplicar:** extrai os números do próprio comprador e devolve o gap. *"Deixa eu fazer uma conta com você, abre aqui comigo. Hoje, [a métrica que ele controla] tá em quanto? E onde você me disse que quer chegar? Então tem um buraco de [resultado] entre onde você tá e onde você mesmo desenhou que queria estar. Esse buraco custa [valor] por mês que ele continua aberto."* Sempre com o número real dele, sempre pra mostrar o gap que já existe, nunca pra fabricar urgência.
 
-*(origem: DTbOMK5Dsap, DXPqA8Jjb2g)*
 
 ### Fase 3 · O compromisso é com ele, não com você
 
@@ -458,7 +478,6 @@ Use estas falas como matéria-prima das 7 fases, não como roteiro fixo lido. A 
 
 **Como aplicar:** descola a urgência da oferta. *"Repara uma coisa: eu não tô te perguntando o quanto você quer comprar de mim. Eu nem te mostrei o que eu faço ainda. Tô te perguntando o quanto você quer resolver [problema] pra você mesmo. Esquece a minha parte. O quanto isso aperta na sua vida hoje?"*
 
-*(origem: DZ7qkJ7ubos)*
 
 ---
 
@@ -469,7 +488,6 @@ Use estas falas como matéria-prima das 7 fases, não como roteiro fixo lido. A 
 
 **Como aplicar:** o clique não vem de "você tá frustrado", vem do detalhe real da vida dele. *"Deixa eu entender no concreto. Esse [problema], como ele aparece no seu dia a dia mesmo? Aquela [coisa que ele mencionou querer fazer], deu pra fazer ou ficou pra trás? E as contas no fim do mês, como ficam com isso pesando em cima?"* Ancora em detalhes que ele mesmo te deu, não em frases prontas sobre "a dor".
 
-*(origem: DZsP0-tu3GN)*
 
 ### Fase 4 · O espelho que faz ele concluir sozinho (e a ponte pra apresentação)
 
@@ -479,7 +497,6 @@ Use estas falas como matéria-prima das 7 fases, não como roteiro fixo lido. A 
 
 **Como aplicar:** conduz até ele concluir, depois corta a energia e passa a decisão pra mão dele. *"Então é isso que você quer resolver: [resume com as palavras dele]. A partir de agora muda uma coisa: eu vou te mostrar como a gente resolve exatamente [aquilo que ele trouxe], e no fim disso você vai me dizer sim ou não. Já não é mais sobre o que eu vendo. É sobre o que você quer. Pode ser?"* Você não diz "você precisa de mim", você conduz até ele dizer.
 
-*(origem: DXvAwf-Nz4z, DXp5UloDRZQ)*
 
 ---
 
@@ -494,7 +511,6 @@ Antes do método, o medidor. É ele que diz, ao vivo, se o reframe pegou ou se v
 - Se ele diz *"faz sentido"*, *"entendi"*, *"é isso mesmo que eu vivo"* → você ainda não fez o reframe, só espelhou. Aprofunda: traz o ângulo que ele não tem.
 - O reframe acertou quando ele diz algo como *"nossa, eu não tinha pensado por aí"*, *"isso é mais fundo do que eu imaginava"*, *"não sabia que era assim"*. Esse é o sinal verde pra seguir.
 
-*(origem: DY2NZQsOl_f)*
 
 ### Fase 5 · Reframe · o método em 3 movimentos (o coração da fase)
 
@@ -518,7 +534,6 @@ O reframe não é insight solto nem mágica. É pegar a crença que o lead já t
 
 Conscientizar está acima de convencer: o que ele conclui sozinho não recua. Sempre sobre a realidade dele, nunca um problema fabricado.
 
-*(origem: DXXxiIujWoV, DZFlneWOmxW, DYfBqOoOP8S, DXNmMxiDW4Z)*
 
 ### Fase 5 · Reframe · quando você ensina, ele para de pedir case (você vira o case)
 
@@ -527,4 +542,3 @@ Conscientizar está acima de convencer: o que ele conclui sozinho não recua. Se
 
 **Como aplicar:** resolve o iniciante sem case próprio. Quando você executa o reframe em camadas e o lead enxerga o que não via, a prova já aconteceu. Se ainda assim ele pede um caso, entende o pedido como busca de confiança e devolve pro que você já mostrou: *"Posso te mostrar casos, claro. Mas repara: o que eu acabei de te mostrar sobre [o ângulo que ele não tinha] já é o que eu faço com quem trabalha comigo. Você tá vendo funcionar agora, na sua própria situação."* A prova não precisa ser "[cliente] chegou em [resultado]". A prova é o nível do que você demonstrou ali. Você é o case.
 
-*(origem: DY2NZQsOl_f)*

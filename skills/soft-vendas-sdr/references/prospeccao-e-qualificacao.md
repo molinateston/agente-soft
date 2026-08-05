@@ -136,7 +136,7 @@ se faz sentido ir pra [oferta principal], ou não.
 ```
 Regra: **nunca 2 ofertas na mesma mensagem.** Uma só. Principal OU downsell.
 
-O downsell abaixo do limiar de R$2.000 o SDR pode fechar direto (com preço/link da tabela aprovada, ver `gate-de-seguranca.md`). Acima, ele qualifica e passa pro closer.
+O downsell abaixo do limiar de ~R$3.000 o SDR pode fechar direto (com preço/link da tabela aprovada, ver `gate-de-seguranca.md`). Acima, ele qualifica e passa pro closer.
 
 ---
 

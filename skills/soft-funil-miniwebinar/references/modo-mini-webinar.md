@@ -1,6 +1,6 @@
-# Modo Mini Webinar, vídeo de 10min em 12 blocos (arco APSD curto)
+# Modo Mini Webinar, vídeo de 10min em 12 blocos (arco ADMA curto)
 
-> **Nota de dono.** Mini Webinar é o micro-APSD do degrau 1 (versão curta ~10min), operado por esta skill `soft-funil-miniwebinar`. O Webinar completo APSD é a skill `soft-webinar-plano` (degrau 2). Os dois rodam o MESMO arco (Atenção → Diagnóstico → Mecanismo → Ação); este aqui é a compressão do degrau 1, não um framework à parte.
+> **Nota de dono.** Mini Webinar é o micro-ADMA do degrau 1 (versão curta ~10min), operado por esta skill `soft-funil-miniwebinar`. O Webinar completo ADMA é a skill `soft-webinar` (degrau 2). Os dois rodam o MESMO arco (Atenção → Diagnóstico → Mecanismo → Ação); este aqui é a compressão do degrau 1, não um framework à parte.
 
 > **Passo 0, antes de escrever a primeira linha (entrada ancorada).** Abre a fonte de fala real do cliente da vez (`shared-references/crivo/01-entrada-verbatim.md`, passo 0: identifica a fonte do usuário) e puxa 3-5 falas de dor e 3-5 de desejo do tema, literais. A primeira linha da peça nasce de uma delas, quase intacta, citando o N. Assim a peça nasce ancorada, não só é reprovada no gate do fim.
 
@@ -55,13 +55,13 @@ Cliente escolhe Carta OU Mini Webinar. Não usa as duas simultaneamente.
 
 ## Princípio estrutural
 
-Mini Webinar segue o **arco APSD** (Atenção → Diagnóstico → Mecanismo → Ação), o MESMO do webinário Soft (`soft-webinar-plano`), comprimido pra 10 minutos. É o micro-APSD do degrau 1.
+Mini Webinar segue o **arco ADMA** (Atenção → Diagnóstico → Mecanismo → Ação), o MESMO do webinário Soft (`soft-webinar`), comprimido pra 10 minutos. É o micro-ADMA do degrau 1.
 
 **Duração ideal:** 9 a 11 minutos. Acima disso retenção cai. Abaixo de 9 perde valor percebido.
 
 **Distribuição em tempo:**
 
-| Fase APSD | Tempo | % do total |
+| Fase ADMA | Tempo | % do total |
 |---|---|---|
 | Atenção | 0:00 a 1:30 | 15% |
 | Diagnóstico | 1:30 a 3:00 | 15% |
@@ -74,7 +74,7 @@ Mesmas fases do webinário completo (lá Atenção 12% · Diagnóstico 20% · Me
 
 ## Mapeamento Discurso Base (7 passos) → 12 blocos da Mini Webinar
 
-| Discurso Base | Onde aparece na Mini Webinar (APSD) |
+| Discurso Base | Onde aparece na Mini Webinar (ADMA) |
 |---|---|
 | 1. Gancho | Atenção (Promessa direta) |
 | 2. Diagnóstico | Diagnóstico (Problema geral) |
@@ -124,7 +124,7 @@ Mesmas fases do webinário completo (lá Atenção 12% · Diagnóstico 20% · Me
 
 ## DIAGNÓSTICO (1:30 a 3:00)
 
-> Função: amplificar a dor até doer, tirar a culpa do lead e nomear o inimigo (a fase Diagnóstico do APSD, comprimida). Lead pensa *"é exatamente isso que eu vivo, e a culpa não é minha"*.
+> Função: amplificar a dor até doer, tirar a culpa do lead e nomear o inimigo (a fase Diagnóstico do ADMA, comprimida). Lead pensa *"é exatamente isso que eu vivo, e a culpa não é minha"*.
 
 **Output esperado:** lead reconhece a si mesmo, sente alívio (a culpa saiu de cima dele) e nomeia o inimigo (sem ser ele mesmo).
 
@@ -157,7 +157,7 @@ Mesmas fases do webinário completo (lá Atenção 12% · Diagnóstico 20% · Me
 
 ## MECANISMO (3:00 a 9:00), coração da Mini Webinar
 
-> Função: instala a crença única, entrega o mecanismo nomeado, prova e faz querer (a fase Mecanismo do APSD, comprimida). Lead pensa *"isso é real, tem prova, e cabe na minha realidade"*.
+> Função: instala a crença única, entrega o mecanismo nomeado, prova e faz querer (a fase Mecanismo do ADMA, comprimida). Lead pensa *"isso é real, tem prova, e cabe na minha realidade"*.
 
 **Output esperado:** lead pronto pra ouvir a oferta na fase Ação.
 
@@ -530,6 +530,6 @@ Nesses casos: Mini Carta (skill `soft-funil-carta`).
 Antes de mostrar a peça, ela passa pelo Crivo embutido em `shared-references/crivo/`, nesta ordem:
 1. **Ancoragem** (`crivo/01-entrada-verbatim.md`), na entrada e na checagem: toda fala entre aspas é verbatim literal da fonte real do cliente, e o ângulo-mãe tem N. Aspa que não bate na fonte reprova.
 2. **Simulação na pele do avatar** (`crivo/02-simulacao-cliente.md`): onde ele larga, onde se reconhece, o teste dos 2 segundos.
-3. **Gate CUB bloqueante + as 3 perguntas do gate** (`crivo/03-gate-cub.md`): imprime a tabela, o veredito é o pior bloco, peça que falha não sai, volta pra reescrita.
+3. **Gate CUB bloqueante + as 3 perguntas do Harry** (`crivo/03-gate-cub.md`): imprime a tabela, o veredito é o pior bloco, peça que falha não sai, volta pra reescrita.
 
 O anti-IA limpa o robô; o Crivo dá a força. Limpo não é forte. Os dois, nessa ordem. **Sem a tabela do Crivo impressa junto, a peça não foi entregue.**

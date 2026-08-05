@@ -58,7 +58,7 @@ WARN = [
     # Antítese-nominal telegráfica de EFEITO (fecho de slogan): a CLÁUSULA INTEIRA
     # é "Não é X, é Y." / "Não foi X, foi Y." / "(Isso) é X, não Y." com os DOIS polos
     # em UMA palavra só e nada mais — o mic-drop de IA. Clause-anchored (início de
-    # linha ou depois de . ! ?) e polos de 1 palavra: por isso a fala REAL do dono
+    # linha ou depois de . ! ?) e polos de 1 palavra: por isso a fala REAL do Léo
     # escapa (ela carrega SUJEITO/VERBO antes do "não é" — "vender não é convencer,
     # é conduzir", "o vilão não é você, é a fama..." — ou uma cauda de +1 palavra —
     # "não foi convencimento, foi ensino em sequência"). Só o fecho pelado é pego.
@@ -137,7 +137,7 @@ def _self_test():
         _, ww = lint(txt)
         return any('nao e sobre' in l for l, _ in ww)
     fakes = [
-        'Cinco pessoas, três milhões. Isso é conta, não sorte.',  # a que o dono pegou
+        'Cinco pessoas, três milhões. Isso é conta, não sorte.',  # a que o Léo pegou
         'Não é sorte, é conta.',
         'Não foi sorte, foi conta.',
         'É conta, não torcida.',
@@ -147,11 +147,11 @@ def _self_test():
         assert _warned_antitese(f), f'devia avisar antitese-nominal em: {f!r}'
     assert _warned_sobre('E não é sobre o preço, é sobre profundidade.'), 'devia avisar molde "nao e sobre"'
 
-    # ── falas REAIS do dono: NÃO podem ser pegas (nem WARN antítese) ───────────
+    # ── falas REAIS do Léo: NÃO podem ser pegas (nem WARN antítese) ───────────
     reais = [
         'vender não é convencer, é conduzir',
         'educar não vende',
-        'eu gerenciei dezenas de milhões, não faturei',
+        'eu gerenciei R$46 milhões, não faturei',
         'O vilão não é você, é a fama que o funil ganhou.',
         'Porque vender não é ensinar, é fazer decidir.',
         'Funil que só vende pra seguidor não é funil, é plateia.',
@@ -161,10 +161,10 @@ def _self_test():
         'Se a venda para no dia que você para, isso não é negócio, é plantão.',
     ]
     for r in reais:
-        assert not _warned_antitese(r), f'FALSO-POSITIVO: pegou fala real do dono: {r!r}'
+        assert not _warned_antitese(r), f'FALSO-POSITIVO: pegou fala real do Léo: {r!r}'
 
     print('lint_copy.py self-test OK — HARD (em-dash + travar), WARN (dramática, '
-          'antítese-nominal telegráfica, molde "não é sobre") e as falas REAIS do dono passam limpas.')
+          'antítese-nominal telegráfica, molde "não é sobre") e as falas REAIS do Léo passam limpas.')
     print('uso: python3 scripts/lint_copy.py peca.txt   |   echo "..." | python3 scripts/lint_copy.py -')
 
 

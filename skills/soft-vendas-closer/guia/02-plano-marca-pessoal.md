@@ -239,7 +239,7 @@ Antes de montar qualquer coisa, calibra-se o valor por quatro fatores. Pra subir
 | Resultado Sonhado | O que o cliente mais quer | Nomeia com número e prazo. Não "crescer", mas "fechar 3 clientes de R$5k em 60 dias" *(exemplo)*. |
 | Probabilidade de Alcançar | O quanto ele acredita que vai funcionar | Cases reais com nome e número. Garantia. Prova do método em ação. Pesa também o quanto ele se vê aplicando: quanto mais simples e factível, mais ele acredita. |
 | Tempo de Espera | Quanto até o primeiro resultado visível | Mostra quando o resultado aparece. A Sessão 1 já entrega a marca pessoal de pé. |
-| Esforço | O quanto ele faz sozinho | A Agente do dono carrega o que ele não sabe, copy, tecnologia, roteiro. Ele traz o método; o sistema carrega o resto. |
+| Esforço | O quanto ele faz sozinho | A Sócio IA carrega o que ele não sabe, copy, tecnologia, roteiro. Ele traz o método; o sistema carrega o resto. |
 
 A maioria tenta aumentar valor subindo o preço. A equação mostra **3 outros caminhos antes disso**: mais prova (probabilidade), resultado mais rápido (tempo), menos trabalho do cliente (esforço).
 
@@ -252,14 +252,14 @@ Liste **cada coisa que você entrega**. Pra cada entregável, responda quatro pe
 - **Que objeção quebra**, qual crença errada ela desmonta.
 - **Que valor gera**, o resultado que ela deixa.
 
-**Exemplo. Implementação Soft Business (oferta Principal):**
+**Exemplo (modelo do caso estudado). [PROGRAMA PRINCIPAL] (oferta Principal):**
 
 | Entregável | O que resolve · dor que tira · objeção que quebra · valor que gera |
 |---|---|
 | Sessão 1. Plano de Marca Pessoal | Define a posição · tira a sensação de ser "mais um" · quebra "eu não sei o que me diferencia" · sai com a marca pessoal de pé no 1º encontro |
 | Sessão 2. Funil Minimalista + CMV | Monta o caminho do lead sem complexidade · tira o peso de postar sobre tudo · quebra "preciso de uma operação inteira" · funil rodando com conteúdo mínimo viável |
 | Sessão 3. Tráfego e Vendas | Liga aquisição sobre uma posição que já convence · tira o medo de queimar caixa com tráfego · quebra "tráfego não funciona pra mim" · cliente certo entrando |
-| Agente do dono configurada | Carrega copy, tecnologia e roteiro · tira o trabalho que ele não domina · quebra "não tenho tempo nem equipe" · execução sem depender de contratar |
+| Sócio IA configurada | Carrega copy, tecnologia e roteiro · tira o trabalho que ele não domina · quebra "não tenho tempo nem equipe" · execução sem depender de contratar |
 | 60 dias de acompanhamento | Ajusta em tempo real · tira o medo de aplicar errado sozinho · quebra "e se eu empacar no meio?" · resultado sustentado, não abandonado |
 
 ### 3. Mapa de Valor (no final)
@@ -276,7 +276,7 @@ Só depois de listar os entregáveis você ancora o preço. Liste cada component
 | Sessão 1. Plano de Marca Pessoal | R$2.500 |
 | Sessão 2. Funil Minimalista + CMV | R$2.500 |
 | Sessão 3. Tráfego e Vendas | R$1.500 |
-| Agente do dono configurada | R$2.000 |
+| Sócio IA configurada | R$2.000 |
 | 60 dias de acompanhamento | R$2.500 |
 | **Total percebido** | **R$11.000** |
 
@@ -292,9 +292,9 @@ Só agora o preço, com a forma de pagamento ao lado. Apresentado depois do Mapa
 
 | Oferta | Produto | Investimento (exemplo) | Pagamento (exemplo) |
 |---|---|---|---|
-| **Secundária** (downsell / sem qualificação) | Soft Start, treinamento gravado + Agente do dono configurada | R$497 a R$997 | À vista ou parcelado |
-| **Principal** (a que sempre ofereço) | Implementação Soft Business, 3 sessões + 60 dias | R$5.000 a R$7.000 | À vista ou parcelado |
-| **Super** (cliente ultra qualificado) | Consultoria Soft com IA, entra no variável ou projeto | R$10.000 a R$20.000 + % do lucro | Entrada + % do faturamento |
+| **Secundária** (downsell / sem qualificação) | [PRODUTO DE ENTRADA], treinamento gravado + bot de DM configurado | [faixa do dono] | À vista ou parcelado |
+| **Principal** (a que sempre ofereço) | [PROGRAMA PRINCIPAL], 3 sessões + 60 dias | [faixa do dono] | À vista ou parcelado |
+| **Super** (cliente ultra qualificado) | [OFERTA SUPER], entra no variável ou projeto | [faixa do dono] + % do lucro | Entrada + % do faturamento |
 
 > **Secundária** é a descida quando o preço da Principal pesa, ou a porta pra quem ainda não tem qualificação. **Super** exige cliente pré-qualificado: método validado, faturamento existente e **ticket acima de R$3k** *(exemplo)*, mais alto que o filtro de entrada do Cliente Ideal porque aqui o mentor entrega mão na operação. Um piso qualifica o público; o outro qualifica o nível mais caro. Disponibilidade limitada.
 

@@ -7,11 +7,11 @@
 
 ## 12.1 · O sistema montado não se toca sozinho
 
-Construir o Posicionamento, o Funil e o Agente do dono monta a máquina. Mas máquina montada não é máquina rodando. A Rotina Estratégica é o trabalho contínuo de manter ela rodando, ler o que ela devolve e ajustar com base nisso.
+Construir o Posicionamento, o Funil e o Sócio IA monta a máquina. Mas máquina montada não é máquina rodando. A Rotina Estratégica é o trabalho contínuo de manter ela rodando, ler o que ela devolve e ajustar com base nisso.
 
 Repare na palavra **contínuo**. Não é um esforço de pico, não é um lançamento que exige seu mês inteiro e depois te dá folga. É uma cadência, algo que se repete em ritmo, na mesma frequência, toda semana. E é uma cadência **de uma pessoa só**: foi desenhada para caber na agenda de quem também atende cliente, não para exigir equipe. Se a rotina não cabe na vida do Especialista solo, ela não é Soft.
 
-A chave do capítulo é não confundir esforço com volume de operação. A rotina é leve **porque** o sistema já foi montado e **porque** o Agente do dono carrega a parte braçal. O que sobra para o humano é o que só o humano faz: conduzir, ler e decidir.
+A chave do capítulo é não confundir esforço com volume de operação. A rotina é leve **porque** o sistema já foi montado e **porque** o Sócio IA carrega a parte braçal. O que sobra para o humano é o que só o humano faz: conduzir, ler e decidir.
 
 ---
 
@@ -21,7 +21,7 @@ Toda semana, três movimentos. Sempre os mesmos, sempre nesta ordem: **Tocar · 
 
 ### Tocar
 
-Produzir o conteúdo da semana, e aqui **o Agente do dono carrega**. Você traz a direção e a vivência; o motor embala. Manter o funil no ar: o feed publicando, a Carta ou o Vídeo acessível, o caminho do conteúdo até o WhatsApp aberto. E conduzir as conversas de venda que chegaram, as que o funil já qualificou e entregou prontas para a conversa.
+Produzir o conteúdo da semana, e aqui **o Sócio IA carrega**. Você traz a direção e a vivência; o motor embala. Manter o funil no ar: o feed publicando, a Carta ou o Vídeo acessível, o caminho do conteúdo até o WhatsApp aberto. E conduzir as conversas de venda que chegaram, as que o funil já qualificou e entregou prontas para a conversa.
 
 A regra que governa o Tocar: **uma oferta ativa por semana, não cinco.** O instinto do Especialista invisível é o oposto, ativar tudo ao mesmo tempo, achando que mais frentes geram mais resultado. Geram mais confusão. Uma oferta ativa por semana é o que mantém a comunicação coerente, a mensagem afiada e a leitura dos números limpa.
 

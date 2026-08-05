@@ -6,8 +6,6 @@ A maioria erra a isca não na execução, no alvo. Capricha num PDF lindo sobre 
 
 Os exemplos abaixo são de **nichos fictícios** (uma nutricionista de corredores amadores, um contador de food trucks, uma professora de violino online, um consultor de eficiência energética pra padarias). São ilustração da forma. O usuário traz a própria oferta, o próprio avatar e o próprio verbatim; você nunca inventa o dele.
 
-> **Regra dura da marca-neutra:** se a isca que você gerou se parece com QUALQUER exemplo desta ref (mesmo nicho, mesmo tema, mesma promessa), DESCARTA. É sinal de que você copiou a ilustração em vez de partir do verbatim do cliente. A isca certa nasce da fala real dele no Passo 0, não do exemplo que estava na sua frente.
-
 ---
 
 ## 1. Os 4 critérios-núcleo da isca perfeita (o crivo de ideação)
@@ -120,7 +118,7 @@ A sequência completa, na ordem:
 
 A saída do Modo Ideação é uma lista de candidatas pontuadas mais uma recomendação com convicção. Postura de consultor, não menu neutro.
 
-- **5 a 8 candidatas**, cada uma com: a dor TOP-3 que ataca · o quick-win em menos de 20min · o formato sugerido · o próximo-dólar pra onde leva. **Na tabela que o usuário lê, os rótulos de coluna saem em português-do-cliente** ("O que ela ganha" · "Em quanto tempo" · "Pra onde leva depois"), nunca os nomes internos do crivo (TOP-3/quick-win/next-dollar). Os nomes de bastidor guiam o teu raciocínio; não aparecem no que o usuário recebe.
+- **5 a 8 candidatas**, cada uma com: a dor TOP-3 que ataca · o quick-win em menos de 20min · o formato sugerido · o próximo-dólar pra onde leva.
 - **Pontua cada uma** pelo crivo (Específico>Amplo · TOP-3 · informação Nova · prova a SUA autoridade · não satura o produto). Mostra a pontuação de forma simples (qual brilha, qual é fraca e por quê).
 - **Recomenda 1-2 com convicção.** "Eu iria com a candidata 3: ataca a dor #1 que apareceu 5 vezes no seu verbatim, entrega vitória em 10 minutos e termina exatamente onde a sua oferta começa." Não despeja as 8 e deixa o usuário se virar.
 - **Marca-neutra:** todo exemplo é de nicho fictício; o usuário traz a própria fundação. Se faltar a oferta, marca `[A CONFIRMAR]` e não fecha a ideação.

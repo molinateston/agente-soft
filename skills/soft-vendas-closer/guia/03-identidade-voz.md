@@ -12,7 +12,7 @@ Pensa assim. O Posicionamento Incomum define o QUE você comunica: qual público
 
 Por que isso importa na prática? Porque posicionamento sem voz destilada produz conteúdo genérico. Você pode ter o ângulo mais afiado do nicho, a proposta mais clara, o problema nomeado com precisão cirúrgica, e ainda assim soar como qualquer outro perfil que comprou o mesmo curso. O posicionamento te dá o argumento. A voz é o que faz o argumento soar seu.
 
-E tem uma razão operacional, hoje incontornável: a Agente do dono precisa da sua voz pra gerar material que pareça de você, e não de IA bem-comportada. Se você não destilou como fala, a máquina preenche o vazio com o tom médio da internet, correto, simétrico, esquecível. Voz destilada é o que separa "conteúdo gerado" de "conteúdo seu, produzido com ajuda".
+E tem uma razão operacional, hoje incontornável: a Sócio IA precisa da sua voz pra gerar material que pareça de você, e não de IA bem-comportada. Se você não destilou como fala, a máquina preenche o vazio com o tom médio da internet, correto, simétrico, esquecível. Voz destilada é o que separa "conteúdo gerado" de "conteúdo seu, produzido com ajuda".
 
 Não se trata de inventar uma persona. Trata-se de capturar a que já existe, a que aparece quando você para de performar, e amplificá-la até ela ficar reconhecível à distância.
 
@@ -20,7 +20,7 @@ Não se trata de inventar uma persona. Trata-se de capturar a que já existe, a 
 
 ## 3.2 · Os 5 elementos da Identidade de Voz
 
-A Identidade de Voz se destila em cinco elementos. Juntos, eles formam o material que a Agente do dono consulta antes de escrever qualquer peça sua.
+A Identidade de Voz se destila em cinco elementos. Juntos, eles formam o material que a Sócio IA consulta antes de escrever qualquer peça sua.
 
 ### 1. Tom destilado
 
@@ -60,6 +60,6 @@ Não são "categorias de post". São os eixos da sua mensagem, os assuntos que v
 
 Na Implementação, a Identidade de Voz é entregável da Fase 1. O cliente sai do Plano de Marca Pessoal com os cinco elementos destilados, tom, narrativa, bastidor, valores e anti-valores, pilares, prontos pra usar.
 
-Esse material não fica no papel. Ele alimenta a Agente do dono nas fases seguintes. É a partir da voz destilada que a máquina gera carrossel, reel, story, carta e roteiro com a sua assinatura, e não com o tom médio de uma IA qualquer. Posicionamento definido responde "o que dizer". Voz definida responde "como soar dizendo". Com os dois prontos, a produção contínua deixa de depender de inspiração: vira execução.
+Esse material não fica no papel. Ele alimenta a Sócio IA nas fases seguintes. É a partir da voz destilada que a máquina gera carrossel, reel, story, carta e roteiro com a sua assinatura, e não com o tom médio de uma IA qualquer. Posicionamento definido responde "o que dizer". Voz definida responde "como soar dizendo". Com os dois prontos, a produção contínua deixa de depender de inspiração: vira execução.
 
 É por isso que a voz vem antes do feed, e não depois. Sem ela, cada peça precisa ser reinventada do zero e nenhuma soa igual à anterior. Com ela, tudo o que sai, reels, carrosséis, stories, bio, anúncios, parece parte da mesma mente. E é dessa congruência, peça após peça, que nasce a percepção forte de marca.

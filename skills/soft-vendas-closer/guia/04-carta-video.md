@@ -44,7 +44,7 @@ Na prática, decida por perfil:
 
 - Articula melhor escrevendo → Carta.
 - Articula melhor falando → Vídeo.
-- Ticket até R$2k → Carta.
+- Ticket até ~R$3k → Carta.
 - Ticket R$3–15k → testa os dois.
 - Ticket R$15k+ → Vídeo.
 

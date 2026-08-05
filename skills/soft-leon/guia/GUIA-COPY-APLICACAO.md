@@ -124,7 +124,7 @@ Ele não sente "posição". Ele sente que foi a segunda opção. Traduz todo ró
 
 ## 3. O teste de cada frase: as 3 perguntas
 
-Depois de escrever uma frase, antes de deixar ela de pé, passa por três perguntas. São as três perguntas do gate, adaptadas. **Três sins: a frase fica. Um não: reescreve.**
+Depois de escrever uma frase, antes de deixar ela de pé, passa por três perguntas. São as três perguntas do Harry Dry, adaptadas. **Três sins: a frase fica. Um não: reescreve.**
 
 **Pergunta 1, Dá pra visualizar?**
 Se não vira imagem na cabeça, é abstrata. E o abstrato evapora.
@@ -187,7 +187,7 @@ Palavra que ninguém usa numa conversa real não entra. As principais:
 - **jornada** → caminho, processo, o que você viveu
 - **potencializar** → aumentar, fortalecer, fazer render mais
 - **mindset** → cabeça, jeito de pensar
-- **destravar / travar / travado** → soltar, sair do lugar, desempacar *(banido em dobro, o autor do método nunca usa "travar"; pra cliente parado, use empacado, emperrado)* <!-- lint-ok: glossario de palavras banidas -->
+- **destravar / travar / travado** → soltar, sair do lugar, desempacar *(banido em dobro, o autor do método nunca usa "travar"; pra cliente parado, use empacado, emperrado)*
 - **alinhamento, sinergia, holístico, disruptivo, escalar (no sentido vago)** → corta ou troca pelo que a coisa é de verdade
 
 A regra por trás da lista: **se você não falaria a palavra num boteco explicando seu trabalho pra um amigo, ela não entra na copy.** A lista cresce, toda vez que você flagrar uma palavra "de LinkedIn" saindo da sua mão, adiciona.

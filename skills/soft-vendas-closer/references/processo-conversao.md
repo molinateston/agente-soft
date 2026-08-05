@@ -48,7 +48,8 @@ Primeiro trabalho: **classificar o pedido** num dos modos. Cada modo tem uma ref
 | **C. Análise de conversa** | cola print/transcrição, "me dá feedback", "o que errei" | `references/analise-de-conversa.md` |
 | **D. Funil & métricas** | "conversão baixa", "funil empacado", números, "meu time" | `references/funil-e-metricas.md` |
 | **E. Pós-venda + indicações** | "pedir indicação", "testemunho", "case real", "cliente atual", "depois do fechamento" | `references/indicacoes-pos-venda.md` |
-| **F. Cabeça do vendedor** | "tô sem confiança", "não consigo cobrar caro", "culpa do mercado", amarra repetida na cabeça | `references/mentalidade-do-vendedor.md` |
+| **F. Cabeça do vendedor** | "tô sem confiança", "não consigo cobrar caro", "culpa do mercado", amarra repetida na cabeça | `references/mentalidade-do-vendedor.md` + `references/perfis-de-closer.md` (a autoavaliação dos 5 perfis) |
+| **G. Treino / ferramentas** | "roleplay", "treinar meu time", "checklist da call", "régua de avaliação", "modelo de laudo" | `references/caixa-de-ferramentas-closer.md` |
 
 **Se ambíguo**, pergunta UMA coisa só: *"Isso é pra (a) conduzir/criar o script da venda, (b) te ajudar agora numa conversa, (c) analisar algo que já aconteceu, (d) olhar funil/métricas, (e) pós-venda/indicações, ou (f) cabeça do vendedor?"* Nunca várias perguntas juntas.
 
@@ -86,8 +87,11 @@ Cravadas no guia (Cap 10 + Cap 13). A skill nunca as relaxa, mesmo que o usuári
 - **Sem sessão/call de descoberta gratuita.** O Filtro Soft (Cap 10.7) substitui a pré-call. O lead que chega no WhatsApp já passou pelo equivalente a 30 minutos de qualificação.
 - **Preço só depois do Isolamento (Fase 6).** Nunca revela valor com dúvida aberta, *"vou pensar"* aparece em 70% dos casos quando se pula o Isolamento.
 - **Um objetivo por mensagem.** Tom de comando, nunca de súplica: *"Facilita?"* / *"Resolve?"* / *"Fecha?"*, nunca *"Você poderia…"*.
-- **Sem desconto que o lead não pediu.** Desconto não solicitado sinaliza fragilidade do valor.
-- **Fecha na conversa, não no follow-up de 7 dias.** Lead que precisa de 7 follow-ups não está pronto, aceita a perda e libera.
+- **Sem desconto que o lead não pediu.** Desconto não solicitado sinaliza fragilidade do valor. A condição única é CRIADA na conversa a partir do diagnóstico, nunca tabelada (condição de prateleira ensina o lead a não acreditar no preço cheio).
+- **Fecha na conversa; follow-up é defeito, não etapa.** Tudo que sairia da conversa pra "depois" se lapida DENTRO dela ("vou ver o cartão" → "abre o app agora, eu espero"; "falo com o sócio" → "liga pra ele agora"). Não fechou: *"o que muda de hoje pra amanhã?"*; sem resposta, encerra com dignidade. **A exceção única e explícita:** processo real de empresa com rito formal E sinceridade demonstrada; aí (e só aí) entra a proposta de 7 dias com compromisso amarrado na call (a hierarquia no Handoff da SKILL.md).
+- **Nunca apresenta sem saber quanto o lead tem.** A leitura de capacidade vem antes da oferta, sempre (a pré-condição da F5 no `script-builder.md`).
+- **Conversão = pagamento.** Dinheiro ou sinal na conta; contrato e "fechou verbal" são pipeline. A taxa se mede sobre os aprovados no diagnóstico (`funil-e-metricas.md`).
+- **"Faz sentido pra você?" é banido do fechamento.** Pergunta de validação na hora do compromisso devolve o bastão; no lugar, engajamento ativo ("o que você entendeu disso?") e afirmação com convicção.
 - **Lead fora do perfil, solta direto.** *"Sendo direto: não acho que faz sentido pra você agora."* Filtrar é parte do trabalho.
 - **Os 3 níveis nunca viram cardápio.** Apresenta do meio pra fora, um por vez (Cap 10.13).
 

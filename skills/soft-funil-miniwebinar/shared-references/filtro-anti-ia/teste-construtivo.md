@@ -2,7 +2,7 @@
 
 > O resto do filtro TIRA o que cheira a IA. Esse teste faz o contrário: checa se o que sobrou tem força. Toda headline, gancho, capa, primeira linha e CTA passa pelas 3 perguntas antes de sair.
 >
-> Origem: as 3 regras do crivo, reescritas pro método. Premissa, não molde: o que vale é o porquê de cada uma, não copiar os exemplos dele.
+> Origem: as 3 regras do Harry Dry, reescritas pro método. Premissa, não molde: o que vale é o porquê de cada uma, não copiar os exemplos dele.
 
 A regra é simples. Pega a frase. Faz as 3 perguntas. **3 sins, tem coisa. 1 não que seja, reescreve.** Três nãos seguidos quase sempre é frase genérica que dava pra qualquer um.
 
@@ -39,7 +39,7 @@ Por quê: o concreto gruda na memória, o abstrato evapora. Ninguém lembra de "
 
 A frase é uma coisa que dá pra provar certa ou errada? Ou é só adjetivo solto?
 
-A régua do o crivo: **"não fala, aponta."** Sai da trilha do adjetivo e mostra a coisa.
+A régua do Harry: **"não fala, aponta."** Sai da trilha do adjetivo e mostra a coisa.
 
 ❌ "ele é inteligente" (adjetivo, ninguém checa)
 ✅ "ele lê no busão" (dá pra ver, dá pra provar)
@@ -55,7 +55,7 @@ Por quê: frase que dá pra provar bota sua cabeça na guilhotina, e é isso que
 
 Se um concorrente pegar sua frase e botar o nome dele embaixo, funciona igual? Então a frase é genérica e tá no lixo.
 
-A régua do o crivo: **"nunca escreva um anúncio que o concorrente pode assinar."**
+A régua do Harry: **"nunca escreva um anúncio que o concorrente pode assinar."**
 
 ❌ "ajudo você a vender mais" (qualquer consultor do mundo assina)
 ✅ uma frase amarrada no SEU mecanismo nomeado ou na SUA prova, que só faz sentido na sua boca

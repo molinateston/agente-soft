@@ -1,12 +1,12 @@
 # Gate CUB: reprova o que não tem força
 
-> Passo 3 do Crítico. Bloqueante. Espelha o gate do design (`soft-designer/references/auditoria-pre-preview.md`), que já provou funcionar: o modelo é OBRIGADO a preencher um artefato visível antes de mostrar a peça, e peça que falha não sai.
+> Passo 3 do Crítico. Bloqueante. Espelha o gate do design (reference `auditoria-pre-preview.md` da skill `soft-designer`, quando instalada), que já provou funcionar: o modelo é OBRIGADO a preencher um artefato visível antes de mostrar a peça, e peça que falha não sai.
 
 ## Por que é bloqueante e não "uma dica"
 
 O design do método tem rigor: 12 perguntas por slide, qualquer NÃO corrige antes, "não mostre slide que falhou". A copy tinha só "escreve, mostra, entrega". O modelo se autoaprovava. Resultado: o rigor estava no visual e frouxo no texto.
 
-Este gate cabea pra copy o mesmo aperto. A teoria mora aqui no Crivo embutido (CUB em camadas e as 3 perguntas do crivo aqui mesmo, as 8 leis em `05-premissas-mestras.md`), pra rodar standalone sem depender de arquivo de outra skill. Se a skill da vez tiver o `guia/GUIA-COPY-APLICACAO.md` local (CUB em camadas no §5, as 3 perguntas no §3, as 8 leis no §2), é a mesma régua e pode ser lida pra ecoar a redação. O gate NÃO reescreve essa teoria. Ele FORÇA a aplicação dela e recusa a peça que não passa.
+Este gate cabea pra copy o mesmo aperto. A teoria mora aqui no Crivo embutido (CUB em camadas e as 3 perguntas do Harry aqui mesmo, as 8 leis em `05-premissas-mestras.md`), pra rodar standalone sem depender de arquivo de outra skill. Se a skill da vez tiver o `guia/GUIA-COPY-APLICACAO.md` local (CUB em camadas no §5, as 3 perguntas no §3, as 8 leis no §2), é a mesma régua e pode ser lida pra ecoar a redação. O gate NÃO reescreve essa teoria. Ele FORÇA a aplicação dela e recusa a peça que não passa.
 
 ## A regra de agregação (binária, sem meio-termo)
 
@@ -59,7 +59,7 @@ Para **cada bloco da peça** (cada slide do carrossel, cada parágrafo da carta,
 | **5. Contraste** | Vira a chave do que ele pensa, em vez de confirmar? | Diz o que ele já acha. Sem antes e depois, erro e acerto, sintoma e causa |
 | **6. Puxa a próxima** | Esta linha faz a próxima ser lida? | Linha que fecha o assunto, que dá pra parar ali sem perder nada |
 
-E para **cada headline ou capa**, as 3 perguntas do crivo (gate extra, todas têm que dar SIM):
+E para **cada headline ou capa**, as 3 perguntas do Harry (gate extra, todas têm que dar SIM):
 
 - **Dá pra ver?** Fecha o olho e enxerga a cena? (concreto, não abstrato)
 - **Dá pra falsificar?** É um fato que dá pra provar certo ou errado, não um adjetivo?
@@ -71,9 +71,9 @@ E para **cada headline ou capa**, as 3 perguntas do crivo (gate extra, todas tê
 - **Consciente da solução / do produto** (já conhece o caminho): abre pela DIFERENÇA do teu mecanismo e pela PROVA, não pela existência dele.
 - **Mercado saturado (E4-E5, o nicho do perfil de exemplo):** promessa direta soa igual a todo concorrente. Abre por mecanismo nomeado + identificação ("isso explica o que eu vivo"), nunca por promessa gasta. O default "mecanismo sempre" só vale aqui; pro leitor inconsciente ele mata a abertura.
 
-**Passada 3-bis, Proprietário (headline, capa, CTA).** Teste de substituição-de-autor: troca o nome do cliente pelo do concorrente direto na frase. Se a frase sobrevive (o rival podia assinar igual), é genérica, NOTA de conserto. A frase de assinatura é a que SÓ sobrevive na boca DESTE cliente, porque carrega um bordão, uma cena-assinatura ou o mecanismo nomeado da Biblioteca de Assinatura (`soft-plano-posicionamento/references/bloco-5-fundacao-headlines.md`, item 5). Aprofunda o "só eu posso dizer" do o crivo: não basta não ser frase de guru, tem que ser inconfundivelmente do cliente.
+**Passada 3-bis, Proprietário (headline, capa, CTA).** Teste de substituição-de-autor: troca o nome do cliente pelo do concorrente direto na frase. Se a frase sobrevive (o rival podia assinar igual), é genérica, NOTA de conserto. A frase de assinatura é a que SÓ sobrevive na boca DESTE cliente, porque carrega um bordão, uma cena-assinatura ou o mecanismo nomeado da Biblioteca de Assinatura (reference `bloco-5-fundacao-headlines.md`, item 5, da skill `soft-plano-posicionamento`, quando instalada). Aprofunda o "só eu posso dizer" do Harry: não basta não ser frase de guru, tem que ser inconfundivelmente do cliente.
 
-3 sins, passa. 1 não, reescreve. Standalone, este bloco JÁ É o teste construtivo completo (as 3 perguntas do crivo são o corte anti-genérico). Se a skill da vez tiver o `shared-references/filtro-anti-ia/teste-construtivo.md` local (toda skill que produz peça tem, é cópia sincronizada da fonte), abre lá pra mais detalhe e exemplos; o resultado é o mesmo.
+3 sins, passa. 1 não, reescreve. Standalone, este bloco JÁ É o teste construtivo completo (as 3 perguntas do Harry são o corte anti-genérico). Se a skill da vez tiver o `shared-references/filtro-anti-ia/teste-construtivo.md` local (soft-conteudo, soft-funil, soft-vendas, soft-posicionamento, soft-leon, soft-webinar), abre lá pra mais detalhe e exemplos; o resultado é o mesmo.
 
 ## O CTA e o último bloco (onde a peça cai de tom)
 
@@ -87,7 +87,7 @@ Duas passadas a mais no CTA, que o gate não rodava:
 - **Coerência CTA × pilar.** O mecanismo do CTA contradiz o pilar declarado da peça? Um pilar de filtro/seleção (ex.: "qualidade contra volume") não fecha em mecânica que infla volume de DM. Quando o pilar é filtro, o CTA pede auto-qualificação ("comenta X + há quanto tempo você..."), não engajamento de massa. O fim não trai o começo.
 
 As regras abaixo valem dentro do tipo certo:
-- **CTA AUSENTE reprova** (no feed/anúncio). Toda peça tem a Ação do APSD, com um próximo passo claro e real (o mecanismo do funil do cliente: comenta uma palavra → puxa no direct, link → carta ou isca, manda no direct, cadastra numa página). Peça que termina só na consequência, sem dizer o que fazer, FALHA. A Ação não é opcional. Anúncio sem CTA é falha grave (é tráfego pago).
+- **CTA AUSENTE reprova** (no feed/anúncio). Toda peça tem a Ação do ADMA, com um próximo passo claro e real (o mecanismo do funil do cliente: comenta uma palavra → puxa no direct, link → carta ou isca, manda no direct, cadastra numa página). Peça que termina só na consequência, sem dizer o que fazer, FALHA. A Ação não é opcional. Anúncio sem CTA é falha grave (é tráfego pago).
 - **Caça-comentário cafona reprova** ("comenta EU QUERO 🔥" puro, engajamento vazio). O "comenta PALAVRA" do Soft passa quando leva a um próximo passo real (dá em público, pede em privado), não quando é só isca de algoritmo.
 - **Frase de afago reprova** por anti-IA ("é disso que eu cuido com você", "me chama", "tô aqui pra te ajudar"). É afago de coach, não convite.
 - **Queda de tom reprova.** Corpo lâmina com CTA morno é falha. O CTA tem a mesma temperatura clínica do bloco mais forte. CTA forte do Soft convida pela CONSEQUÊNCIA ("resolve a posição primeiro, aí todo esforço que você já faz vira cliente"), não pela oferta de carinho.
@@ -102,9 +102,9 @@ O gate bloco-a-bloco não pega o que só aparece no conjunto. Roda também:
 - **Carrossel, os 2 pontos onde ele morre:** (1) o slide 2 ABRE O LOOP (promete algo pior ou mais fundo que a capa), nunca repete a capa reembalada. FALHA se a tese do slide 2 for a da capa reembalada. (2) Os slides finais mostram a FUNÇÃO do método, nunca o passo a passo executável.
 - **Coerência de avatar.** Os sub-padrões que sustentam o ângulo vêm plausivelmente do MESMO avatar, não um Frankenstein de dores de avatares vizinhos pra inflar o N. E o ângulo-mãe canônico que o avatar já viu mil vezes só conta como fresco se a cena ou a virada for nova.
 - **Prova no momento da decisão (bloqueante).** A peça planta ALGUM grão de credibilidade (caso real com dono nominal e prazo, ou resíduo de resultado do autor) antes ou no CTA? Diagnóstico afiado que chega no CTA com ZERO autoridade perde o cético-de-guru exatamente onde ele decide. FALHA. Placeholder de prova (`[CASE: ...]`, `SEUNUMERO`, `[LINK]`) deixa a peça não-publicável, nunca "pronta". (Foi a fraqueza nº 1, em 3 de 4 peças do teste.) **Número plausível não é número lastreado:** um "90 dias", um "parou de pegar trampo de fora", um "-8kg" que NÃO foi verificado na fonte (grep no acervo) nem é caso-próprio-com-dono sai marcado NÃO-VERIFICADO e força veredito `RASCUNHO-COM-PENDÊNCIA`, igual ao placeholder. A barreira de ancoragem pega a aspa fabricada; esta pega o desfecho ou prazo plausível porém sem lastro, que é por onde o "converte" bonzinho escapava.
-- **Mecanismo nomeado na espinha.** O M do APSD é um artefato ou método BATIZADO (propriedade do cliente), não uma ideia genérica. Diagnóstico proprietário com solução genérica fica no nível de insight, FALHA, porque o concorrente repete a frase amanhã. O CTA promete o artefato nomeado, não uma direção vaga ("por onde começa").
+- **Mecanismo nomeado na espinha.** O M do ADMA é um artefato ou método BATIZADO (propriedade do cliente), não uma ideia genérica. Diagnóstico proprietário com solução genérica fica no nível de insight, FALHA, porque o concorrente repete a frase amanhã. O CTA promete o artefato nomeado, não uma direção vaga ("por onde começa").
 - **Insight vira imagem.** Insight aprovado SÓ se traz UMA imagem concreta de como funciona na prática (o tipo de frase, a cena). Concordância intelectual sem farelo concreto não converte quem já comprou curso que não andou. Reforço das passadas Confuso e Boring.
-- **Coerência de assinatura.** A peça TOCA a Biblioteca de Assinatura (`soft-plano-posicionamento/references/bloco-5-fundacao-headlines.md`, item 5)? Reusa ao menos um bordão proprietário, uma cena-assinatura ou um inimigo canônico? Peça que não toca a biblioteca não constrói marca, regride pro centro do nicho (vira "mais um"), NOTA de conserto. E o que colou de novo nesta peça (bordão que pegou, cena nova ancorada no VoC) VOLTA pra biblioteca, que é viva. É assim que o conjunto vira marca inconfundível, não peças soltas competentes.
+- **Coerência de assinatura.** A peça TOCA a Biblioteca de Assinatura (reference `bloco-5-fundacao-headlines.md`, item 5, da skill `soft-plano-posicionamento`, quando instalada)? Reusa ao menos um bordão proprietário, uma cena-assinatura ou um inimigo canônico? Peça que não toca a biblioteca não constrói marca, regride pro centro do nicho (vira "mais um"), NOTA de conserto. E o que colou de novo nesta peça (bordão que pegou, cena nova ancorada no VoC) VOLTA pra biblioteca, que é viva. É assim que o conjunto vira marca inconfundível, não peças soltas competentes.
 
 ## Quando não há case: o chão de credibilidade (destrava o iniciante)
 
@@ -172,7 +172,7 @@ Se ainda cheira a esforço, a alguém querendo soar inteligente, voltou a Confus
 
 ## O que o gate NÃO faz
 
-Ele não suaviza promessa por covardia, nem enche de prova falsa. Se falta prova real, o conserto é ABAIXAR a promessa até o tamanho do que dá pra provar (premissa do método: promessa menor com risco zero converte mais que promessa grande sem chão). Reprovar em U não é "promete menos", é "promete o que você consegue sustentar, e sustenta na frente do leitor".
+Ele não suaviza promessa por covardia, nem enche de prova falsa. Se falta prova real, o conserto é ABAIXAR a promessa até o tamanho do que dá pra provar (premissa do Fladlien: promessa menor com risco zero converte mais que promessa grande sem chão). Reprovar em U não é "promete menos", é "promete o que você consegue sustentar, e sustenta na frente do leitor".
 
 E o limite honesto do gate: ele aprova a FORMA (a frase é falsificável?), não a VERACIDADE. Se o caso "João, 3 pra 11" for inventado, isso é fraude, não copy fraca, e o Crítico não pega. Por isso toda NOTA de prova-do-autor lembra: o número tem que ser real. Forma falsificável com número falso é o único jeito de furar este gate, e a responsabilidade aí é do autor, não da régua.
 

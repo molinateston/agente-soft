@@ -128,7 +128,7 @@ Cada tipo abaixo segue sempre o mesmo cartão, pra você ler rápido e montar o 
 
 **Framework de copy:** 4Ps (promessa, retrato do resultado, prova, empurrão) com a prova vindo de pares do mesmo setor.
 
-**Roteia pra irmã?** Não, é landing pura. Mas o SCRIPT que o comercial usa depois é `soft-vendas-closer`.
+**Roteia pra irmã?** Não, é landing pura. Mas o SCRIPT que o comercial usa depois é `soft-vendas`.
 
 **Exemplo de nicho fictício (software de gestão de frota):**
 
@@ -219,7 +219,7 @@ São duas páginas que andam juntas: a de captura (igual ao squeeze) e a de deli
 
 **Framework de copy:** AIDA enxuto, com a data fazendo o papel de urgência real.
 
-**Roteia pra irmã?** Se o evento é um WEBINAR (perpétuo ou ao vivo), as páginas de cadastro/obrigado/checkout são `soft-webinar-paginas`. Este tipo aqui serve evento presencial ou aula avulsa que NÃO é o sistema de webinar.
+**Roteia pra irmã?** Se o evento é um WEBINAR (perpétuo ou ao vivo), as páginas de cadastro/obrigado/checkout são `soft-webinar`. Este tipo aqui serve evento presencial ou aula avulsa que NÃO é o sistema de webinar.
 
 **Exemplo de nicho fictício (sommelier que dá aula de vinho):**
 
@@ -248,7 +248,7 @@ São duas páginas que andam juntas: a de captura (igual ao squeeze) e a de deli
 
 **Framework de copy:** direto, sem arco longo. Confirma, avança.
 
-**Roteia pra irmã?** Página de obrigado de WEBINAR é `soft-webinar-paginas`.
+**Roteia pra irmã?** Página de obrigado de WEBINAR é `soft-webinar`.
 
 **Exemplo de nicho fictício (terapeuta de casais):**
 
@@ -278,7 +278,7 @@ São duas páginas que andam juntas: a de captura (igual ao squeeze) e a de deli
 
 **Framework de copy:** Slippery Slide leve (cada linha puxa a próxima), com a janela como urgência verdadeira.
 
-**Roteia pra irmã?** Replay de WEBINAR é `soft-webinar-paginas`. Este tipo serve replay de aula/evento avulso.
+**Roteia pra irmã?** Replay de WEBINAR é `soft-webinar`. Este tipo serve replay de aula/evento avulso.
 
 **Exemplo de nicho fictício (professor de violão):**
 
@@ -338,9 +338,9 @@ São duas páginas que andam juntas: a de captura (igual ao squeeze) e a de deli
 
 **Mecânica-assinatura:** CTA atrasado (o botão sincroniza com o pitch, não aparece no topo) + formulário de qualificação como fricção que filtra.
 
-**Framework de copy:** PASTOR ou 12-step de VSL pro vídeo, com o arco-mãe da carta sendo o APSD (ver nota em `frameworks-copy.md`).
+**Framework de copy:** PASTOR ou 12-step de VSL pro vídeo, com o arco-mãe da carta sendo o ADMA (ver nota em `frameworks-copy.md`).
 
-**Roteia pra irmã?** O ROTEIRO do VSL em texto corrido é `soft-funil-carta`. O SCRIPT da call de qualificação é `soft-vendas-sdr`. Aqui você monta a página.
+**Roteia pra irmã?** O ROTEIRO do VSL em texto corrido é `soft-funil-carta`. O SCRIPT da call de qualificação é `soft-vendas`. Aqui você monta a página.
 
 **Exemplo de nicho fictício (consultor de sucessão de empresa familiar):**
 
@@ -492,7 +492,7 @@ São duas páginas que andam juntas: a de captura (igual ao squeeze) e a de deli
 
 **Framework de copy:** curiosidade no hook, microcopy por pergunta, promessa de personalização no result-shell.
 
-**Roteia pra irmã?** A LÓGICA de perguntas de diagnóstico profundo de marca (segmentação estratégica) pode vir de `soft-plano-posicionamento`. Aqui você monta a casca: hook + perguntas + gate + result-shell.
+**Roteia pra irmã?** A LÓGICA de perguntas de diagnóstico profundo de marca (segmentação estratégica) pode vir de `soft-posicionamento`. Aqui você monta a casca: hook + perguntas + gate + result-shell.
 
 **Exemplo de nicho fictício (loja de suplementos):**
 
@@ -537,7 +537,7 @@ São duas páginas que andam juntas: a de captura (igual ao squeeze) e a de deli
 
 ## Fecho · gate inline + faca Soft + preço
 
-Todo tipo, sem exceção, passa pelo gate inline do SKILL.md bloco a bloco (uma promessa · prova depois da promessa · mobile-first · fricção casada com a temperatura · mecânica-assinatura do tipo presente · 3 perguntas do gate · C/U/B · anti-IA HARD). O tipo muda a receita de blocos, não dispensa o gate.
+Todo tipo, sem exceção, passa pelo gate inline do SKILL.md bloco a bloco (uma promessa · prova depois da promessa · mobile-first · fricção casada com a temperatura · mecânica-assinatura do tipo presente · 3 perguntas do Harry · C/U/B · anti-IA HARD). O tipo muda a receita de blocos, não dispensa o gate.
 
 A faca Soft vale em todo conteúdo que descreve método: descreve resultado e função, nunca o passo a passo executável que tira o especialista da jogada.
 

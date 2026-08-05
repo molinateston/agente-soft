@@ -1,26 +1,7 @@
 ---
 name: soft-vendas-closer
-description: O CLOSER do método Soft, a frente que CONDUZ e FECHA o lead que já chegou quente. Faz a metade de baixo da venda e contém TUDO do tema, a espinha das 7 fases, o fechamento na DM/WhatsApp (canal default do 1:1), o banco de objeções, o script por canal, o copiloto em tempo real, a análise de conversa, a Conta de Padaria + a coleta de sinal/Pix, a mentalidade do vendedor, o pós-venda (indicação, testemunho, troca bônus-por-prova). Recebe o lead qualificado do SDR (com contexto) OU direto do funil; puxa a Oferta/PUV do Plano. Use SEMPRE que envolver "script de venda", "conduzir/fechar a venda", "objeção", "tá caro/vou pensar", "pedir o sim", "coletar o Pix/sinal", "follow-up", "copiloto", "analisa essa conversa", "não consigo cobrar caro", "pós-venda", "indicação", "testemunho". NÃO use pra ABRIR/qualificar/agendar lead frio, prospecção na DM, SDR, CRM (soft-vendas-sdr); contrato (soft-contratos-consultoria); carta/VSL/landing (soft-funil); posicionamento (soft-plano-posicionamento); conteúdo (soft-conteudo).
+description: O CLOSER do método Soft, a frente que CONDUZ e FECHA o lead que já chegou quente. Faz a metade de baixo da venda e contém TUDO do tema, a espinha das 7 fases, o fechamento na DM/WhatsApp (canal default do 1:1), o banco de objeções, o script por canal, o copiloto em tempo real, a análise de conversa, a Conta de Padaria + a coleta de sinal/Pix, a mentalidade do vendedor, o pós-venda (indicação, testemunho, troca bônus-por-prova). Recebe o lead qualificado do SDR (com contexto) OU direto do funil; puxa a Oferta/PUV do Plano. Use SEMPRE que envolver "script de venda", "conduzir/fechar a venda", "objeção", "tá caro/vou pensar", "pedir o sim", "coletar o Pix/sinal", "follow-up", "copiloto", "analisa essa conversa", "não consigo cobrar caro", "pós-venda", "indicação", "testemunho". NÃO use pra ABRIR/qualificar/agendar lead frio, prospecção na DM, SDR, CRM (soft-vendas-sdr); contrato (soft-vendas-contratos); carta/VSL/landing (soft-funil); posicionamento (soft-plano-posicionamento); conteúdo (soft-conteudo).
 ---
-
-> 🔴 **REGRA DURA DE FRASE , "TODA FRASE SE EXPLICA SOZINHA"** (vale em TUDO que esta skill escrever pro público)
->
-> Copy Soft é **frase que gera IMAGEM na cabeça de quem lê frio**. Não pode assumir que o leitor já sabe o assunto, o produto, a categoria, o método, o mecanismo ou o antes/depois. Toda frase que você escrever precisa se sustentar sozinha, sem depender do slide anterior, da bio, do título, ou do que "obviamente é". Frase curta que "soa punchy" e deixa o entendimento pro contexto é reprovada.
->
-> **Teste antes de aprovar CADA frase:** "se essa frase caísse solta no scroll de uma pessoa que nunca ouviu falar do produto, ela entenderia O QUÊ + PRA QUEM + O RESULTADO CONCRETO?" Se não, REESCREVE nomeando explícito: qual é o objeto ("dieta", "calorias", "conta de calorias", não só "conta"), qual é o público ("mulher que já tentou emagrecer de todas as formas", não só "mulher que já tentou de tudo"), qual é o resultado concreto ("para de recomeçar a dieta", não só "para de recomeçar").
->
-> **Ex reprovado →** *"Você come o que ama, um agente faz a conta do seu dia e você para de recomeçar."*
-> **Ex aprovado →** *"Você passa a comer o que ama, um agente faz a conta de calorias do seu dia inteiro e não te deixa escorregar, e você para de recomeçar a dieta toda vez do zero."*
->
-> Adicionar as 3-5 palavras que ancoram o contexto é MELHOR que a frase curta ambígua. Copy boa não é curta, é **inequívoca e imagética**. Frase que precisa de contexto pra ser entendida = frase quebrada, refaz.
-
-> **REGRA-IRMÃ · "NENHUM VERBO ÓRFÃO" (cérebro preguiçoso do leitor):** o leitor tem cérebro preguiçoso e NÃO vai completar sua frase pra você. Todo verbo precisa vir com seu OBJETO NOMEADO na mesma frase, senão vira frase média. Verbos-armadilha que exigem complemento explícito: cortar (**cortar o quê?**), recomeçar (**recomeçar o quê?**), parar (**parar de quê?**), mudar, melhorar, escapar, largar, controlar, ajustar, resolver, virar, transformar. Sempre nomeia o objeto concreto (arroz, pão, doce, dieta, treino, agenda, cliente, valor), NUNCA deixa aberto.
->
-> **Ex ✅ BOA (verbos ancorados + objetos nomeados):** *"Você come arroz, pão e o que ama, e uma ferramenta minha conta as calorias de tudo por você todo dia, pra você emagrecer sem viver de dieta."* , "come" tem objeto (arroz, pão), "conta" tem objeto (calorias), "emagrecer" tem contexto ("sem viver de dieta").
->
-> **Ex ⚠️ MÉDIA (verbo órfão no fim):** *"…pra você emagrecer comendo o que gosta em vez de cortar."* , "cortar O QUÊ?" ficou pro leitor completar. Cérebro preguiçoso não completa, desiste. Correto: *"…em vez de cortar arroz, pão e doce."*
->
-> Antes de aprovar a frase, sublinha mentalmente cada verbo e confere: cada um tem OBJETO nomeado? Não? Nomeia agora.
 
 ## 📦 O QUE ESTA SKILL PRODUZ
 
@@ -38,6 +19,8 @@ Esta skill contém TUDO do seu tema, a técnica de fechamento inteira:
 - **Métricas de pipeline** (lead → reunião → venda → ticket, win rate, CAC/LTV) pra achar o gargalo do fechamento (`references/funil-e-metricas.md`).
 - **Pós-venda**, pedido de indicação, coleta de testemunho, a troca bônus-por-prova e expansão de cliente (`references/indicacoes-pos-venda.md`).
 - **A cabeça do vendedor**, o sistema de crença e a confiança no preço, antes de qualquer técnica (`references/mentalidade-do-vendedor.md`).
+- **Os 5 perfis de closer**, a autoavaliação do vendedor com o estudo dos ~6.000 vendedores B2B (o desafiador com 39% de alta performance vs o amigão com 7%) e os 4 pilares que se treinam (`references/perfis-de-closer.md`).
+- **A caixa de ferramentas do closer**, checklists por fase, régua de autoavaliação de call, roteiro de roleplay, prompts de copiloto e o modelo de laudo de diagnóstico visual (`references/caixa-de-ferramentas-closer.md`).
 - **Frameworks de venda consultiva adaptados ao Soft**, perguntas em escada, ensinar/desafiar a visão, qualificação por dor, tamanho do problema (`references/frameworks-consolidados.md`).
 - **A condução na prática**, o jeito de conduzir destilado de sessões reais (`references/conducao-na-pratica.md`).
 
@@ -66,12 +49,17 @@ Esta é a linha que faz as duas skills fazerem muito bem cada uma a sua metade d
 
 ## A doutrina do canal (é do FUNIL, não do ticket)
 - **O Funil de Aula Agendada fecha de uma vez no checkout, na própria aula (one-step).** A esteira 1:1 vem DEPOIS como ascensão, e é AÍ que esta skill entra, não no fechamento do produto da aula.
-- **Nos funis comerciais (carta, jogadas de campanha, mentoria), o 1:1 fecha via de regra na DM/WhatsApp** (chat com áudio, doc e vídeo curto, o modo `dm-sem-call`), mesmo high-ticket. **A call/reunião é exceção de contexto**, não o degrau seguinte do preço: entra quando o lead pede a condução ao vivo, o caso é complexo (B2B, decisão a vários), ou o especialista prefere.
-- **SDR+Closer só com equipe e volume.** Volume baixo e ticket alto, uma pessoa faz as duas pontas na DM. Não confunda: aula = one-step no checkout; carta/jogada/mentoria = DM por padrão.
+- **Nos funis comerciais (carta, jogadas de campanha, mentoria), o LIMIAR UNIFICADO manda:** até ~R$3.000 o closer FECHA na própria DM/WhatsApp (chat com áudio, doc e vídeo curto, o modo `dm-sem-call`); **acima de ~R$3.000 o chat qualifica e AGENDA a call 1:1**, e é na call que o high-ticket fecha. Fora do limiar, a call também entra quando o lead pede a condução ao vivo, o caso é complexo (B2B, decisão a vários), ou o especialista prefere.
+- **SDR+Closer só com equipe e volume.** Volume baixo e ticket alto, uma pessoa faz as duas pontas. Não confunda: aula = one-step no checkout; carta/jogada/mentoria = DM até ~R$3.000, call 1:1 acima.
 
 ## A fonte e a lei
 - Guia: `guia/10-vendas-consultivas.md` (a mecânica). Fonte da verdade, leia na 1ª invocação da sessão. Lá vivem a cabeça do vendedor (10.3), os 4 princípios (10.4), as premissas dos grandes (10.5), a espinha de 7 fases (10.6), o Filtro Soft (10.7), o mapa de canal (10.8), a mecânica do diagnóstico que revela sem inflar (10.10-A), o roteiro fase a fase com as falas prontas (10.10), o Isolamento (Fase 6), o catálogo de objeções no tom Soft (10.11), as frases de poder (10.12) e os 3 níveis no fechamento (10.13).
 - `guia/CODIGO-DE-ESCRITA.md`: pegada falada, **simples e honesto, nunca fácil e mágico**, sem travessão na copy.
+- **Biblioteca `guia/` (acervo da era monolítica; consulta dirigida, nunca leitura obrigatória):**
+  - Fundação e marca: `guia/02-plano-marca-pessoal.md` · `guia/03-identidade-voz.md` (a fonte VIVA disso hoje é a soft-plano-posicionamento).
+  - Copy e conteúdo: `guia/04-carta-video.md` · `guia/05-feed-conteudo.md` · `guia/06-carrossel.md` · `guia/07-reel.md` · `guia/08-stories.md` · `guia/GUIA-COPY-APLICACAO.md` (as fontes VIVAS são as soft-conteudo-* e soft-funil-*).
+  - Operação e rotina: `guia/09-trafego.md` (viva: soft-trafego-meta) · `guia/11-socio-ia.md` (viva: soft-vendas-sdr) · `guia/12-rotina.md` · `guia/13-regras.md` · `guia/14-glossario.md` (o vocabulário do método).
+  - Mapas gerais: `guia/GUIA-SOFT-MARKETING.md` · `guia/GUIA-APLICACAO-AUTOGUIADA.md` · `guia/PIPELINE-DE-PRODUCAO.md` · `guia/README.md` (o índice da biblioteca).
 - **O eixo:** o lead vive o **teto** (preso, comparado por preço, refém da operação); "invisibilidade/percepção" é o teu diagnóstico, não a fala da conversa. Fala pelo teto que ele sente.
 - Filtros anti-ia + cliente-primeiro (não vaza o autor do método nem jargão de cozinha) antes de qualquer texto sair: `shared-references/filtro-anti-ia/` e `filtro-cliente-primeiro.md`.
 
@@ -98,7 +86,7 @@ A ordem é fixa. O que muda por canal e ticket é ritmo e comprimento, nunca a s
 | **6. Isolamento** | Confirma que, com valor e ajuste claros, falta só investir; separa objeção real de decorativa, ANTES do preço. | *"Antes de eu te passar o investimento: se a gente resolver [as dores] em [prazo], com [formato], e o valor fizer sentido, faz sentido trabalhar junto?"* |
 | **7. Fechamento** | Operacionaliza a venda (preço, condição, coleta do sinal/Pix); quem chegou aqui já decidiu. Uma jogada de encaminhamento no máximo, depois para. | *"O investimento é R$[valor] à vista ou [Xx] de R$[parcela]. [O que inclui em 1 frase]. E a gente já garante sua entrada pra começar."* |
 
-**Regras universais entre fases:** nunca apresenta antes de entender (pular F2 = pitch no vazio) · nunca revela preço com dúvida aberta (pular F6 = objeção garantida) · nunca força quem não tem perfil (encerra leve, isso é vitória) · uma oferta por vez (Principal → Condicional → Secundária) · tom de comando, nunca de súplica · nunca cala depois do preço (ancoragem negativa; diz o número com leveza e emenda no próximo passo).
+**Regras universais entre fases:** nunca apresenta antes de entender (pular F2 = pitch no vazio) · **nunca apresenta sem saber quanto o lead tem** (a leitura de capacidade é pré-condição da F5) · nunca revela preço com dúvida aberta (pular F6 = objeção garantida) · **antecipa as objeções clássicas ANTES do preço** (decisor, financeiro, "vou pensar", concorrente; enquanto são hipotéticas, morrem baratas) · nunca força quem não tem perfil (encerra leve, isso é vitória) · uma oferta por vez (Principal → Condicional → Secundária) · tom de comando, nunca de súplica (e a régua 7-38-55: a palavra é ~7% do impacto, tom ~38%, corpo ~55%; incisivo com semblante leve, nunca agressivo) · nunca cala depois do preço (ancoragem negativa; diz o número com leveza e emenda no próximo passo) · **"faz sentido pra você?" é banido do fechamento** (pergunta de validação devolve o bastão; engaja com "o que você entendeu disso?") · **conversão = PAGAMENTO** (dinheiro ou sinal na conta; a taxa se mede sobre os aprovados no diagnóstico: ≤20% péssimo · 30% sinal de vida · 40% no jogo · 50% bom).
 
 **Falas-assinatura irredutíveis (a assinatura Soft, não "qualquer LLM").** O repertório denso vive em `references/script-builder.md` (§"Falas de campo") e `conducao-na-pratica.md`; estas três são o piso que NÃO pode sair raso, porque no app o corpo é tudo que carrega. Adapta ao nicho, mantém o miolo:
 - **A Conta de Padaria** (quando o lead pede preço cedo, F2): *"Você já foi num restaurante? Trazem a conta antes ou primeiro perguntam o tamanho da sua fome? Aqui é igual, não consigo te passar valor sem entender o que você precisa. Hoje, qual é a maior dificuldade no seu [problema]?"*
@@ -120,7 +108,7 @@ Isola antes de responder quando der: *"É só isso ou tem mais coisa emperrando?
 
 Se a mesma objeção volta duas vezes, é outra coisa: *"Acho que tem algo além disso. O que é?"* Não nomeou, é curiosidade, não comprador, encerra com leveza.
 
-## Fechar high-ticket na DM (o canal DEFAULT, detalhe em `dm-sem-call`)
+## Fechar na DM até ~R$3.000 (detalhe em `dm-sem-call`; acima disso, call 1:1)
 Quando o lead já chega quente (viu o perfil, consumiu um material, veio do SDR) e quer **resolver agora** sem marcar call, você fecha 100% na DM/WhatsApp com áudio, doc e vídeo curto. Comprime a espinha de 7 fases em **5 etapas** (Conexão → Qualificação com 3-4 perguntas que filtram → Autoridade em áudio que normaliza a dor + pede permissão "posso te mostrar como funciona?" → Oferta com doc/vídeo de 3min + "já libero seu acesso" → Follow-up 10min/24h/24h). Doutrina: **venda fácil = entrega fácil**, não mata objeção à força; e **só flexibiliza o preço quando a própria pessoa abre a brecha** ("só teria metade agora" → ajusta a forma de pagamento, nunca baixa o valor cheio). O doc/vídeo da oferta puxa o bloco Oferta da `soft-plano-posicionamento`. A abordagem fria que TRAZ o lead até aqui é da `soft-vendas-sdr`.
 
 ## Coletar o sinal/Pix na hora (detalhe em `comercial-1a1-e-conta-de-padaria`)
@@ -176,46 +164,6 @@ BLOCO: [o slide/parágrafo/fala, entre aspas]
 
 **O linter é passo BLOQUEANTE, não nota solta.** Roda a copy no `scripts/lint_copy.py` (anti-IA + anti-voz Soft): `python3 scripts/lint_copy.py peca.txt` ou `echo "..." | python3 scripts/lint_copy.py -`. **`exit 1` = COPY REPROVADA = não entrega, reescreve e re-roda.** Ele derruba por 2 falhas duras: **o em-dash (o travessão longo U+2014)** e a **família da palavra banida "tr-a-v-a-r"** (todas as flexões e o antônimo "des-tr-a-v-a-r"). **Valem em QUALQUER lugar do `.md`, inclusive TÍTULOS, cabeçalhos e rótulos de fase**, não só nas aspas de copy: um título "Script [travessão] WhatsApp" ou um header "FASE 3 [travessão]" ou a palavra banida na narração ("a intimidade tr-a-v-o-u", "(des-tr-a-v-a-d-a)") reprova igual. Troca o travessão por ponto ou hífen comum; troca a palavra banida por emperrar/empacar/parar/freio/amarra. No chat (sem rodar o script), faz CTRL+F manual do travessão e da palavra banida em todo o doc antes de marcar ✓. O anti-IA limpa o robô; o Crivo dá a força. **Sem a tabela do Crivo impressa junto E o linter em exit 0, a peça não foi entregue.**
 
-## KPIs comerciais canônicos (o que medir e o ideal, doutrina FSS)
-
-Régua de performance que o closer e a gestão comercial acompanham semanalmente, uma linha por métrica.
-
-**Métricas primárias**
-- Custo por comparecimento: custo por lead × taxa de comparecimento.
-- CAC: investimento total / novos clientes.
-- Faturamento por call realizada: total faturado / calls no período.
-- ROAS: receita / valor investido. Abaixo de 5 = ajusta operação. 5-6 = estabiliza. 7-11 = acelera gradual. 11+ = acelera robusto.
-
-**Métricas secundárias**
-- Tempo de contato pós-lead: menos de 5min, máximo 1h.
-- Taxa de agendamento: alvo > 20%, mínimo 12%.
-- Taxa de comparecimento: > 65% B2C, > 70% B2B.
-- Taxa de conversão do closer: 20% a 35% (alvo 30%+).
-- Ticket médio: próximo do produto principal.
-- Faturamento por fonte: distribuição balanceada.
-
-Regra dura: ataca sempre a métrica PIOR, não a mais fácil de melhorar. Se agendamento tá 4% e conversão tá 30%, subir agendamento pra 12% multiplica o resultado por 3. Subir conversão de 30 pra 35 quase não move nada.
-
-## Pipeline canônico + dimensionamento comercial (doutrina FSS, calibrada ao Soft)
-
-**Pipeline padrão:**
-- Pré-vendas: Entrada · Primeira interação · Follow Up 1 · Follow Up 2 · Follow Up 3 · Agendamento · Reagendamento · Sales Farming (repescagem).
-- Vendas: Agendado · No Show · Venda com Sinal · Venda Concluída · Farming.
-- CS: Onboarding · Acompanhamento · Renovação · Fidelização.
-
-**Dimensionamento:**
-- 1 SDR sozinho: 15-25 leads/dia (450-750/mês).
-- 1 SDR com IA auxiliando: 45-50 leads/dia.
-- 1 closer: 3-5 atendimentos/dia (ideal 3-4; 5 baixa performance; 6+ contrata outro).
-- Regra geral: 1 SDR para 1 closer.
-
-**Fase inicial da operação Soft:**
-- O dono/fundador na cadeira de closer no início. Adapta a oferta, cria as calls-exemplo pra treinar o time depois.
-- Um SDR de IA na cadeira de receptivo (funil + DM Insta/WhatsApp inbound). Zero prospecção fria fora do ecossistema — só quem já interagiu.
-- Sales Farming (repescagem de base própria) só depois de meses de base acumulada, não no dia 1.
-
-**Follow-up cadence padrão:** 24h após 1ª interação sem resposta · 72h · 7 dias · depois disso, Sales Farming (repesca mensal). Teto de 4 toques antes de encerrar — não persegue.
-
 ## Princípios
 - **Confirma, não convence:** se a oferta do Plano é forte e a carta aqueceu, a conversa fecha confirmando a crença, não construindo do zero.
 - **Honesto sempre:** simples e real, nunca fácil e mágico. O avatar já tomou pau de promessa mágica.
@@ -223,7 +171,7 @@ Regra dura: ataca sempre a métrica PIOR, não a mais fácil de melhorar. Se age
 
 ## When NOT to use
 - **Abrir conversa fria, prospectar no Direct, qualificar de leve, vender/agendar a sessão, operar o CRM (GHL/GoHighLevel), o SDR de IA** → **soft-vendas-sdr**. Esta skill começa quando o lead já chega quente.
-- **Contrato de mentoria/consultoria** (depois do sim) → **soft-contratos-consultoria** (cláusulas anti-calote/pagamento/PF-PJ/por formato, glossário jurídico, modo enxuto vs robusto). Fechou a venda → gera o contrato lá, sem trocar de método.
+- **Contrato de mentoria/consultoria** (depois do sim) → **soft-vendas-contratos** (cláusulas anti-calote/pagamento/PF-PJ/por formato, glossário jurídico, modo enxuto vs robusto). Fechou a venda → gera o contrato lá, sem trocar de método.
 - **Carta, VSL, mini-webinar ou landing** (aquecer/qualificar o lead antes da conversa) → `soft-funil-carta`, `soft-funil-miniwebinar`, `soft-funil-landing`.
 - **Posicionamento, Oferta, PUV, Mecanismo, Voz** (a fundação de onde o script puxa) → `soft-plano-posicionamento`. Sem Plano, a venda volta pra lá.
 - **Conteúdo de feed** (carrossel, reel, stories, headline) → `soft-conteudo-*`.
@@ -240,238 +188,12 @@ Regra dura: ataca sempre a métrica PIOR, não a mais fácil de melhorar. Se age
 | Script sem verbatim (aspas inventadas) | Reprova no Crivo de ancoragem; soa genérico, não fecha | Puxa 3-5 falas reais da fonte do cliente, a 1ª linha nasce de uma delas |
 | Follow-up eterno sem pedir sim/não | Queima o aquecimento e a autoridade; lead que precisa de 7 toques não está pronto | Pede a decisão na conversa; antecipa o follow-up pra dentro da conversa |
 | Apresentou o método inteiro (F5) | Lead desengaja; vira aula, não venda | Só o que amarra com o que ele disse + 1 reframe |
+| Apresentou sem saber quanto o lead tem | Pitch no escuro: a conta nunca ia fechar, e a melhor munição foi gasta à toa | Leitura de capacidade ANTES da F5 ("quanto se programou?" + faixas decrescentes) |
+| "Faz sentido pra você?" na hora de fechar | Pede aprovação, devolve o bastão, abre porta de fuga | "O que você entendeu disso?" + afirmação com convicção + escada de fechamento com o número DELE |
+| Mede conversão de "call feita" | Mistura filtro (acerto) com perda (erro); o número mente | Conversão = pagamento sobre APROVADOS no diagnóstico (régua 20/30/40/50) |
 | Nome de framework vazando pro lead | "Degrau de implicação" soa manual, mata a naturalidade | O framework opera invisível; vira pergunta em linguagem do nicho |
 
 ## Handoff
 - **Pra trás:** lead frio, prospecção, qualificação, agendamento → **soft-vendas-sdr** (o closer não abre conversa fria). Pré-qualificador que falta → `soft-funil-carta`/`soft-funil-miniwebinar`. Oferta/PUV indefinida → `soft-plano-posicionamento`.
-- **Pra frente:** venda fechada → contrato na **soft-contratos-consultoria**; os números (lead → reunião → venda → ticket) voltam pro **LEON**, que calibra a rotina; cliente novo → o pós-venda abre indicações e testemunho (a troca bônus-por-prova), que viram prova pra `soft-plano-posicionamento` e as `soft-conteudo-*`.
-
-
----
-
-## RÉGUA DE DIAGRAMAÇÃO obrigatória (18/07/2026)
-
-Todo doc/entregável que essa skill produz DEVE seguir `skills/shared-references/REGUA-DIAGRAMACAO-DOCS.md`:
-
-- Topo: rótulo pequeno + título grande + subtítulo + metadata `chave: valor`
-- Números ANTES da narrativa (seção "0" com tabela/KPI ancora tudo)
-- Numeração hierárquica (1, 2, 3.1, 3.2), divisa entre seções
-- Bloco padronizado que se repete em TODAS as seções
-- Bullet > parágrafo, com palavra-âncora em **negrito**
-- Callouts (azul/verde/amarelo/vermelho) 1 por seção no máximo
-- Comparação = 2 colunas paralelas · Fluxo = seta ↓ · KPI = cards
-- Aspas literais pra citação · badges pra marcar novidade
-- Fecha com checklist acionável (dono/prazo quando existe)
-- Zero gordura: NUNCA "vale destacar", "importante notar", "além disso", "por outro lado", "em suma", "conforme mencionado", "neste documento", "vamos explorar"
-- **Zero changelog** dentro do doc (não escreva "atualizei X, antes era Y")
-- **Zero meta-processo** ("pesquisei X, cruzei com Y")
-- 1 bloco = 1 tela de celular (o dono lê no Telegram)
-
-**Teste antes de entregar:** (1) topo bate no padrão? (2) número ancora antes da narrativa? (3) bloco padronizado repete? (4) callout ≤1 por seção? (5) checklist acionável no fim? (6) zero das palavras proibidas? Se sim nos 6 → entrega. Se não → reescreve.
-
-============================================================
-GATE OBRIGATORIO · soft-critico-copy
-============================================================
-
-Antes de entregar QUALQUER linha final publica pro dono
-(headline, capa, corpo, slide, script, sequencia, carta,
-landing, isca, oferta, WhatsApp, e-mail, bio, CTA), esta
-skill invoca o GATE UNIVERSAL soft-critico-copy passando o
-texto pronto + o tipo de peca.
-
-Como acionar:
-
-1. Salva a copy pronta em /tmp/copy-<slug>-<epoch>.txt
-2. Invoca a Skill soft-critico-copy com:
-   - texto: o conteudo do arquivo
-   - tipo_de_peca: um de {headline, capa, corpo, slide,
-     script_reel, sequencia_stories, carta, landing_bloco,
-     landing_completa, isca_copy, oferta, whatsapp, email,
-     script_sdr, script_closer, pos_venda, bio, cta}
-   - contexto (opcional): tese-mae, avatar, verbatim_ref
-
-O gate retorna: passou_nos_4 (sim/nao) + falhas em 4 filtros
-(CUB, Estrutura-mae, Anti-IA, Verbatim) com trecho, motivo e
-sugestao de reescrita.
-
-Se reprovou, aplica as sugestoes e re-invoca. Loop de no
-maximo 3 iteracoes. Se ainda reprovar, escala pro dono com
-as falhas listadas (nao insiste automatico ao infinito).
-
-Substitui qualquer gate anti-IA anterior desta skill. O
-soft-critico-copy JA roda o lint_copy.py internamente no
-filtro 3 (Anti-IA), mais 3 filtros adicionais (CUB,
-Estrutura-mae, Verbatim).
-
-
-============================================================
-MODO PIPELINE Q&A GUIADO RETOMÁVEL (mold soft-webinar-plano), 2026-07-23
-============================================================
-
-Esta skill agora OPERA em Q&A guiado retomável, no mesmo molde da
-soft-webinar-plano. O corpo acima é a FONTE DE MÉTODO (os frameworks,
-as tabelas, as fórmulas, os anti-patterns, os checks do gate). O
-pipeline abaixo é a EXPERIÊNCIA que conduz o dono pelo método,
-uma pergunta por vez, com preview e retomabilidade.
-
-Ordem sempre: (a) chega pedido, (b) roda M0 pra identificar sub-caso,
-(c) roda P0 pra importar o que já existe e pular perguntas cobertas,
-(d) roda as Fases numeradas, cada uma UMA pergunta por vez com 2-3
-opções cruzando com o método do corpo, (e) preview a cada 5 respostas,
-(f) fecha com o gate.
-
-
-REGRAS TRANSVERSAIS DURAS (valem em TODOS os blocos)
-
-1) UMA PERGUNTA POR VEZ. Nunca despejar 5 perguntas juntas. Nunca
-   continuar antes da resposta anterior.
-
-2) SUGERE 2-3 OPÇÕES depois das perguntas cruas. Nunca sugestão única
-   (vira empurrão). As opções vêm cruzando a resposta do dono com o
-   método do corpo acima. Ele escolhe, edita, ou pede mais.
-
-3) PREVIEW a cada 5 respostas. Bloco curto: "com o que você me deu
-   até agora, o esqueleto ta assim: [3-4 linhas]. seguimos?".
-
-4) ZERO DEFAULT DO DONO DO MÉTODO (o dono). Exemplos do produto do dono
-   (Operação SOFT, Mesa de Operação, Call de Arquitetura) só entram
-   como REFERÊNCIA marcada "(exemplo, não copia)". Naming do dono da
-   skill é SEMPRE aberto: ele escolhe o nome. A skill NUNCA impõe.
-
-5) RETOMABILIDADE. A cada resposta o state cai em
-   /tmp/<skill>-<slug>-<epoch>.json. Se o dono chamar de novo (ou
-   sair e voltar), a skill lê o state mais recente e pergunta
-   "quer continuar de onde parou ou começar novo?".
-
-6) SAIR/PAUSAR SALVA. "sai", "pausa", "amanhã" → salva state, avisa
-   o path, encerra limpo.
-
-7) PULAR = "[A CONFIRMAR]". Se o dono digitar "pula" ou "depois", a
-   resposta vira [A CONFIRMAR - <bloco>] no state e o pacote final
-   marca esses pontos pra ele afinar.
-
-8) RESPOSTA RASA = REFAZ A PERGUNTA. Se o dono responde em 3 palavras
-   algo que precisa contexto, devolve UMA pergunta específica pra
-   abrir mais.
-
-9) ZERO INVENTAR DADO DO DONO. Preço, número, case, nome de cliente,
-   fala do avatar: se não respondeu, pergunta. Nunca chuta.
-
-10) NAMING USER-FRIENDLY. Nomes internos (canonico/high_ticket, tipo
-    A/B/C) nunca aparecem na cara do dono. Perguntar sempre pelo
-    resultado que ele quer.
-
-
-COMO OPERA (o loop)
-
-Passo 1 - CHECA state antigo
-   Lê /tmp/<skill>-*.json. Se encontrou, pergunta "vi um trabalho
-   de {data} sobre {tese}. continua ou começa novo?".
-
-Passo 2 - RODA a fase atual
-   Uma pergunta por vez. Salva resposta no state. Cruza com o método
-   do corpo. Devolve 2-3 sugestões. Dono escolhe ou edita.
-
-Passo 3 - PREVIEW a cada 5 respostas
-   Bloco curto de progresso.
-
-Passo 4 - AVANÇA pra próxima fase quando fecha a atual
-   Anuncia em uma linha: "beleza, agora vou pra {nome amigável}".
-
-Passo 5 - NA FASE DE GERAÇÃO
-   Monta o entregável usando o método do corpo (as fórmulas dos
-   blocos, o gate, os anti-patterns).
-
-Passo 6 - ENTREGA
-   Google Doc (via gog drive upload --convert) OU artefato específico
-   da skill + resumo curto + lista de [A CONFIRMAR] pendentes.
-
-
-ESTADO EM /tmp
-
-Arquivo: /tmp/<skill>-<slug>-<epoch>.json
-
-Formato mínimo:
-{
-  "skill": "<nome>",
-  "slug": "<slug curto>",
-  "epoch": <unix>,
-  "criado_em": "<ISO>",
-  "atualizado_em": "<ISO>",
-  "fase_atual": "M0|P0|F1|F2|...|Fn|entrega",
-  "sub_caso": "<valor de M0>",
-  "pecas_prontas": {},
-  "respostas": {},
-  "pendentes_a_confirmar": []
-}
-
-
-
-============================================================
-M0 / P0 / FASES, soft-vendas-closer
-============================================================
-
-M0. MODO, UMA pergunta abre o sub-caso:
-"o que você quer que eu faça agora?
- (a) escrever o script de venda completo (7 fases até o Pix)
- (b) copiloto ao vivo (você está numa conversa AGORA)
- (c) analisar/desemperrar uma conversa empacada
- (d) montar o banco de objeções pro seu produto
- (e) montar a arquitetura do Comercial 1:1 (Conta de Padaria,
-     coleta de sinal/Pix)
- (f) pós-venda (indicação, testemunho, expansão)
- (g) trabalhar a mentalidade do vendedor / preço"
-
-Grava state.sub_caso. Sub-caso (b) NÃO gera doc, gera mensagem
-operacional na hora (diagnóstico 1 linha + mensagem pronta +
-2 caminhos esperados). Todos os outros geram doc completo.
-
-
-P0. IMPORT DE PEÇAS PRONTAS, UMA pergunta com checklist:
-"marca com sim/não:
-
-- Plano de posicionamento (Oferta, PUV, Mecanismo, Voz)
-- Ticket definido + canal do fechamento (DM/WhatsApp default,
-  call de exceção)
-- Lead veio do SDR com nota rica? (dor nomeada, BANT, objeções)
-- Lead veio direto do funil? (qual funil, mini-webinar/carta/aula)
-- Cases reais + verbatim
-- Objeções recorrentes já mapeadas
-- Script antigo rodando (pra reengenhar)
-- Nada, começo do zero"
-
-Salva em state.pecas_prontas.
-
-
-FASES (variam por sub-caso)
-
-Sub-caso (a), script completo:
-F1. Briefing (produto, ticket, canal, avatar, contexto do lead).
-F2. Escolha do canal (DM/WhatsApp default, call de exceção), roda
-    a doutrina do corpo (é do funil, não do ticket).
-F3. Script-builder (references/script-builder.md), 7 fases do
-    corpo cruzando com Oferta/PUV do Plano. Preview a cada 5.
-F4. Banco de objeções relevante (references/banco-de-objecoes.md)
-    embutido no script.
-F5. Conta de Padaria + coleta de sinal/Pix (references/comercial-
-    1a1-e-conta-de-padaria.md).
-F6. Gate interno + soft-critico-copy no /tmp/copy-<slug>-<epoch>.txt.
-F7. Entrega Google Doc com as 7 fases INTEIRAS até o Pix. Nunca
-    fase-a-fase.
-
-Sub-caso (b), copiloto ao vivo:
-F1. Diagnóstico da mensagem/print recebido em 1 linha.
-F2. Mensagem operacional pronta em bloco copiável.
-F3. 2 caminhos esperados (o que o lead vai responder + próxima
-    jogada em cada caso).
-Sem doc, resposta direta no chat.
-
-Sub-caso (c), análise de conversa empacada:
-F1. Pede print/transcrição.
-F2. Rodas references/analise-de-conversa.md.
-F3. Entrega diagnóstico + próximo passo em bloco.
-
-Sub-casos (d)-(g): pipeline curto próprio de cada tema.
-
-State: /tmp/soft-vendas-closer-<slug>-<epoch>.json
-
+- **Call sem Pix (a hierarquia é explícita):** a rota é FECHAR NA CALL, lapidando cada pendência dentro dela ("vou ver o cartão" → "abre o app agora"; "falo com o sócio" → "liga pra ele, eu espero"). Não fechou e não há justificativa: *"o que muda de hoje pra amanhã?"*; sem resposta, encerra com dignidade e libera. **A proposta de 7 dias é EXCEÇÃO, não etapa:** só entra pra call que sobreviveu ao método com motivo real (processo formal de empresa, rito de decisão a vários com sinceridade demonstrada), e SEMPRE com compromisso amarrado na própria call (dia/hora do retorno + condição que expira). Nesse caso, a **soft-vendas-proposta** materializa a oferta num site premium com validade de 7 dias, e o follow-up desses 7 dias é do CLOSER (cobra no dia 5, fecha ou encerra no dia 7). Proposta virou rotina = as reuniões estão sendo feitas PRA gerar follow-up; conserta a reunião, não a proposta.
+- **Pra frente:** venda fechada → contrato na **soft-vendas-contratos**; os números (lead → reunião → venda → ticket) voltam pro **LEON**, que calibra a rotina; cliente novo → o pós-venda abre indicações e testemunho (a troca bônus-por-prova), que viram prova pra `soft-plano-posicionamento` e as `soft-conteudo-*`.

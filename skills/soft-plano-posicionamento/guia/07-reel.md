@@ -158,7 +158,7 @@ Você não pode acertar **uma vez só**. Tem que acertar sempre e pra sempre. Br
 
 **Meta: 1 reel/dia nos primeiros 90 dias.**
 
-Não grava um por dia - **isso mata o ritmo**. Produz em lote: **5 reels numa tarde**. Grava todos, edita todos, agenda todos. O Agente do dono (Cap 11) carrega a criação dos roteiros e headlines; o humano carrega a estratégia e a cara na câmera. Sem o Agente do dono, esse volume com foco é insustentável solo.
+Não grava um por dia - **isso mata o ritmo**. Produz em lote: **5 reels numa tarde**. Grava todos, edita todos, agenda todos. O Sócio IA (Cap 11) carrega a criação dos roteiros e headlines; o humano carrega a estratégia e a cara na câmera. Sem o Sócio IA, esse volume com foco é insustentável solo.
 
 > **Documentação > Produção.** Não inventa pauta. Vive a vida e documenta. Cada coisa do dia é matéria-prima para uma headline.
 

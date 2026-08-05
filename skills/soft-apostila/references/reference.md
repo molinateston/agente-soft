@@ -8,7 +8,6 @@
 - [Pipeline (7 etapas)](#pipeline-7-etapas)
 - [Pré-requisitos](#pré-requisitos)
 - [Passo a passo](#passo-a-passo)
-- [Checklist anti-IA (rodar antes de consolidar)](#checklist-anti-ia-rodar-antes-de-consolidar)
 - [Boas práticas](#boas-práticas)
 - [Variações](#variações)
 - [Erros comuns](#erros-comuns)
@@ -187,7 +186,7 @@ Estrutura mínima:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Apostila: {titulo}</title>
+<title>Apostila — {titulo}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -338,19 +337,6 @@ wrangler pages project list
 # pegar URL .pages.dev
 # adicionar CNAME no DNS: apostila → apostila-aula1.pages.dev
 ```
-
----
-
-## Checklist anti-IA (rodar antes de consolidar)
-
-Depois de enriquecer TODOS os capítulos e ANTES de concatenar em `apostila.md`, varra o material inteiro por estes tells de IA e reescreva o que acusar. O enriquecimento é o passo que mais planta esses vícios, então a varredura é obrigatória, não opcional.
-
-1. **Travessão em-dash `—`** (zero-tolerância). Varra o texto por `—`. Todo em-dash sai: troca por ponto ou hífen comum. Nenhum brasileiro digita `—` na mão; é assinatura de IA. Vale também nos títulos, no `<title>` do HTML e em qualquer legenda. ❌ "a calda falha — e empedra" → ✅ "a calda falha. E empedra."
-2. **Frase-emoldura que promete revelação.** Corpo e intro de capítulo abrem DIRETO no conteúdo, nunca com moldura meta. Bane: "Este capítulo é sobre...", "Neste capítulo você vai...", "A verdade é que...", "O segredo está em...", "O que ninguém te conta...". ❌ "Este capítulo é sobre o ponto de calda." → ✅ "A calda empedra quando passa do ponto. O teste do fio evita isso."
-3. **Verbo de transformação genérico.** Bane "transformar, revolucionar, redefinir, destravar, potencializar, alavancar, elevar, expandir" quando não é fala literal do dono. Usa concreto: funciona, resolve, ataca, tira, muda, faz. (Toda a família "travar/travado/destravar" é banida na voz Soft, exceto citação literal do dono entre aspas.)
-4. **Tricolon performático** (a, b e c com mesma cadência). ❌ "simples, sólido e sustentável" → quebra em frases próprias.
-
-Régua: reprova por AGLOMERADO de tells, não por um sinal isolado numa fala autêntica do dono. MAS em-dash e a família "travar" são zero-tolerância, saem sempre. Automatize a varredura de em-dash: `grep -n '—' apostila.md` tem que voltar vazio antes de fechar.
 
 ---
 

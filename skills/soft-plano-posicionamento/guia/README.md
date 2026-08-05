@@ -8,7 +8,7 @@
 ## A espinha - 2 Pilares + 1 Motor = 10X$
 - **Pilar 1 - Posicionamento Incomum** (Plano de Marca Pessoal) → resolve a **Invisibilidade**
 - **Pilar 2 - Funil Minimalista** (Feed → Carta/Vídeo → WhatsApp) → resolve a **Complexidade**
-- **Motor - Agente do dono** (Claude.ai + Claude Code) → resolve o **Improviso**
+- **Motor - Sócio IA** (Claude.ai + Claude Code) → resolve o **Improviso**
 
 Tese (o mecanismo): **C + Im = In** (Complexidade + Improviso = Invisibilidade). Na pele, o Especialista sente isso como **teto** - bom demais pro lugar onde está, e não sai do lugar; "invisibilidade" é o diagnóstico por baixo, nunca a palavra da copy. · Princípio operacional: **1:1:1:1** (1 público · 1 problema · 1 produto · 1 canal) · Régua de tudo: *o cliente entende e confia mais rápido.*
 
@@ -33,7 +33,7 @@ Tese (o mecanismo): **C + Im = In** (Complexidade + Improviso = Invisibilidade).
 - `10-vendas-consultivas.md` - Vendas Consultivas, Fechamento Limpo
 
 **O Motor**
-- `11-agente-do-dono.md` - Agente do dono
+- `11-socio-ia.md` - Sócio IA
 
 **Operação**
 - `12-rotina.md` - Rotina Estratégica

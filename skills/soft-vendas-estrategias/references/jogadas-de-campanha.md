@@ -165,7 +165,7 @@
 
 **Onde encaixa no mes.** O **pico** do mes: gera caixa imediato (os R$100) e ativa os mais quentes pro high ticket. No Plano de Guerra, e a jogada que mais move a meta, encaixa como evento ancora.
 
-**Quem executa.** Os stories e a sequencia = **soft-conteudo-stories**. O desenho do evento e do conteudo da aula = **soft-funil-miniwebinar** (a micro-aula) ou **soft-webinar-plano** (se virar webinar cheio). A oferta high ticket ofertada no fim, se for mentoria = **soft-plano-ofertas**. A oferta dentro da reuniao e o follow-up de 24h = **soft-vendas-closer**.
+**Quem executa.** Os stories e a sequencia = **soft-conteudo-stories**. O desenho do evento e do conteudo da aula = **soft-funil-miniwebinar** (a micro-aula) ou **soft-webinar** (se virar webinar cheio). A oferta high ticket ofertada no fim, se for mentoria = **soft-plano-ofertas**. A oferta dentro da reuniao e o follow-up de 24h = **soft-vendas-closer**.
 
 **Ajuste Soft.** O conteudo da reuniao e util de verdade, nao isca vazia pra empurrar a venda no fim. A oferta **confirma** o que a sala acabou de provar (filtra e convence). O R$100 e filtro de compromisso, nao barreira de caixa: o valor real esta no que sobe pro programa. Nao da desconto, da vantagem.
 

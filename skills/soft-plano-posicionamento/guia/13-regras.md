@@ -33,8 +33,8 @@ Nunca oferecer o nível de entrada antes de apresentar o nível principal. Quem 
 **8. Volume diário.**
 Reel é story. Cada post é cheque. A repetição insuportável é trabalho, não acidente - é assim que a marca se constrói.
 
-**9. Agente do dono carrega criação, humano carrega estratégia.**
-Sem Agente do dono, volume com foco é insustentável solo. A IA embala; o humano decide. Cada um na sua função.
+**9. Sócio IA carrega criação, humano carrega estratégia.**
+Sem Sócio IA, volume com foco é insustentável solo. A IA embala; o humano decide. Cada um na sua função.
 
 **10. Documentação > Produção.**
 Não invente pauta. Viva e documente. Cada coisa do dia é matéria-prima - o conteúdo nasce da vivência, não da criatividade forçada.

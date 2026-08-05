@@ -6,7 +6,7 @@
 
 **0. Localiza.** Quem lê e o que ele já sabe. O avatar e o nível de consciência (no Plano de Marca). Peça pro nível errado não cola, por melhor que seja escrita. O Otávio já tenta o digital há anos e patina, não é iniciante; não fale com ele como se fosse.
 
-**1. Gancho.** Puxa a `soft-conteudo-headlines`: os critérios, os 30 templates, os gatilhos. Escolhe um template, marca o gatilho. Gancho sem isso é chute. (Régua rápida: número, contraste, promessa concreta. "10 anos pra explicar o que faço, te ensino em 30 segundos" passa; "o mercado nunca te entendeu" não.)
+**1. Gancho.** Puxa a `soft-conteudo`: os critérios, os 30 templates, os gatilhos. Escolhe um template, marca o gatilho. Gancho sem isso é chute. (Régua rápida: número, contraste, promessa concreta. "10 anos pra explicar o que faço, te ensino em 30 segundos" passa; "o mercado nunca te entendeu" não.)
 
 **2. Corpo.** A estrutura-mãe: Diagnóstico → Nomeação → Polaridade → Nova interpretação → Consequência → Movimento. No carrossel vira slides, no reel ~40s, no story espalha no dia.
 

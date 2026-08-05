@@ -3,25 +3,6 @@ name: soft-plano-posicionamento
 description: "Constrói o Plano de Posicionamento Incomum COMPLETO, a FUNDAÇÃO do método Soft (Posicionamento + Voz). Entrega o Racional, o Grande Dominó (a tese-mãe que vende), o Mecanismo do Problema + as crenças a quebrar, o Mecanismo da Solução (novo mecanismo único nomeado), a Oferta com PUV, 2 saídas (Perfil Enxuto, Fundação de Headlines) e os 5 elementos de Voz. Vira o cérebro do LEON do cliente. Conduz por entrevista e pesquisa. Use quando o pedido for posicionamento, plano de marca, reposicionamento, construir ou nomear método, proposta de valor, oferta, PUV, perfil, bio, LinkedIn, cliente ideal, problema avançado, tom de voz, minha voz não soa minha, narrativa, pilares de conteúdo, auditar perfil/concorrente. NÃO use pra a HEADLINE da peça, vai pra soft-conteudo-headlines; NÃO use pro CORPO da peça (carrossel, reel, stories), vai pra soft-conteudo-*; NÃO use pra carta, VSL ou funil, vai pra soft-funil-*; NÃO use pro script de venda, vai pra soft-vendas-closer (abertura/prospecção: soft-vendas-sdr)."
 ---
 
-> 🔴 **REGRA DURA DE FRASE , "TODA FRASE SE EXPLICA SOZINHA"** (vale em TUDO que esta skill escrever pro público)
->
-> Copy Soft é **frase que gera IMAGEM na cabeça de quem lê frio**. Não pode assumir que o leitor já sabe o assunto, o produto, a categoria, o método, o mecanismo ou o antes/depois. Toda frase que você escrever precisa se sustentar sozinha, sem depender do slide anterior, da bio, do título, ou do que "obviamente é". Frase curta que "soa punchy" e deixa o entendimento pro contexto é reprovada.
->
-> **Teste antes de aprovar CADA frase:** "se essa frase caísse solta no scroll de uma pessoa que nunca ouviu falar do produto, ela entenderia O QUÊ + PRA QUEM + O RESULTADO CONCRETO?" Se não, REESCREVE nomeando explícito: qual é o objeto ("dieta", "calorias", "conta de calorias", não só "conta"), qual é o público ("mulher que já tentou emagrecer de todas as formas", não só "mulher que já tentou de tudo"), qual é o resultado concreto ("para de recomeçar a dieta", não só "para de recomeçar").
->
-> **Ex reprovado →** *"Você come o que ama, um agente faz a conta do seu dia e você para de recomeçar."*
-> **Ex aprovado →** *"Você passa a comer o que ama, um agente faz a conta de calorias do seu dia inteiro e não te deixa escorregar, e você para de recomeçar a dieta toda vez do zero."*
->
-> Adicionar as 3-5 palavras que ancoram o contexto é MELHOR que a frase curta ambígua. Copy boa não é curta, é **inequívoca e imagética**. Frase que precisa de contexto pra ser entendida = frase quebrada, refaz.
-
-> **REGRA-IRMÃ · "NENHUM VERBO ÓRFÃO" (cérebro preguiçoso do leitor):** o leitor tem cérebro preguiçoso e NÃO vai completar sua frase pra você. Todo verbo precisa vir com seu OBJETO NOMEADO na mesma frase, senão vira frase média. Verbos-armadilha que exigem complemento explícito: cortar (**cortar o quê?**), recomeçar (**recomeçar o quê?**), parar (**parar de quê?**), mudar, melhorar, escapar, largar, controlar, ajustar, resolver, virar, transformar. Sempre nomeia o objeto concreto (arroz, pão, doce, dieta, treino, agenda, cliente, valor), NUNCA deixa aberto.
->
-> **Ex ✅ BOA (verbos ancorados + objetos nomeados):** *"Você come arroz, pão e o que ama, e uma ferramenta minha conta as calorias de tudo por você todo dia, pra você emagrecer sem viver de dieta."* , "come" tem objeto (arroz, pão), "conta" tem objeto (calorias), "emagrecer" tem contexto ("sem viver de dieta").
->
-> **Ex ⚠️ MÉDIA (verbo órfão no fim):** *"…pra você emagrecer comendo o que gosta em vez de cortar."* , "cortar O QUÊ?" ficou pro leitor completar. Cérebro preguiçoso não completa, desiste. Correto: *"…em vez de cortar arroz, pão e doce."*
->
-> Antes de aprovar a frase, sublinha mentalmente cada verbo e confere: cada um tem OBJETO nomeado? Não? Nomeia agora.
-
 ## 📦 O QUE ESTA SKILL PRODUZ
 
 O entregável-mãe é **um documento só, o Plano de Posicionamento Incomum completo** (Posicionamento + Voz), que vira o cérebro do LEON do cliente. Dentro dele, esta skill produz:
@@ -65,8 +46,6 @@ Sem o Plano de pé, toda peça é ruído. Esta skill constrói o **Plano de Posi
 ## ⚠️ ENTREGA = UM doc MD, SEMPRE (nunca pingar a peça no chat)
 Regra dura, vale mesmo pra copy curta: o RESULTADO desta skill sai como **UM documento markdown consolidado**. No **claude.ai**, um **artifact de markdown** (o dono abre, copia, baixa); no **Claude Code**, um arquivo `.md`. A CONDUÇÃO (perguntas de contexto, escolhas, os STOPs de aprovação) acontece no chat; a PEÇA/COPY em si mora no DOC. Ao parar num STOP, você mostra ou atualiza o DOC e pergunta "ajusto?"; você NUNCA reescreve a peça em pedaços no corpo da conversa. Sem o doc entregue, a skill não terminou.
 
-**🔴 O DOC NASCE NO PRIMEIRO TURNO E É O PREVIEW VIVO.** Antes da 1ª pergunta de condução, CRIA o arquivo `.md` do plano com o esqueleto INTEIRO preenchido com `[A CONFIRMAR]` em cada campo, e cita o path no primeiro turno. A partir daí, cada resposta do dono num STOP, você EDITA a seção correspondente do arquivo (troca o `[A CONFIRMAR]` por conteúdo real) e responde no chat SÓ *"atualizei a Seção X, olha o doc; ajusto?"*. **O `.md` é a FONTE DE VERDADE, não o chat:** o dono pode EDITAR direto o arquivo (VS Code, editor local, quem quiser), e no próximo turno você LÊ a versão atualizada dele antes de continuar (nunca sobrescreve edição do dono sem confirmar). NUNCA despeja seção montada no corpo da conversa "pra ele ver antes"; o lugar de ver é o doc. Chat = perguntas curtas + confirmações. Peça inteira despejada no chat = paredão que ninguém aproveita e reprova o output.
-
 ## O que esta skill protege: o FRAMEWORK e os princípios (o eixo é de CADA usuário)
 Esta é a maestro do posicionamento: todo Plano que sai daqui segue o framework e os princípios do método, e CONDUZ o usuário a cravar o eixo DELE. O eixo não é embutido nem herdado de ninguém, é construído com o usuário. Os princípios que valem pra todo Plano:
 - **Território do método:** alto resultado com baixa complexidade, o oposto da cultura do "adicione mais" (postar todo dia, lançar, prospectar, fazer tudo de uma vez).
@@ -83,7 +62,7 @@ Esta é a maestro do posicionamento: todo Plano que sai daqui segue o framework 
 
 ## A fonte é o guia, leia primeiro
 Na primeira invocação da sessão, **leia primeiro o guia**: o framework, o mecanismo-matriz (Reorganização da Percepção / APSD) e a régua de coerência saem daqui - sobretudo `guia/CODIGO-DE-ESCRITA.md` e `guia/02-plano-marca-pessoal.md` (já genéricos). O Plano do USUÁRIO é construído com o eixo DELE. Depois:
-- `PLANO-POSICIONAMENTO-COMPLETO.md` (caminho preferencial `~/entregas/PLANO-POSICIONAMENTO-COMPLETO.md`), um exemplo de Plano completo preenchido (de um perfil de exemplo). Mostra a ESTRUTURA do que um Plano fechado é (todos os blocos preenchidos com coerência), nunca o conteúdo a copiar pro cliente. **FALLBACK:** se esse arquivo não estiver acessível, opera com o framework embutido na skill (a seção "O que esta skill protege" acima) e os blocos vivem em `guia/02-plano-marca-pessoal.md`; não pare nem invente, conduza pelo framework.
+- `PLANO-POSICIONAMENTO-COMPLETO.md` (caminho preferencial `/home/cloud/guia-soft-business/PLANO-POSICIONAMENTO-COMPLETO.md`), um exemplo de Plano completo preenchido (de um perfil de exemplo). Mostra a ESTRUTURA do que um Plano fechado é (todos os blocos preenchidos com coerência), nunca o conteúdo a copiar pro cliente. **FALLBACK:** se esse arquivo não estiver acessível, opera com o framework embutido na skill (a seção "O que esta skill protege" acima) e os blocos vivem em `guia/02-plano-marca-pessoal.md`; não pare nem invente, conduza pelo framework.
 - `guia/02-plano-marca-pessoal.md`, os 3 blocos NMO + as 2 saídas, a Equação de Valor, o Mapa de Valor, o Problema Avançado, os níveis de acesso. Fonte da verdade do Posicionamento.
 - `guia/03-identidade-voz.md`, os 5 elementos da Voz. Fonte da verdade da Voz.
 - `guia/01-filosofia.md`, a régua (as 7 percepções; "o cliente entende e confia mais rápido").
@@ -94,7 +73,7 @@ As definições vivem no guia; esta skill é o **processo de execução** (como 
 ## A lei de escrita + os enxertos (todo output obedece)
 Todo texto obedece o `CODIGO-DE-ESCRITA.md`: lente da percepção (o mercado não paga o melhor, paga o mais percebido), as 8 leis, os mecanismos, a estrutura-mãe e a regra-zero (*"que percepção estou reorganizando?"* + *"onde está o chão?"*). Mais os enxertos:
 - **Anti-raso do Mecanismo (inegociável).** O Mecanismo da Solução é **nomeado e concreto**, um fenômeno do domínio que explica por que funciona. Cada parte da explicação (pilar, premissa, característica OU passo) só fecha com mecanismo concreto. Teste: se a premissa cabe em qualquer especialista do nicho, está rasa, desce até o fenômeno técnico real. Sai da pesquisa + entrevista. **O nome do método é BATIZADO, nunca trademarkeado: escreve o nome LIMPO, sem `™` nem `®` colado (é maneirismo de IA, e pra profissional de saúde é uma alegação de marca registrada que ele não tem, destrói a legitimidade). `™/®` estão na lista de tells visuais banidos.**
-- **Forma:** pegada falada (*eu diria isso no olho de um cara experiente?*) · **simples e honesto, nunca fácil e mágico** (o avatar já tentou a fórmula mágica e tomou pau) · **ZERO travessão "," em QUALQUER lugar do doc**, não só na "copy" de bio/headline: também em TÍTULOS, notas de STOP, corpo técnico, aposto e travessão de rascunho. Em toda parte troca "," por ponto ou hífen comum. O corpo do plano é técnico e mostra o racional; bio, headlines e frases de voz são curtas e faladas.
+- **Forma:** pegada falada (*eu diria isso no olho de um cara experiente?*) · **simples e honesto, nunca fácil e mágico** (o avatar já tentou a fórmula mágica e tomou pau) · **ZERO travessão "—" em QUALQUER lugar do doc**, não só na "copy" de bio/headline: também em TÍTULOS, notas de STOP, corpo técnico, aposto e travessão de rascunho. Em toda parte troca "—" por ponto ou hífen comum. O corpo do plano é técnico e mostra o racional; bio, headlines e frases de voz são curtas e faladas.
 - **Anti-raso da Oferta.** É o produto que o cliente vai vender, o bloco mais detalhado, nunca enxuto: abre com a **PUV** (proposta única de valor, destilada de Narrativa + Mecanismo - pra quem · a reinterpretação · o mecanismo único · a transformação com prazo · o diferencial honesto) · Equação de Valor (4 fatores) · cada entregável com *o que faz · que objeção/dor resolve · valor avulso · por que ESTE* · o **entregável-tese** (o que materializa o mecanismo) · Mapa de Valor (soma dos avulsos = âncora) · ancoragem · níveis de acesso · custo invisível · garantia · e o racional de cada escolha (*por que é assim, por que deixa de ser outra coisa*). **Engenharia completa de execução em `references/bloco-3-oferta.md`.**
 - **Rótulo não é explicação:** "o problema é posição" é vazio → "ninguém lembra do teu nome primeiro".
 - **Clareza radical (vale pra TODA copy, não só o Plano).** Simples, claro, forma a imagem mental certa, traz significado, curto, não raso, diz mais com menos palavras. **Específico > abstrato.** Se o lead precisa gastar energia mental pra entender, reescreve. Abstração é o inimigo: troca o conceito pela cena, o número, o objeto concreto.
@@ -173,7 +152,7 @@ Roda no Plano completo, antes de virar fundação das filhas. Preenche cada linh
 | **Oferta por valor, não pelo bolso** | PUV + Equação de Valor (4 fatores) + níveis de acesso (mesmo destino) + entregável-tese + garantia; preço ancorado no valor gerado, não no bolso do cliente | `bloco-3-oferta.md` | |
 | **Voz observada, não arquétipo** | os 5 elementos saíram da coleta do usuário (tom, narrativa, bastidor, valores, pilares), amplificados; nada de arquétipo de catálogo | guia/03 | |
 | **Cliente-primeiro (idioma do nicho)** | zero jargão de cozinha ("lead/funil/ticket") vazado, zero traço do autor do método; é o vocabulário do cliente final do USUÁRIO | `filtro-cliente-primeiro.md` | |
-| **Anti-IA (HARD), ÚLTIMA ação sobre o TEXTO FINAL do doc** | roda sobre o doc consolidado PRONTO (não sobre o rascunho mental): **conta os "," no texto final inteiro (títulos, STOPs, corpo, oferta, tudo). Se count > 0, o Plano NÃO passou: reescreve trocando por ponto/hífen e RECONTA até dar zero.** Idem `™/®` e a família "emperrar/empacado/desemperrar" (exceção: aspa literal do usuário). Sem frase-emoldura nem verbo-clichê. No Code roda `python3 scripts/lint_copy.py` no doc final (exit 1 = reprova); no chat faz CTRL+F de ",", "™", "®" e "trav" no doc final e confere count=0 | `filtro-anti-ia/` | |
+| **Anti-IA (HARD), ÚLTIMA ação sobre o TEXTO FINAL do doc** | roda sobre o doc consolidado PRONTO (não sobre o rascunho mental): **conta os "—" no texto final inteiro (títulos, STOPs, corpo, oferta, tudo). Se count > 0, o Plano NÃO passou: reescreve trocando por ponto/hífen e RECONTA até dar zero.** Idem `™/®` e a família "travar/travado/destravar" (exceção: aspa literal do usuário). Sem frase-emoldura nem verbo-clichê. No Code roda `python3 scripts/lint_copy.py` no doc final (exit 1 = reprova); no chat faz CTRL+F de "—", "™", "®" e "trav" no doc final e confere count=0 | `filtro-anti-ia/` | |
 | **Regulado (DISPARO AUTOMÁTICO)** | se o nicho é saúde/jurídico/finanças (fisio/COFFITO-CREFITO, dentista/CRO, nutri/CRN, psi/CRP, médico/CRM, enfermeiro/COREN, advogado/OAB, contador, consultor de investimento...) o gate é OBRIGATÓRIO, nunca N/A: a Promessa e a Projeção NÃO podem cravar prazo/desfecho garantido (reprova "resultado em X semanas"). Troca por educação + mecanismo + processo e adiciona a ressalva "resultado varia por pessoa, sem prazo garantido; confirma a redação atual com teu conselho". N/A só se o nicho comprovadamente não é regulado | `crivo/04-gate-regulado.md` | |
 | **VEREDITO** | **= o PIOR item acima.** Um ✗ qualquer = REPROVA e re-roda o bloco. Só tudo-✓ (ou N/A justificado) = PASSA e libera o handoff. | | |
 
@@ -192,7 +171,7 @@ Roda no Plano completo, antes de virar fundação das filhas. Preenche cada linh
 - Pediu o **CORPO da peça** (carrossel, reel, stories, calendário) → **soft-conteudo-*** (carrossel/reels/stories/multiplataforma); design de slides → **soft-designer**.
 - Pediu **carta de vendas, VSL, landing, mini-webinar, isca, captura** → **soft-funil-*** (carta/landing/miniwebinar/isca).
 - Pediu **script de venda, objeção, fechamento, follow-up** → **soft-vendas-closer**; **prospecção/abertura de lead frio** → **soft-vendas-sdr**.
-- Pediu **webinário / perpétuo** → **soft-webinar-plano/-script** (a irmã de webinar certa pra fase); **lançamento pago / Sala Secreta** → **soft-launch**.
+- Pediu **webinário / perpétuo** → **soft-webinar**; **lançamento pago / Sala Secreta** → **soft-launch**.
 - Perguntou "por onde começo / próximo passo / que fase tô / valida isso" → **soft-leon** (o orquestrador, que invoca esta mãe na hora certa).
 
 ## Anti-Patterns (sintoma → correção)
@@ -211,244 +190,4 @@ Roda no Plano completo, antes de virar fundação das filhas. Preenche cada linh
 | Fez o Plano inteiro de uma vez no chat, sem parar | Conduz por etapa com os 4 STOPs; só monta o doc MD final depois de aprovar os blocos e passar o Crivo |
 
 ## Handoff
-Plano completo (Racional + os 3 blocos NMO + as 2 saídas + os 5 elementos de Voz) = a fundação. Vira o conhecimento do LEON do cliente e a fonte de toda peça da escada: `soft-conteudo-*` (atração: headlines/carrossel/reels/stories/multiplataforma/impulsionar), `soft-funil-*` (carta/landing/miniwebinar/isca + Comercial 1:1), `soft-webinar-plano/-script` (webinário perpétuo + Comercial), `soft-launch` (Soft Launch + Comercial) e `soft-vendas-sdr`/`soft-vendas-closer` (o Comercial 1:1: o SDR abre/qualifica/agenda, o closer conduz e fecha, onde a venda acontece). O LEON (`soft-leon`) é quem invoca esta mãe e cada irmã na hora certa e passa tudo pelo Crivo. Doc vivo: revisar quando muda a oferta principal, a audiência, o inimigo do mercado, ou a narrativa ganha capítulo.
-
-
----
-
-## RÉGUA DE DIAGRAMAÇÃO obrigatória (18/07/2026)
-
-Todo doc/entregável que essa skill produz DEVE seguir `skills/shared-references/REGUA-DIAGRAMACAO-DOCS.md`:
-
-- Topo: rótulo pequeno + título grande + subtítulo + metadata `chave: valor`
-- Números ANTES da narrativa (seção "0" com tabela/KPI ancora tudo)
-- Numeração hierárquica (1, 2, 3.1, 3.2), divisa entre seções
-- Bloco padronizado que se repete em TODAS as seções
-- Bullet > parágrafo, com palavra-âncora em **negrito**
-- Callouts (azul/verde/amarelo/vermelho) 1 por seção no máximo
-- Comparação = 2 colunas paralelas · Fluxo = seta ↓ · KPI = cards
-- Aspas literais pra citação · badges pra marcar novidade
-- Fecha com checklist acionável (dono/prazo quando existe)
-- Zero gordura: NUNCA "vale destacar", "importante notar", "além disso", "por outro lado", "em suma", "conforme mencionado", "neste documento", "vamos explorar"
-- **Zero changelog** dentro do doc (não escreva "atualizei X, antes era Y")
-- **Zero meta-processo** ("pesquisei X, cruzei com Y")
-- 1 bloco = 1 tela de celular (o dono lê no Telegram)
-
-**Teste antes de entregar:** (1) topo bate no padrão? (2) número ancora antes da narrativa? (3) bloco padronizado repete? (4) callout ≤1 por seção? (5) checklist acionável no fim? (6) zero das palavras proibidas? Se sim nos 6 → entrega. Se não → reescreve.
-
-============================================================
-GATE OBRIGATORIO · soft-critico-copy
-============================================================
-
-Antes de entregar QUALQUER linha final publica pro dono
-(headline, capa, corpo, slide, script, sequencia, carta,
-landing, isca, oferta, WhatsApp, e-mail, bio, CTA), esta
-skill invoca o GATE UNIVERSAL soft-critico-copy passando o
-texto pronto + o tipo de peca.
-
-Como acionar:
-
-1. Salva a copy pronta em /tmp/copy-<slug>-<epoch>.txt
-2. Invoca a Skill soft-critico-copy com:
-   - texto: o conteudo do arquivo
-   - tipo_de_peca: um de {headline, capa, corpo, slide,
-     script_reel, sequencia_stories, carta, landing_bloco,
-     landing_completa, isca_copy, oferta, whatsapp, email,
-     script_sdr, script_closer, pos_venda, bio, cta}
-   - contexto (opcional): tese-mae, avatar, verbatim_ref
-
-O gate retorna: passou_nos_4 (sim/nao) + falhas em 4 filtros
-(CUB, Estrutura-mae, Anti-IA, Verbatim) com trecho, motivo e
-sugestao de reescrita.
-
-Se reprovou, aplica as sugestoes e re-invoca. Loop de no
-maximo 3 iteracoes. Se ainda reprovar, escala pro dono com
-as falhas listadas (nao insiste automatico ao infinito).
-
-Substitui qualquer gate anti-IA anterior desta skill. O
-soft-critico-copy JA roda o lint_copy.py internamente no
-filtro 3 (Anti-IA), mais 3 filtros adicionais (CUB,
-Estrutura-mae, Verbatim).
-
-
-============================================================
-MODO PIPELINE Q&A GUIADO RETOMÁVEL (mold soft-webinar-plano), 2026-07-23
-============================================================
-
-Esta skill agora OPERA em Q&A guiado retomável, no mesmo molde da
-soft-webinar-plano. O corpo acima é a FONTE DE MÉTODO (os frameworks,
-as tabelas, as fórmulas, os anti-patterns, os checks do gate). O
-pipeline abaixo é a EXPERIÊNCIA que conduz o dono pelo método,
-uma pergunta por vez, com preview e retomabilidade.
-
-Ordem sempre: (a) chega pedido, (b) roda M0 pra identificar sub-caso,
-(c) roda P0 pra importar o que já existe e pular perguntas cobertas,
-(d) roda as Fases numeradas, cada uma UMA pergunta por vez com 2-3
-opções cruzando com o método do corpo, (e) preview a cada 5 respostas,
-(f) fecha com o gate.
-
-
-REGRAS TRANSVERSAIS DURAS (valem em TODOS os blocos)
-
-1) UMA PERGUNTA POR VEZ. Nunca despejar 5 perguntas juntas. Nunca
-   continuar antes da resposta anterior.
-
-2) SUGERE 2-3 OPÇÕES depois das perguntas cruas. Nunca sugestão única
-   (vira empurrão). As opções vêm cruzando a resposta do dono com o
-   método do corpo acima. Ele escolhe, edita, ou pede mais.
-
-3) PREVIEW a cada 5 respostas. Bloco curto: "com o que você me deu
-   até agora, o esqueleto ta assim: [3-4 linhas]. seguimos?".
-
-4) ZERO DEFAULT DO DONO DO MÉTODO (o dono). Exemplos do produto do dono
-   (Operação SOFT, Mesa de Operação, Call de Arquitetura) só entram
-   como REFERÊNCIA marcada "(exemplo, não copia)". Naming do dono da
-   skill é SEMPRE aberto: ele escolhe o nome. A skill NUNCA impõe.
-
-5) RETOMABILIDADE. A cada resposta o state cai em
-   /tmp/<skill>-<slug>-<epoch>.json. Se o dono chamar de novo (ou
-   sair e voltar), a skill lê o state mais recente e pergunta
-   "quer continuar de onde parou ou começar novo?".
-
-6) SAIR/PAUSAR SALVA. "sai", "pausa", "amanhã" → salva state, avisa
-   o path, encerra limpo.
-
-7) PULAR = "[A CONFIRMAR]". Se o dono digitar "pula" ou "depois", a
-   resposta vira [A CONFIRMAR - <bloco>] no state e o pacote final
-   marca esses pontos pra ele afinar.
-
-8) RESPOSTA RASA = REFAZ A PERGUNTA. Se o dono responde em 3 palavras
-   algo que precisa contexto, devolve UMA pergunta específica pra
-   abrir mais.
-
-9) ZERO INVENTAR DADO DO DONO. Preço, número, case, nome de cliente,
-   fala do avatar: se não respondeu, pergunta. Nunca chuta.
-
-10) NAMING USER-FRIENDLY. Nomes internos (canonico/high_ticket, tipo
-    A/B/C) nunca aparecem na cara do dono. Perguntar sempre pelo
-    resultado que ele quer.
-
-
-COMO OPERA (o loop)
-
-Passo 1 - CHECA state antigo
-   Lê /tmp/<skill>-*.json. Se encontrou, pergunta "vi um trabalho
-   de {data} sobre {tese}. continua ou começa novo?".
-
-Passo 2 - RODA a fase atual
-   Uma pergunta por vez. Salva resposta no state. Cruza com o método
-   do corpo. Devolve 2-3 sugestões. Dono escolhe ou edita.
-
-Passo 3 - PREVIEW a cada 5 respostas
-   Bloco curto de progresso.
-
-Passo 4 - AVANÇA pra próxima fase quando fecha a atual
-   Anuncia em uma linha: "beleza, agora vou pra {nome amigável}".
-
-Passo 5 - NA FASE DE GERAÇÃO
-   Monta o entregável usando o método do corpo (as fórmulas dos
-   blocos, o gate, os anti-patterns).
-
-Passo 6 - ENTREGA
-   Google Doc (via gog drive upload --convert) OU artefato específico
-   da skill + resumo curto + lista de [A CONFIRMAR] pendentes.
-
-
-ESTADO EM /tmp
-
-Arquivo: /tmp/<skill>-<slug>-<epoch>.json
-
-Formato mínimo:
-{
-  "skill": "<nome>",
-  "slug": "<slug curto>",
-  "epoch": <unix>,
-  "criado_em": "<ISO>",
-  "atualizado_em": "<ISO>",
-  "fase_atual": "M0|P0|F1|F2|...|Fn|entrega",
-  "sub_caso": "<valor de M0>",
-  "pecas_prontas": {},
-  "respostas": {},
-  "pendentes_a_confirmar": []
-}
-
-
-
-============================================================
-M0 / P0 / FASES, soft-plano-posicionamento
-============================================================
-
-M0. MODO, UMA pergunta abre o sub-caso:
-"em que ponto você está com o seu posicionamento?
- (a) começando do zero (cold start, nunca fiz plano)
- (b) já vendo mas quero cravar o posicionamento
- (c) reposicionamento (mudei oferta/audiência/inimigo)
- (d) auditoria de perfil/concorrente (não é plano completo)
- (e) só nomear o método"
-
-Grava state.sub_caso. Cada sub-caso puxa uma trilha diferente
-do corpo (a=plano completo, b=confirma+afia, c=revisão, d=audit
-lateral, e=engenharia de nomeação isolada).
-
-
-P0. IMPORT DE PEÇAS PRONTAS, UMA pergunta com checklist:
-"marca com sim/não:
-
-- Nicho definido (vertical + faturamento do avatar + maturidade)
-- Cases reais documentáveis (nome + número + prazo)
-- Entrevistas de cliente já feitas (áudio, transcrição, notas)
-- Vocabulário cru do público (verbatim, prints, comentários)
-- Análise de concorrência já feita
-- Método já nomeado (com nome próprio, não genérico)
-- Oferta já empacotada (preço, garantia, entregável)
-- Plano anterior rodando (pra reposicionar em cima)
-- Nada, começo do zero"
-
-Salva em state.pecas_prontas. Se pecas_prontas.nicho=null e
-sub_caso=a, roda o Score de Nicho (referência do corpo).
-
-
-FASES (blocos do plano)
-
-F0. PERFIL DO USUÁRIO, lê shared-references/crivo/00-perfil-do-
-    usuario.md ANTES de tudo. Cold start = roteia pro onboarding.
-
-F1. RACIONAL (seção 0), território, o que vende de verdade, contra
-    qual cultura luta, tensão dor→desejo, sentimento. 1 pergunta
-    por item.
-
-F2. DOSSIÊ DE NICHO (Super Pesquisa), dispara research
-    (concorrentes, vocabulário cru, preços, força do Problema
-    Avançado). Devolve o dossiê pro dono confirmar.
-
-F3. AVATAR PROFUNDO (protocolo Mente do Cliente), dores em citação,
-    medos, Problema Central. Volta pra entrevista.
-
-F4. NARRATIVA (Bloco 1), Cliente Ideal, Problema Geral, Problema
-    Avançado, Promessa, Projeção. 1 pergunta por item, 2-3 opções
-    por item cruzando com dossiê.
-
-F5. GRANDE DOMINÓ + CRENÇAS, a tese-mãe + as crenças a quebrar. 3
-    hipóteses de Dominó pro dono escolher.
-
-F6. MECANISMO (Bloco 2 · o coração), do PROBLEMA + da SOLUÇÃO.
-    Nomeia o método (engenharia de nomeação). Explicação livre
-    (pilar/premissa/característica/passo), desde que venda.
-
-F7. OFERTA (Bloco 3), PUV, Equação de Valor 4 fatores,
-    entregáveis, entregável-tese, ancoragem, níveis, garantia.
-    Invoca soft-plano-ofertas se dono já quiser empacotar em stack.
-
-F8. VOZ (Parte B), Tom, Narrativa pessoal, Bastidor, Valores/anti-
-    valores, Pilares de conteúdo. 5 elementos, observados na fala
-    do dono, não prescritos.
-
-F9. SAÍDAS, Perfil Enxuto (@, Nome-SEO, bio falada, 3 destaques)
-    + Fundação de Headlines (frases-fonte pra soft-conteudo-
-    headlines).
-
-F10. CRIVO DO PLANO, a tabela do gate do corpo, preenchida e
-     IMPRESSA no doc antes do handoff.
-
-State: /tmp/soft-plano-posicionamento-<slug>-<epoch>.json
-
+Plano completo (Racional + os 3 blocos NMO + as 2 saídas + os 5 elementos de Voz) = a fundação. Vira o conhecimento do LEON do cliente e a fonte de toda peça da escada: `soft-conteudo-*` (atração: headlines/carrossel/reels/stories/multiplataforma/impulsionar), `soft-funil-*` (carta/landing/miniwebinar/isca + Comercial 1:1), `soft-webinar` (webinário perpétuo + Comercial), `soft-launch` (Soft Launch + Comercial) e `soft-vendas-sdr`/`soft-vendas-closer` (o Comercial 1:1: o SDR abre/qualifica/agenda, o closer conduz e fecha, onde a venda acontece). O LEON (`soft-leon`) é quem invoca esta mãe e cada irmã na hora certa e passa tudo pelo Crivo. Doc vivo: revisar quando muda a oferta principal, a audiência, o inimigo do mercado, ou a narrativa ganha capítulo.

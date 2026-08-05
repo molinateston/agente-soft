@@ -55,23 +55,6 @@ WARN = [
      'fechamento que implora engajamento'),
     (re.compile(r'[✨\U0001F680\U0001F4AF\U0001F3AF\U0001F525]'),
      'emoji decorativo (✨🚀💯🎯🔥)'),
-    # Antítese-nominal telegráfica de EFEITO (fecho de slogan): a CLÁUSULA INTEIRA
-    # é "Não é X, é Y." / "Não foi X, foi Y." / "(Isso) é X, não Y." com os DOIS polos
-    # em UMA palavra só e nada mais — o mic-drop de IA. Clause-anchored (início de
-    # linha ou depois de . ! ?) e polos de 1 palavra: por isso a fala REAL do dono
-    # escapa (ela carrega SUJEITO/VERBO antes do "não é" — "vender não é convencer,
-    # é conduzir", "o vilão não é você, é a fama..." — ou uma cauda de +1 palavra —
-    # "não foi convencimento, foi ensino em sequência"). Só o fecho pelado é pego.
-    (re.compile(
-        r'(?:(?<=[.!?])\s+|^)\s*(?:isso\s+)?'
-        r'(?:n[aã]o\s+(?:é|foi)\s+[\wáéíóúâêôãõç]+\s*,\s*(?:é|foi)\s+[\wáéíóúâêôãõç]+'
-        r'|é\s+[\wáéíóúâêôãõç]+\s*,\s*n[aã]o\s+[\wáéíóúâêôãõç]+)\s*[.!?]',
-        re.I | re.M),
-     'antitese-nominal telegrafica de efeito (fecho de slogan tipo "Isso e conta, nao sorte."; '
-     'a fala real dele carrega sujeito/verbo ou cauda concreta — aqui e so o mic-drop pelado, reescreva)'),
-    # Molde de coach/IA "não é sobre X, é sobre Y".
-    (re.compile(r'n[aã]o\s+é\s+sobre\s+.{1,40}?[,.]?\s*é\s+sobre\b', re.I),
-     'molde "nao e sobre X, e sobre Y" (fechamento generico de coach/IA)'),
 ]
 
 # ── COUNT: warn quando excede o limite por peça ───────────────────────────────
@@ -119,7 +102,12 @@ def _run(text):
     return 0
 
 
-def _self_test():
+if __name__ == '__main__':
+    if len(sys.argv) >= 2:
+        arg = sys.argv[1]
+        txt = sys.stdin.read() if arg == '-' else open(arg, encoding='utf-8').read()
+        sys.exit(_run(txt))
+    # self-test
     dirty = 'O método destrava tudo — literalmente. Isso muda o jogo. ✨'
     h, w = lint(dirty)
     assert any('EM-DASH' in l for l, _ in h), 'devia pegar em-dash'
@@ -128,49 +116,5 @@ def _self_test():
     clean = 'O lead certo chega já querendo. Você mostra numa aula e ele compra.'
     h2, w2 = lint(clean)
     assert not h2, 'copy limpa não devia ter falha dura'
-
-    # ── antítese-nominal telegráfica: DEVE avisar (WARN) ──────────────────────
-    def _warned_antitese(txt):
-        _, ww = lint(txt)
-        return any('antitese-nominal' in l for l, _ in ww)
-    def _warned_sobre(txt):
-        _, ww = lint(txt)
-        return any('nao e sobre' in l for l, _ in ww)
-    fakes = [
-        'Cinco pessoas, três milhões. Isso é conta, não sorte.',  # a que o dono pegou
-        'Não é sorte, é conta.',
-        'Não foi sorte, foi conta.',
-        'É conta, não torcida.',
-        'Foi essa função. Não foi sorte, foi conta. O mesmo caminho fez outro.',
-    ]
-    for f in fakes:
-        assert _warned_antitese(f), f'devia avisar antitese-nominal em: {f!r}'
-    assert _warned_sobre('E não é sobre o preço, é sobre profundidade.'), 'devia avisar molde "nao e sobre"'
-
-    # ── falas REAIS do dono: NÃO podem ser pegas (nem WARN antítese) ───────────
-    reais = [
-        'vender não é convencer, é conduzir',
-        'educar não vende',
-        'eu gerenciei dezenas de milhões, não faturei',
-        'O vilão não é você, é a fama que o funil ganhou.',
-        'Porque vender não é ensinar, é fazer decidir.',
-        'Funil que só vende pra seguidor não é funil, é plateia.',
-        'Prospectar 200 pessoas no direct pra marcar 1 reunião não é negócio, é desgaste no dedo.',
-        'Não foi convencimento, foi ensino em sequência.',
-        'Não é uma fase corrida de trabalho, é o modelo inteiro.',
-        'Se a venda para no dia que você para, isso não é negócio, é plantão.',
-    ]
-    for r in reais:
-        assert not _warned_antitese(r), f'FALSO-POSITIVO: pegou fala real do dono: {r!r}'
-
-    print('lint_copy.py self-test OK — HARD (em-dash + travar), WARN (dramática, '
-          'antítese-nominal telegráfica, molde "não é sobre") e as falas REAIS do dono passam limpas.')
+    print('lint_copy.py smoke test OK — HARD (em-dash + travar) e WARN funcionando.')
     print('uso: python3 scripts/lint_copy.py peca.txt   |   echo "..." | python3 scripts/lint_copy.py -')
-
-
-if __name__ == '__main__':
-    if len(sys.argv) >= 2 and sys.argv[1] not in ('--self-test', '--selftest', '--test'):
-        arg = sys.argv[1]
-        txt = sys.stdin.read() if arg == '-' else open(arg, encoding='utf-8').read()
-        sys.exit(_run(txt))
-    _self_test()

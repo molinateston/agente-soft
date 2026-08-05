@@ -1,6 +1,6 @@
-# Premissas-mestras de copy (o melhor das 3 famílias, destilado)
+# Premissas-mestras de copy (o melhor das 3 skills, destilado)
 
-> O que usar pra ESCREVER conteúdo, carrossel e anúncio forte. Destilado do que já existe e funciona nas 3 famílias de skill: conteúdo (CODIGO-DE-ESCRITA e Fórmula 7, hoje em `soft-conteudo-carrossel` e irmãs `soft-conteudo-*`), webinar (o método, hoje na família `soft-webinar-*`) e `soft-launch` (ponto cego). Premissa, não molde: pega o porquê-funciona e reconstrói na voz do cliente, nunca decalca o exemplo.
+> O que usar pra ESCREVER conteúdo, carrossel e anúncio forte. Destilado do que já existe e funciona em `soft-conteudo` (CODIGO-DE-ESCRITA, Fórmula 7), `soft-webinar` (Fladlien) e `soft-lancamento-pago` (ponto cego). Premissa, não molde: pega o porquê-funciona e reconstrói na voz do cliente, nunca decalca o exemplo.
 
 ---
 
@@ -76,7 +76,7 @@ Regra prática: se a peça soa como qualquer anúncio do nicho, o mercado está 
 
 Toda peça forte mira uma frase na cabeça do leitor: **"isso explica exatamente o que eu vivo."** Identificação profunda gera autoridade instantânea. Quem nomeia o problema melhor que o próprio mercado vira referência.
 
-Duas leis do método que regem isso:
+Duas leis do Fladlien que regem isso:
 - **Estado emocional importa mais que o conteúdo.** O que você faz o leitor SENTIR (de vergonha pra aceitação, de sem-esperança pra esperança) pesa mais que a informação que você passa. Antes de cada peça, a pergunta de design é "que estado eu crio aqui?".
 - **Educar é vender.** O conteúdo educa CRIANDO desejo, não dando aula. Não existe "agora paro de ensinar e começo a vender". A peça inteira é a venda, e a transição só torna explícito o que já acontecia.
 

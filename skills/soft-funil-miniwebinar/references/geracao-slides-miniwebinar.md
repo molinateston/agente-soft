@@ -1,19 +1,19 @@
 # Geração de slides do Mini Webinar, vestir o roteiro de 12 blocos com tela
 
-Esta reference é a profundidade do **MODO SLIDES (Passo 6 do SKILL.md)**. Ela ensina a pegar o roteiro APSD de 12 blocos já fechado e **vesti-lo de tela**, comprimido pro mini-webinar de ~10 min. O deck não é o conteúdo; é o amplificador visual de uma fala que já funciona. A fala constrói a crença, o slide só devolve o olho pra voz e ancora 1 ideia.
+Esta reference é a profundidade do **MODO SLIDES (Passo 6 do SKILL.md)**. Ela ensina a pegar o roteiro ADMA de 12 blocos já fechado e **vesti-lo de tela**, comprimido pro mini-webinar de ~10 min. O deck não é o conteúdo; é o amplificador visual de uma fala que já funciona. A fala constrói a crença, o slide só devolve o olho pra voz e ancora 1 ideia.
 
 > **Pré-requisito-lei.** O roteiro das 4 fases tem que estar fechado e aprovado. Se não tem, PARA e fecha o roteiro primeiro (volta pro corpo do SKILL.md, Passos 2 a 5). O deck nasce do script, nunca do zero. Sem roteiro, montar slides é alucinar fala de palco.
 
 > **Marca-neutra.** Todos os exemplos de slide aqui são de **nicho FICTÍCIO** (um estúdio de cerâmica, um nutricionista de corredores, uma escola de violão online). O slot do nome do método, dos bordões e dos polos da dicotomia fica marcado `(a definir com o usuário)`, nunca inventado nem decalcado de outra marca. Os números são ilustrativos e marcados como tal; número de verdade só sai do que o cliente confirmou.
 
-> **Modela na irmã do degrau 2.** A engenharia vem da `soft-webinar-slides` e da ref `geracao-de-slides.md` do webinário completo. A diferença é a ESCALA: aqui o deck é enxuto (~12 a 20 slides, não 72) e SEM a maquinaria de oferta (stack/preço/queda riscada), porque o mini-webinar é degrau 1 e a Ação convida pro 1:1, não fecha no checkout.
+> **Modela na irmã do degrau 2.** A engenharia vem da `soft-webinar` e da ref `geracao-de-slides.md` do webinário completo. A diferença é a ESCALA: aqui o deck é enxuto (~12 a 20 slides, não 72) e SEM a maquinaria de oferta (stack/preço/queda riscada), porque o mini-webinar é degrau 1 e a Ação convida pro 1:1, não fecha no checkout.
 
 ---
 
 ## Índice
 
 - 0. PRINCÍPIO-MÃE, copy na nota (o slide serve a fala)
-- 1. MAPA dos 12 blocos APSD pras faixas de slide
+- 1. MAPA dos 12 blocos ADMA pras faixas de slide
 - 2. CATÁLOGO ENXUTO de arquétipos (molde + slide instanciado em nicho fictício)
 - 3. CALIBRAGEM MINI (deck de ~12 a 20 slides, sem stack/preço)
 - 4. DOIS CAMINHOS DE SAÍDA (Code via deck_gen.py, Chat via PDF)
@@ -25,7 +25,7 @@ Esta reference é a profundidade do **MODO SLIDES (Passo 6 do SKILL.md)**. Ela e
 
 A ordem de produção é fixa e não inverte:
 
-1. O **roteiro já está pronto** (saída das 4 fases APSD).
+1. O **roteiro já está pronto** (saída das 4 fases ADMA).
 2. Pega a **copy falada** de cada bloco e cola **na NOTA** (campo `nota` do JSON / Speaker Notes), invisível pra quem assiste.
 3. **Só depois** cria o conteúdo visível do slide: o reforço (1 frase OU 1 número OU 1 imagem-conceito).
 4. A tela recebe **só o reforço**. O parágrafo falado mora na nota.
@@ -49,11 +49,11 @@ O Bloco I.1 (Diagnóstico) do roteiro fala: *"você abre o ateliê, posta a peç
 
 ---
 
-## 1. MAPA dos 12 blocos APSD pras faixas de slide
+## 1. MAPA dos 12 blocos ADMA pras faixas de slide
 
-O deck é um APSD visualizado. Cada bloco do roteiro vira uma faixa de slides com arquétipos característicos. A ordem é lei: cada slide deixa a pessoa num estado que é pré-condição do próximo. Pode **expandir** um bloco em mais slides quando a fala pede respiro; **não pode suprimir nem reordenar**.
+O deck é um ADMA visualizado. Cada bloco do roteiro vira uma faixa de slides com arquétipos característicos. A ordem é lei: cada slide deixa a pessoa num estado que é pré-condição do próximo. Pode **expandir** um bloco em mais slides quando a fala pede respiro; **não pode suprimir nem reordenar**.
 
-| Fase APSD | Blocos do roteiro | Faixa de slides (arquétipos) |
+| Fase ADMA | Blocos do roteiro | Faixa de slides (arquétipos) |
 |---|---|---|
 | **ATENÇÃO (0:00 a 1:30)** | A.1 Promessa + filtragem · A.2 Prova social ancorada | capa/big-idea → respiro → prova social ancorada (número-gigante OU depoimento empilhado) → respiro |
 | **DIAGNÓSTICO (1:30 a 3:00)** | I.1 Problema geral · I.2 Problema avançado (opcional) | storytelling-de-dor (1 cena por slide) → manifesto-tese do inimigo nomeado → respiro-chave (a virada) |
@@ -128,7 +128,7 @@ São os arquétipos que o degrau 1 usa. É um **subset** dos 18 do webinário co
 - **Slide instanciado (nicho: nutricionista de corredores):** **"Manda CORRIDA no meu direct."** + sub *"não é compra, é conversa: eu te explico e você decide"*.
 - **Leitura Soft:** o destino é sempre um canal humano que captura o indeciso pro 1:1. Nada de "saiba mais" vago. Sem stack, sem preço seco, sem checkout na tela.
 
-> **O que o degrau 1 NÃO usa.** Os arquétipos de oferta do webinário completo (âncora externa alta, stack-nota-fiscal somado, queda em degraus riscada, redução ao ridículo do preço por dia, escassez + FAQ matador de fechamento) ficam de fora. Eles são a maquinaria de venda do degrau 2 (`soft-webinar-slides`). Aqui a Ação é leve e convida pro 1:1.
+> **O que o degrau 1 NÃO usa.** Os arquétipos de oferta do webinário completo (âncora externa alta, stack-nota-fiscal somado, queda em degraus riscada, redução ao ridículo do preço por dia, escassez + FAQ matador de fechamento) ficam de fora. Eles são a maquinaria de venda do degrau 2 (`soft-webinar`). Aqui a Ação é leve e convida pro 1:1.
 
 ---
 
@@ -181,7 +181,7 @@ Sem acesso a shell nem ao `deck_gen.py`. Então:
 ## 5. RE-GATE ao condensar + checklist do mini-deck
 
 ### RE-GATE (a regra que fecha o modo)
-O roteiro já passou pelo gate quando foi escrito. Mas o texto VISÍVEL de cada slide (a 1 frase / 1 número / 1 imagem-conceito do reforço) é uma **condensação NOVA** que o lead LÊ, não a fala original. Então a copy de tela de cada slide **re-passa pelo gate** ANTES de exportar: a ancoragem (o número é real?), as 3 perguntas do gate no título de cada slide-chave (dá pra ver? dá pra falsificar? só você diz?), o C/U/B e o anti-IA do gate do SKILL.md (o item Anti-IA HARD, com o CTRL+F manual dos padrões banidos no chat; `python3 scripts/lint_copy.py` na copy de tela + nota no Code). Depois de aprovado, o render não muda palavra; se condensar ou reescrever o texto de tela, re-passa o gate antes de exportar.
+O roteiro já passou pelo gate quando foi escrito. Mas o texto VISÍVEL de cada slide (a 1 frase / 1 número / 1 imagem-conceito do reforço) é uma **condensação NOVA** que o lead LÊ, não a fala original. Então a copy de tela de cada slide **re-passa pelo gate** ANTES de exportar: a ancoragem (o número é real?), as 3 perguntas do Harry no título de cada slide-chave (dá pra ver? dá pra falsificar? só você diz?), o C/U/B e o anti-IA do gate do SKILL.md (o item Anti-IA HARD, com o CTRL+F manual dos padrões banidos no chat; `python3 scripts/lint_copy.py` na copy de tela + nota no Code). Depois de aprovado, o render não muda palavra; se condensar ou reescrever o texto de tela, re-passa o gate antes de exportar.
 
 ### Checklist do mini-deck (roda por dentro, por fase)
 - [ ] Nenhum slide passa na pergunta-teste ("dá pra narrar lendo só a tela"). Copy toda na nota.

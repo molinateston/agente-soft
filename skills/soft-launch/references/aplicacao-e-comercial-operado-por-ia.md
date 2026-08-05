@@ -25,7 +25,7 @@ O mercado já entendeu que você reabre o carrinho, então fechar não gera mais
 
 Pra encher a aula ao vivo, o time comercial liga INDIVIDUALMENTE pra base confirmar presença (não automação de massa). Dá trabalho, mas leva o comparecimento pra ~24% em listas grandes, e fala com ~50% de quem atende mesmo sem número salvo. É o time comercial que liga, nunca freela: time comercial é pra vender e qualificar, não pra tarefa.
 
-## O Comercial operado por IA (o Agente do dono no lançamento)
+## O Comercial operado por IA (o Sócio IA no lançamento)
 
 O que a IA carrega na operação do lançamento (aponta pro LEON / `soft-vendas-sdr` abre e qualifica, `soft-vendas-closer` fecha):
 - **Automação de WhatsApp (função de SDR):** dispara mensagem até o lead responder, agenda a ligação, libera o humano só pro fechamento. A 1ª mensagem é montada pela IA com o que o lead respondeu na aplicação (personalizada).

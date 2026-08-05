@@ -4,7 +4,7 @@ Esta reference é a profundidade do **MODO PÁGINA RICA (Passo 7 do SKILL.md)**.
 
 > **Marca-neutra.** Todos os exemplos aqui são de **nicho FICTÍCIO** (uma confeiteira que ensina bolo de pote, um personal de reabilitação de ombro, um professor de inglês pra entrevista). Os slots ficam marcados `[A CONFIRMAR]` no que faltar (número, prova, oferta), nunca preenchidos com plausível. O cliente traz a fundação; a página só veste a prova mais forte que ele tem.
 
-> **Modela em 2 irmãs.** A régua, a bio e as provas na moeda vêm da `soft-webinar-paginas` (degrau 2). O argumento de 7 passos e os blocos de copy vêm da `soft-funil-carta` e do `discurso-base-7-passos.md` desta própria skill. Aqui é UMA página de hospedagem do mini-webinar, não as 3 páginas (cadastro/obrigado/checkout) do webinário completo.
+> **Modela em 2 irmãs.** A régua, a bio e as provas na moeda vêm da `soft-webinar` (degrau 2). O argumento de 7 passos e os blocos de copy vêm da `soft-funil-carta` e do `discurso-base-7-passos.md` desta própria skill. Aqui é UMA página de hospedagem do mini-webinar, não as 3 páginas (cadastro/obrigado/checkout) do webinário completo.
 
 ---
 
@@ -109,7 +109,7 @@ A ordem é lei. Cada bloco prepara o próximo.
 
 O destino do CTA muda pelo ticket (é decisão de negócio, não estética):
 - **Ticket ≤~3k:** pode levar pro **checkout/link** direto (a página pode fechar a venda de quem já decidiu).
-- **High-ticket (acima de ~3k):** fecha no **1:1**. O CTA leva pro `wa.me` ou pro Direct, **nunca o preço seco na página**. O degrau 1 qualifica e entrega quente; a venda em si é da `soft-vendas-closer`.
+- **High-ticket (acima de ~3k):** fecha no **1:1**. O CTA leva pro `wa.me` ou pro Direct, **nunca o preço seco na página**. O degrau 1 qualifica e entrega quente; a venda em si é da `soft-vendas`.
 
 Coerente com a regra Soft de preço-fora-da-peça: a página leva pra conversa no high-ticket, não despeja stack nem preço seco.
 

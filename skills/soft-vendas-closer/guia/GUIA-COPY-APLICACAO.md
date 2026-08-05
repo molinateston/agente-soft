@@ -1,4 +1,4 @@
-# Guia de Copy, Como Aplicar e Revisar
+# Guia de Copy. Como Aplicar e Revisar
 
 > O manual prático. O *Código de Escrita* é a lei; isto aqui é como você usa a lei na frente do teclado. Você escreve uma peça, passa ela por aqui, e sai uma versão que parece escrita por quem entende, não por quem tenta parecer.
 >
@@ -62,21 +62,21 @@ Repara que ninguém foi convencido. Ele foi *reorganizado*. A conclusão é dele
 
 As leis não são teoria. Cada uma é uma decisão que você toma frase a frase. Aqui está cada uma com o erro que ela corrige.
 
-**Lei 1, Revele, não ensine.** Diagnóstico, não aula. Você não dá instrução; você nomeia o que está acontecendo.
+**Lei 1. Revele, não ensine.** Diagnóstico, não aula. Você não dá instrução; você nomeia o que está acontecendo.
 
 > ❌ *Fraco:* "Você precisa melhorar seu posicionamento pra atrair mais clientes."
 > ✅ *Forte:* "O que está acontecendo é que você entrega melhor que o concorrente, e mesmo assim ele fecha primeiro."
 
 O fraco manda. O forte revela. Manda gera resistência; revela gera "é exatamente isso".
 
-**Lei 2, Cada frase é uma conclusão.** Comprima. O que explica demais, enfraquece. Corta introdução, transição, justificativa.
+**Lei 2. Cada frase é uma conclusão.** Comprima. O que explica demais, enfraquece. Corta introdução, transição, justificativa.
 
 > ❌ *Fraco:* "É importante entender que, ao longo do tempo, a forma como o mercado funciona acabou fazendo com que muitos especialistas bons ficassem para trás."
 > ✅ *Forte:* "O mercado deixou o especialista bom pra trás."
 
 Toda palavra que sobra dilui o soco. Se dá pra cortar e a frase continua de pé, corta.
 
-**Lei 3, Deixe respirar.** Bloco curto. Linha quebrada. A ideia chega em camadas, não num parágrafo só. O espaço é parte do argumento.
+**Lei 3. Deixe respirar.** Bloco curto. Linha quebrada. A ideia chega em camadas, não num parágrafo só. O espaço é parte do argumento.
 
 > ❌ *Fraco:* "O mercado não paga o melhor, ele paga o mais percebido, e por isso muita gente boa fica parada enquanto gente mediana lota a agenda, o que mostra que o problema não é competência."
 > ✅ *Forte:*
@@ -88,32 +88,32 @@ Toda palavra que sobra dilui o soco. Se dá pra cortar e a frase continua de pé
 
 A quebra força a pausa. A pausa dá peso. No celular, parede de texto é desculpa pra rolar.
 
-**Lei 4, Polarize.** Dois lados, uma tensão. Escreve pro cliente certo; o resto que passe.
+**Lei 4. Polarize.** Dois lados, uma tensão. Escreve pro cliente certo; o resto que passe.
 
 > ❌ *Fraco:* "Esse conteúdo é pra qualquer pessoa que quer crescer no digital."
 > ✅ *Forte:* "Isso aqui é pra quem já é bom e cansou de ser tratado como mais um. Se você ainda acha que o problema é postar mais, não é pra você."
 
 Texto que serve pra todo mundo não gruda em ninguém. Quando você exclui, quem fica se identifica mais forte.
 
-**Lei 5, Nomeie o fenômeno.** Batize o que ele sente e nunca soube dizer.
+**Lei 5. Nomeie o fenômeno.** Batize o que ele sente e nunca soube dizer.
 
 > ❌ *Fraco:* "Tem muita gente boa que não consegue se destacar no mercado."
 > ✅ *Forte:* "Tem nome pra isso: competência invisível. Você é bom, e ninguém vê tão rápido quanto deveria."
 
 Sem nome, é uma reclamação genérica. Com nome, vira diagnóstico, e você vira quem entende o assunto.
 
-**Lei 6, Repita a tese.** As mesmas teses, contrastes e inimigos, sempre. Marca é repetição. Não tenha medo de voltar.
+**Lei 6. Repita a tese.** As mesmas teses, contrastes e inimigos, sempre. Marca é repetição. Não tenha medo de voltar.
 
 Isso não é fraco→forte de uma frase, é de uma estratégia. O erro é achar que falar a mesma coisa de novo "cansa". Não cansa. *"O mercado paga o mais percebido"* tem que aparecer no reel de segunda, no carrossel de quarta e no story de sexta. Você enjoa antes do público começar a lembrar. Volta sempre.
 
-**Lei 7, Ancore.** Toda tese fecha em chão: um número, o Otávio (a persona), um mecanismo. Tese sem chão é a própria doença que o método cura.
+**Lei 7. Ancore.** Toda tese fecha em chão: um número, o Otávio (a persona), um mecanismo. Tese sem chão é a própria doença que o método cura.
 
 > ❌ *Fraco:* "O mercado paga o mais percebido."
 > ✅ *Forte:* "O mercado paga o mais percebido. Especialista de dez anos perdendo cliente pro curso de três meses, e o de três meses faturando o triplo."
 
 A primeira é bonita e some. A segunda você não esquece. Frase bonita sem chão evapora; com chão, vira lâmina.
 
-**Lei 8, Rótulo não é explicação.** As palavras internas do método (posição, percepção, autoridade) são etiqueta de bastidor. Sozinhas, pro leitor, não dizem nada. Descreva o que o conceito **É** na vida do cara, nunca o nome dele.
+**Lei 8. Rótulo não é explicação.** As palavras internas do método (posição, percepção, autoridade) são etiqueta de bastidor. Sozinhas, pro leitor, não dizem nada. Descreva o que o conceito **É** na vida do cara, nunca o nome dele.
 
 > ❌ *Fraco:* "O seu problema é posição."
 > ✅ *Forte:* "O seu problema é que ninguém lembra do seu nome primeiro."
@@ -126,7 +126,7 @@ Ele não sente "posição". Ele sente que foi a segunda opção. Traduz todo ró
 
 Depois de escrever uma frase, antes de deixar ela de pé, passa por três perguntas. São as três perguntas do gate, adaptadas. **Três sins: a frase fica. Um não: reescreve.**
 
-**Pergunta 1, Dá pra visualizar?**
+**Pergunta 1. Dá pra visualizar?**
 Se não vira imagem na cabeça, é abstrata. E o abstrato evapora.
 
 > ❌ "Melhore sua liderança." *(que imagem? nenhuma)*
@@ -135,20 +135,20 @@ Se não vira imagem na cabeça, é abstrata. E o abstrato evapora.
 > ❌ "Otimize sua presença digital."
 > ✅ "Pare de sumir no feed dois dias depois de postar."
 
-**Pergunta 2, Dá pra provar ou desmentir?**
+**Pergunta 2. Dá pra provar ou desmentir?**
 Frase que não é verdadeira-ou-falsa é enchimento. Não diga o adjetivo, aponte o fato.
 
 > ❌ "Somos referência no mercado." *(não se prova)*
-> ✅ "800 pacientes atendidos em dez anos." *(número ilustrativo, ex. nutricionista; se prova ou se desmente)*
+> ✅ "Lotei a agenda de 8 dentistas em 90 dias." *(se prova ou se desmente)*
 
 > ❌ "Tenho um método validado."
-> ✅ "Lotei meu consultório sem depender de indicação." *(exemplo ilustrativo, ex. dentista)*
+> ✅ "Enchi minha clínica e troquei a recepcionista por um sistema, mesma receita."
 
-**Pergunta 3, Só você poderia dizer isso?**
+**Pergunta 3. Só você poderia dizer isso?**
 Se o concorrente assina a mesma frase, ela não diferencia.
 
 > ❌ "Ajudo você a crescer." *(qualquer um assina)*
-> ✅ "Monto com você o mesmo consultório que lotei sem depender de indicação." *(exemplo ilustrativo, ex. dentista; só você)*
+> ✅ "Monto com você o mesmo protocolo que usei pra encher minha clínica." *(só você)*
 
 > ❌ "Transformo a vida dos meus clientes."
 > ✅ "Pego especialista que fatura R$20k instável e deixo previsível, sem ele virar creator."
@@ -187,7 +187,7 @@ Palavra que ninguém usa numa conversa real não entra. As principais:
 - **jornada** → caminho, processo, o que você viveu
 - **potencializar** → aumentar, fortalecer, fazer render mais
 - **mindset** → cabeça, jeito de pensar
-- **destravar / travar / travado** → soltar, sair do lugar, desempacar *(banido em dobro, o autor do método nunca usa "travar"; pra cliente parado, use empacado, emperrado)* <!-- lint-ok: glossario de palavras banidas -->
+- **destravar / travar / travado** → soltar, sair do lugar, desempacar *(banido em dobro; pra cliente parado, use empacado, emperrado)*
 - **alinhamento, sinergia, holístico, disruptivo, escalar (no sentido vago)** → corta ou troca pelo que a coisa é de verdade
 
 A regra por trás da lista: **se você não falaria a palavra num boteco explicando seu trabalho pra um amigo, ela não entra na copy.** A lista cresce, toda vez que você flagrar uma palavra "de LinkedIn" saindo da sua mão, adiciona.
@@ -209,7 +209,7 @@ Aqui está o coração do diagnóstico. Depois de escrever, você **não** revis
 
 A ordem é fixa: **Confusão → Inacreditável → Boring.** Primeiro garante que entende, depois que acredita, por último que não enjoa. Não adianta deixar empolgante um texto que ninguém entende.
 
-### Camada 1, C de Confusão
+### Camada 1. C de Confusão
 
 > *O leitor procura desculpa pra parar. Confusão é a desculpa mais barata.*
 
@@ -222,7 +222,7 @@ Passa frase a frase e pergunta:
 > ❌ *Confuso:* "A assimetria de percepção no mercado faz com que a competência não se converta em demanda de forma proporcional."
 > ✅ *Limpo:* "Você é bom. Mas o cliente certo não te acha. Porque ser bom e ser visto são duas coisas diferentes."
 
-### Camada 2, U de Inacreditável (vira o cético)
+### Camada 2. U de Inacreditável (vira o cético)
 
 > *Promessa grande sem prova ao lado mata a confiança na hora.*
 
@@ -232,11 +232,11 @@ Lê de novo, agora como o cara mais desconfiado do mundo, e pergunta:
 - **Eu acreditaria nisso se um estranho me dissesse?** Se não, falta prova.
 
 > ❌ *Inacreditável:* "Você vai virar a maior referência do seu nicho e faturar muito mais."
-> ✅ *Crível:* "Dá pra sair de R$20k instável pra previsível, foi o que aconteceu quando lotei o consultório sem depender de indicação." *(exemplo ilustrativo, ex. dentista)*
+> ✅ *Crível:* "Dá pra sair de R$20k instável pra previsível, foi o que aconteceu quando organizei a agenda e mantive a mesma equipe."
 
 A diferença não é a promessa ser menor. É ter chão embaixo.
 
-### Camada 3, B de Boring (tédio)
+### Camada 3. B de Boring (tédio)
 
 > *O que ele já ouviu mil vezes não prende. E o óbvio é tudo que ele já ouviu.*
 
@@ -300,7 +300,7 @@ Leitura solitária não perdoa: cada frase puxa a próxima, ou ele fecha a aba. 
 - [ ] Arco completo: identificação → dor → falha das soluções → nova visão → mecanismo → transformação → prova → entrada.
 - [ ] **Toda promessa grande tem prova ao lado** (a camada U vale dobrado aqui).
 - [ ] **Sem buraco de leitura**, não tem parágrafo onde ele largaria.
-- [ ] Sem preço (o preço vai pro WhatsApp, depois do desejo), se for Carta de até R$2k.
+- [ ] Sem preço (o preço vai pro WhatsApp, depois do desejo), se for Carta de até ~R$3k.
 - [ ] Custo invisível presente: o que continuar como está cobra em silêncio.
 
 > **O fio que une todas.** Toda peça aponta pro método ou faz seeding da tese. O leitor sai sabendo que existe um caminho, e que **você** domina esse caminho. Não sai sabendo andar sozinho. É o que separa conteúdo que atrai estranho (e morre ali) de conteúdo que atrai cliente.
@@ -322,7 +322,7 @@ Tudo escrito, tudo revisado. Antes de publicar, dois movimentos. Só dois.
 É o teste único que resume os outros todos. Quem entende fala calmo, direto, com chão. Quem tenta parecer enche de palavra difícil, promessa sem prova, frase-ponte.
 
 Se passou: publica.
-Se ainda cheira a esforço: você já sabe onde voltar, Confusão, Descrença ou Tédio. Sempre um dos três.
+Se ainda cheira a esforço: você já sabe onde voltar. Confusão, Descrença ou Tédio. Sempre um dos três.
 
 ---
 
