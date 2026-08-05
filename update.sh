@@ -58,13 +58,7 @@ on_exit(){
   local rc=$?
   if [ -f "$RECIBO" ]; then
     if [ "$rc" -eq 0 ]; then tg "✅ Conferi: você já estava na última versão, não precisou trocar nada. Segui no ar o tempo todo."
-    # Falha ANTES do ponto de rollback (rede, disco, pacote corrompido): aqui o cliente segue
-    # mesmo na versão de antes, então este texto é verdadeiro. O caso "aplicou mas não passou na
-    # conferência" NÃO cai aqui — quem avisa nele é o próprio bloco de rollback, lá embaixo, que
-    # é o único que sabe se a reversão completou. (O trap já está desarmado quando aquele bloco
-    # roda, por isso o aviso mora lá e não aqui.)
-    else tg "⚠️ Tentei atualizar e não consegui agora — continuo no ar na versão de antes e nada da nossa conversa se perdeu. Tento de novo no automático."
-    fi
+    else tg "⚠️ Tentei atualizar e não consegui agora — continuo no ar na versão de antes e nada da nossa conversa se perdeu. Tento de novo no automático."; fi
     rm -f "$RECIBO" 2>/dev/null || true
   fi
   rm -f "$GREET" 2>/dev/null || true
@@ -161,51 +155,12 @@ baixar_pacote() {
     say "⚠️ o pacote $pub veio incompleto ou com motor inválido. NÃO apliquei. Sigo na atual."
     rm -rf "$tmp"; PULL_FAIL=1; return 0
   fi
-  # AUTOMACAO DO DONO NUNCA MORRE NO UPDATE (04/08/2026).
-  # A troca de pasta abaixo faz sumir da versao viva QUALQUER arquivo que o dono tenha criado
-  # dentro do REPO_DIR. Foi assim que um cliente perdeu uma automacao: o cron continuou
-  # apontando pra um script que deixou de existir, e o .anterior morre no update seguinte
-  # (2 updates = perda definitiva). Regra do dono, verbatim: "as automacoes sao do brain, do
-  # usuario. Ela nunca e do proprio motor. Eu nao posso atualizar o meu agente e perder minhas
-  # automacoes. Isso nao existe."
-  # COMO SE SABE O QUE E DO DONO: o pacote deixa um MANIFESTO (.manifesto-pacote) com a lista
-  # do que veio dentro dele. Arquivo que esta no REPO_DIR e NAO esta no manifesto = do dono,
-  # e volta pra versao nova. Sem isso (primeiro update depois desta versao), NAO se restaura
-  # nada as cegas: apenas se AVISA a lista, porque arquivo removido de proposito do pacote
-  # (ja aconteceu: instalador pago tirado do pacote gratuito) nao pode ressuscitar sozinho.
-  # manifesto do que veio NESTE pacote — gravado ANTES de preservar nada, senao arquivo do
-  # dono entraria na lista do produto e no update seguinte seria tratado como "removido de
-  # proposito" (e morreria em silencio, que e exatamente o bug que este bloco existe pra matar).
-  ( cd "$tmp/novo" && find . -type f 2>/dev/null | sed 's#^\./##' | grep -v '^\.git/' | sort > .manifesto-pacote ) 2>/dev/null || true
-  PRESERVADOS=""; ORFAOS=""
-  if [ -d "$REPO_DIR" ]; then
-    MANI="$REPO_DIR/.manifesto-pacote"
-    while IFS= read -r rel; do
-      rel="${rel#./}"
-      case "$rel" in .git/*|.manifesto-pacote) continue;; esac
-      [ -e "$tmp/novo/$rel" ] && continue                      # veio no pacote novo: a versao nova manda
-      if [ -f "$MANI" ] && grep -qxF "$rel" "$MANI"; then
-        ORFAOS="$ORFAOS $rel"                                   # era do pacote e saiu de proposito: NAO volta
-        continue
-      fi
-      if [ -f "$MANI" ]; then
-        mkdir -p "$tmp/novo/$(dirname "$rel")" 2>/dev/null
-        cp -p "$REPO_DIR/$rel" "$tmp/novo/$rel" 2>/dev/null && PRESERVADOS="$PRESERVADOS $rel"
-      else
-        ORFAOS="$ORFAOS $rel"                                   # sem manifesto ainda: so avisa, nao adivinha
-      fi
-    done <<EOF
-$(cd "$REPO_DIR" && find . -type f 2>/dev/null)
-EOF
-  fi
   # troca a pasta inteira (assim arquivo que saiu da versao nova some de verdade),
   # guardando a anterior do lado pra dar pra voltar na mao.
   rm -rf "$REPO_DIR.anterior"
   [ -d "$REPO_DIR" ] && mv "$REPO_DIR" "$REPO_DIR.anterior"
   mv "$tmp/novo" "$REPO_DIR"
   rm -rf "$tmp"
-  [ -n "$PRESERVADOS" ] && say "   mantive o que e teu dentro da pasta:$PRESERVADOS"
-  [ -n "$ORFAOS" ] && say "   estes arquivos nao vieram na versao nova e ficaram so no backup ($REPO_DIR.anterior):$ORFAOS — se algum for teu, me fala que eu trago de volta."
   # Grava a versão que foi PEDIDA, não a que veio escrita dentro do pacote. Se as duas
   # divergirem (empacotamento errado), sem isto o cliente acha que continua na antiga e
   # rebaixa o mesmo pacote de hora em hora, pra sempre. Apareceu no teste de 30/07.
@@ -226,45 +181,6 @@ NEW_SHA="$( [ -d "$SKILLS_DIR/.git" ] && git -C "$SKILLS_DIR" rev-parse HEAD 2>/
 if [ -f "$REPO_DIR/HALT" ] || [ -f "$SKILLS_DIR/HALT" ]; then
   say "⛔ HALT presente no repo — update suspenso de propósito. Nada aplicado. (remova o HALT pra religar)"
   exit 0
-fi
-
-# ---- MÉTODO: as skills do pacote alcançam ~/.claude/skills ------------
-# 03/08: aqui estava o furo que congelava a frota. A instalação copia as skills UMA vez
-# (`cp -an` no SETUP-AGENTE.md, que por definição não sobrescreve) e o update trocava só a
-# pasta ~/agente-soft. Resultado: o cliente baixava skills novas dentro do pacote e seguia
-# lendo as antigas em ~/.claude/skills PARA SEMPRE — método congelado na versão do dia da
-# instalação, sem um único aviso.
-# Fica DEPOIS do HALT de propósito: o freio existe pra cortar a frota se um push ruim vazar,
-# e método aplicado antes do freio é exatamente o que ele precisa impedir.
-# Só roda no caminho do pacote: quem tem ~/.claude/skills/.git é instalação antiga por clone
-# e continua sendo servida pelo pull_safe lá em cima (mexer aqui apagaria o git dele).
-if [ -d "$REPO_DIR/skills" ] && [ ! -d "$SKILLS_DIR/.git" ]; then
-  mkdir -p "$SKILLS_DIR"
-  # -a preserva modo/mtime; sem -n de propósito: SOBRESCREVER é o conserto.
-  if cp -a "$REPO_DIR/skills/." "$SKILLS_DIR/" 2>>"$LOG"; then
-    say "   método sincronizado: $(find "$SKILLS_DIR" -maxdepth 2 -name SKILL.md 2>/dev/null | wc -l) skills em $SKILLS_DIR."
-  else
-    say "⚠️ não consegui sincronizar as skills do método (veja $LOG). A ponte atualizou; o método não."
-  fi
-fi
-
-# ---- BRAÇOS: os subagentes precisam chegar onde o motor OLHA -----------
-# 03/08: os 5 braços viajam no pacote em ~/agente-soft/.claude/agents/, mas o Claude roda com
-# cwd = WORK_DIR (~/lean-bridge) — ele procura os agentes em ~/.claude/agents e no cwd, nunca
-# na pasta do pacote. Resultado no gratuito: os braços chegavam no disco e o motor não via
-# nenhum. No pago funciona por acidente (lá o cwd É a pasta de instalação).
-# Sem isto, versionar os braços resolveu metade do problema: certo no git, inerte na ponta.
-# Vão pros DOIS lugares que o Claude Code consulta: a pasta do cwd (WORK_DIR, que é de onde o
-# motor spawna) e a global do usuário. O LEON funciona pela primeira; a segunda cobre o caso de
-# WORK_DIR mudar de lugar amanhã.
-if [ -d "$REPO_DIR/.claude/agents" ]; then
-  for DEST_AGENTES in "$BRIDGE_DIR/.claude/agents" "$HOME/.claude/agents"; do
-    [ -n "$DEST_AGENTES" ] || continue
-    mkdir -p "$DEST_AGENTES" 2>/dev/null || continue
-    cp -a "$REPO_DIR/.claude/agents/." "$DEST_AGENTES/" 2>>"$LOG" \
-      && say "   braços sincronizados: $(ls "$DEST_AGENTES"/*.md 2>/dev/null | wc -l) em $DEST_AGENTES." \
-      || say "⚠️ não consegui sincronizar os braços em $DEST_AGENTES (veja $LOG)."
-  done
 fi
 
 # ---- Codex CLI (imagem grátis pela assinatura ChatGPT do dono) --------
@@ -333,20 +249,6 @@ cp -p "$HOME/.config/systemd/user/agente.service" "$BACKUP_DIR/agente.service" 2
 for u in agente-update.service agente-update.timer agente-health.service agente-health.timer; do
   [ -f "$HOME/.config/systemd/user/$u" ] && { cp -p "$HOME/.config/systemd/user/$u" "$BACKUP_DIR/$u" || snap_fail "$u"; }
 done
-# AUTOMACAO DO DONO NO SNAPSHOT (04/08/2026). Antes o snapshot guardava so 6 coisas do
-# proprio sistema (.env, topics, sessions, bridge, persona e 4 units nossos) — nunca o
-# crontab do usuario nem os agendamentos que o DONO criou. Se algo desligasse no update,
-# nao havia nem como saber o que existia antes. Agora tem: e a foto que a conferencia
-# pos-update compara pra avisar se alguma automacao caiu.
-crontab -l > "$BACKUP_DIR/crontab.txt" 2>/dev/null || true
-systemctl --user list-units --type=service --type=timer --state=running,active --no-legend 2>/dev/null \
-  | awk '{print $1}' | sort > "$BACKUP_DIR/units-ativos.txt" 2>/dev/null || true
-mkdir -p "$BACKUP_DIR/units-do-dono" 2>/dev/null
-for u in "$HOME"/.config/systemd/user/*.service "$HOME"/.config/systemd/user/*.timer; do
-  [ -f "$u" ] && cp -p "$u" "$BACKUP_DIR/units-do-dono/$(basename "$u")" 2>/dev/null
-done
-true
-
 # .last-backup só DEPOIS do snapshot inteiro ok (senão rollback apontaria pra lixo).
 echo "$BACKUP_DIR" > "$BRIDGE_DIR/.last-backup"
 
@@ -494,51 +396,8 @@ fi
 # auto-update da frota EM SILÊNCIO — aqui isso vira FAIL e dispara o rollback.
 # Só vale onde existe systemd de usuário: sem ele, não há timer nenhum pra checar.
 if [ "$BUS_OK" = "1" ] && { [ "$UNITS_CHANGED" -eq 1 ] || [ "$NEED_RELOAD" -eq 1 ]; }; then
-  # 03/08 — SEGUNDA CHANCE ANTES DE REPROVAR. Achado num cliente real: máquina com timer ANTIGO
-  # apontando pra caminho que a estrutura nova não usa. O update instala o unit certo, mas o
-  # `enable` esbarra no estado velho ainda carregado, o timer não sobe, a validação reprova e o
-  # rollback desfaz justamente o conserto do timer. Cão mordendo o rabo: o cliente fica preso
-  # pra sempre, e cada tentativa termina em "tentei atualizar e não consegui agora".
-  # Aqui NÃO se afrouxa o critério: se depois do reload+enable o timer continuar fora, ainda é
-  # FAIL e o rollback roda igual. Só se dá ao sistema a chance de recarregar o unit novo.
-  if ! systemctl --user is-active --quiet agente-update.timer; then
-    say "   timer não subiu de primeira; recarregando os units e tentando de novo..."
-    systemctl --user daemon-reload 2>>"$LOG" || true
-    systemctl --user reset-failed agente-update.timer 2>/dev/null || true
-    systemctl --user enable --now agente-update.timer 2>>"$LOG" || true
-    sleep 2
-  fi
   systemctl --user is-active --quiet agente-update.timer || { say "⚠️ agente-update.timer não ficou ativo após o update."; FAIL=1; }
 fi
-# ---- CONFERENCIA DA AUTOMACAO DO DONO (04/08/2026) ------------------
-# Nao basta preservar: tem que CONFERIR e AVISAR. Aqui se compara o crontab e os servicos
-# ativos com a foto tirada antes de mexer. Cron que sumiu volta na hora (e reversivel e e do
-# dono). Servico que caiu vira aviso — religar sozinho poderia subir algo que o dono desligou
-# de proposito no meio do update.
-if [ -f "$BACKUP_DIR/crontab.txt" ] && command -v crontab >/dev/null 2>&1; then
-  CRON_DEPOIS="$(crontab -l 2>/dev/null || true)"
-  CRON_SUMIU=""
-  while IFS= read -r linha; do
-    case "$linha" in ""|\#*) continue;; esac
-    printf %s "$CRON_DEPOIS" | grep -qxF "$linha" || CRON_SUMIU="$CRON_SUMIU
-$linha"
-  done < "$BACKUP_DIR/crontab.txt"
-  if [ -n "$CRON_SUMIU" ]; then
-    { printf '%s\n' "$CRON_DEPOIS"; printf '%s\n' "$CRON_SUMIU"; } | crontab - 2>>"$LOG" \
-      && tg "Percebi que uma automacao tua tinha saido do ar na atualizacao e ja coloquei de volta:$CRON_SUMIU" \
-      || tg "⚠️ Uma automacao tua saiu do ar na atualizacao e eu nao consegui recolocar sozinho:$CRON_SUMIU"
-  fi
-fi
-if [ -f "$BACKUP_DIR/units-ativos.txt" ] && [ "$BUS_OK" = "1" ]; then
-  UNITS_CAIRAM=""
-  while IFS= read -r u; do
-    [ -z "$u" ] && continue
-    case "$u" in agente.service|agente-update.*|agente-health.*) continue;; esac
-    systemctl --user is-active --quiet "$u" || UNITS_CAIRAM="$UNITS_CAIRAM $u"
-  done < "$BACKUP_DIR/units-ativos.txt"
-  [ -n "$UNITS_CAIRAM" ] && tg "⚠️ Estas automacoes tuas estavam rodando antes da atualizacao e nao estao mais:$UNITS_CAIRAM — quer que eu religue?"
-fi
-
 if [ "$FAIL" -eq 0 ]; then
   say "✅ UPDATE OK (skills em $NEW_SHA)."
   # Se o bridge novo veio quebrado mas o resto (skills, units) foi aplicado ok,
@@ -550,35 +409,13 @@ if [ "$FAIL" -eq 0 ]; then
 fi
 
 say "✗ Validação falhou — REVERTENDO SOZINHO pro estado anterior..."
-# 03/08 — A MENSAGEM PRECISA DIZER A VERDADE DE CADA CASO.
-# Os 3 desfechos abaixo caíam no mesmo aviso genérico ("continuo na versão de antes"), e num
-# deles isso é FALSO: quando o rollback não completa, o cliente FICA na versão nova. Aconteceu
-# com um agente real — o dono leu "não consegui atualizar", concluiu que nada tinha chegado, e o
-# agente já estava atualizado. Diagnóstico errado a partir de mensagem errada.
-# O REVERTEU marca qual dos três foi, e o aviso do trap lê essa marca.
-REVERTEU="nao-tentou"
 if [ -x "$REPO_DIR/rollback.sh" ]; then
   if bash "$REPO_DIR/rollback.sh" >>"$LOG" 2>&1; then
     say "↩️  Revertido. Cliente segue no ar na versão anterior."
-    REVERTEU="sim"
   else
     say "‼️  Rollback automático falhou — precisa olhar manual: tail -40 $LOG"
-    REVERTEU="falhou"
   fi
 else
   say "‼️  rollback.sh ausente — não consegui reverter sozinho."
-  REVERTEU="sem-script"
-fi
-# O aviso sai AQUI, e não pelo trap: o trap já foi desarmado lá em cima (antes do restart), então
-# a marca nunca chegava a ser lida — o texto certo existia num caminho morto. Quem sabe o que
-# aconteceu é este bloco, então é ele que fala. Só avisa se havia recibo (pedido manual de
-# /atualiza); update agendado segue silencioso, como sempre foi.
-if [ -f "$RECIBO" ]; then
-  case "$REVERTEU" in
-    sim) tg "⚠️ Tentei atualizar, algo não passou na conferência e eu voltei sozinho pra versão de antes. Sigo no ar e nada da nossa conversa se perdeu. Tento de novo no automático." ;;
-    falhou|sem-script) tg "⚠️ Atenção: a atualização foi aplicada mas não passou na conferência final, e eu NÃO consegui voltar sozinho. Estou no ar, mas na versão NOVA — não na de antes. Nada da conversa se perdeu. Me manda /status pra ver como estou, ou /atualiza de novo." ;;
-    *) tg "⚠️ Tentei atualizar e não consegui agora — sigo no ar e nada da nossa conversa se perdeu. Tento de novo no automático." ;;
-  esac
-  rm -f "$RECIBO" 2>/dev/null || true
 fi
 exit 1

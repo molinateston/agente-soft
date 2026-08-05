@@ -365,408 +365,6 @@ const AVISO_PESADA_MS = Number(process.env.AVISO_PESADA_SEG || 25) * 1000; // pa
 // ---------- CONTEXTO REDONDO: knobs (motor portado do LEON — compactação semeada + continuidade) ----------
 const SOFT_FRAC    = Number(process.env.SOFT_FRAC || 0.80);   // fração da janela de CONVERSA onde COMPACTA (resumo)
 const HARD_FRAC    = Number(process.env.HARD_FRAC || 0.88);   // backstop bruto se a compactação falhar
-
-// ==================== GATE DE SKILLS (portado do LEON em 02/ago) ====================
-// O cliente COMPRA as skills e este bridge nunca as injetava no prompt — o agente respondia de
-// cabeça em vez de seguir o método que ele pagou. Este bloco lê o catálogo, detecta a skill certa
-// pela frase, e injeta o método. Marca-neutro: BRAIN_CRAVADO aponta pro brain DO DONO do agente.
-
-const SKILL_TRIGGERS_FILE = `${WORKDIR}/lib/skill-triggers.json`;
-let _skillTriggers = null, _skillTrigMtime = -1;
-function loadSkillTriggers() {
-  try {
-    const m = fs.statSync(SKILL_TRIGGERS_FILE).mtimeMs;
-    if (m !== _skillTrigMtime) {
-      const j = JSON.parse(fs.readFileSync(SKILL_TRIGGERS_FILE, "utf8"));
-      // remove chave _comment
-      const clean = {}; for (const k in j) if (k !== "_comment") clean[k] = j[k];
-      _skillTriggers = clean; _skillTrigMtime = m;
-    }
-  } catch { _skillTriggers = _skillTriggers || {}; }
-  return _skillTriggers;
-}
-function _deaccent(s) {
-  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-}
-// QUEM DIZ o que a sala faz é a PRÓPRIA SALA, nunca o código. Cada dono organiza os tópicos como
-// quiser e renomeia quando quiser — mapa de nome (ou de número) dentro do código morre calado na
-// primeira renomeação e não serve pra mais ninguém além de uma instalação. Ordem de leitura:
-//   1) campo "skills" da sala no topics.json  (["soft-conteudo"] = base fixa · [] = sala sem gate)
-//   2) linha "SKILLS: a, b" declarada no topo do arquivo de persona da sala
-//   3) nada declarado → vale só o gatilho por palavra-chave, que é genérico
-const _personaSkillsCache = new Map();
-function personaDeclaredSkills(personaFile) {
-  if (!personaFile) return null;
-  const fp = `${PERSONA_DIR}/${personaFile}`;
-  let mt; try { mt = fs.statSync(fp).mtimeMs; } catch { return null; }
-  const c = _personaSkillsCache.get(fp);
-  if (c && c.mt === mt) return c.val;
-  let val = null;
-  try {
-    const head = fs.readFileSync(fp, "utf8").slice(0, 4000);
-    const m = head.match(/^\s*(?:<!--\s*)?SKILLS?\s*:\s*([^\n]*)/im);
-    if (m) {
-      const raw = m[1].replace(/-->/, "").trim();
-      val = /^(nenhuma|none|off|-)$/i.test(raw) ? []
-          : raw.split(/[,;]+/).map(x => x.trim()).filter(Boolean);
-    }
-  } catch {}
-  _personaSkillsCache.set(fp, { mt, val });
-  return val;
-}
-function roomSkills(cfg) {
-  if (!cfg) return null;
-  if (Array.isArray(cfg.skills)) return cfg.skills;
-  if (typeof cfg.skills === "string") {
-    return /^(nenhuma|none|off|-)$/i.test(cfg.skills.trim()) ? [] : cfg.skills.split(/[,;]+/).map(x => x.trim()).filter(Boolean);
-  }
-  return personaDeclaredSkills(cfg.persona);
-}
-function detectSkillsForMessage(text, cfg) {
-  if (!text) return [];
-  const base = roomSkills(cfg);
-  if (Array.isArray(base) && base.length === 0) return [];   // sala declarou que não quer gate
-  const triggers = loadSkillTriggers();
-  const norm = _deaccent(text);
-  const hits = [];
-  for (const skill in triggers) {
-    const kws = triggers[skill] || [];
-    const matched = [];
-    for (const kw of kws) {
-      const nkw = _deaccent(kw);
-      // borda de palavra pra evitar match parcial de sub-palavra ("web" dentro de "webinar")
-      const re = new RegExp(`(^|[^\\p{L}\\p{N}])${nkw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^\\p{L}\\p{N}]|$)`, "u");
-      if (re.test(norm)) matched.push(kw);
-    }
-    if (matched.length) hits.push({ skill, matched });
-  }
-  for (const skill of (base || [])) {
-    if (!hits.some(h => h.skill === skill)) hits.push({ skill, matched: [`sala ${(cfg && cfg.label) || "atual"}`], base: true });
-  }
-  // o crivo de copy é obrigatório antes de entregar linha pública: entra junto, sempre.
-  if (hits.some(h => COPY_SKILLS.has(h.skill)) && !hits.some(h => h.skill === "soft-critico-copy")) {
-    hits.push({ skill: "soft-critico-copy", matched: ["gate obrigatório de copy"], base: true });
-  }
-  return hits;
-}
-// ---- CARREGAMENTO DE MÉTODO (o gate deixa de PEDIR e passa a ENTREGAR) ----
-// Pedir "invoque a skill X" é ignorável. Ler o SKILL.md e colar o método no turno, não é.
-const SKILLS_ROOT = process.env.SKILLS_DIR || `${process.env.HOME || "/home/cloud"}/.claude/skills`;
-const SKILL_BODY_CAP = Number(process.env.SKILL_BODY_CAP || 7000);   // teto por skill
-const SKILL_TOTAL_CAP = Number(process.env.SKILL_TOTAL_CAP || 16000); // teto do turno (cabe método + crivo juntos)
-const SKILL_MAX_LOAD = Number(process.env.SKILL_MAX_LOAD || 3);       // quantas skills de MÉTODO por turno (o gate de saída tem vaga própria, fora deste teto)
-
-// HIERARQUIA BRAIN > SKILL. A regra: "a skill tira a pessoa do zero,
-// mas depois o brain vale mais. É como contratar um funcionário que tem a skill: no começo ele gera
-// pela cabeça dele; depois que conhece meu negócio, meu tom de voz e minha identidade visual, ele
-// gera do jeito certo". Duas naturezas, tratadas de formas opostas:
-//
-//   SAÍDA  — conferência antes de entregar. SEMPRE entra, em vaga reservada fora do teto. O brain
-//            não substitui: por mais treinado que ele esteja, toda peça pública passa pelo crivo.
-//   CRIAÇÃO— o método de fazer. CEDE ao brain quando o brain já cravou o padrão daquele assunto:
-//            entra RESUMIDA (só o esqueleto), pra não puxar a peça de volta pro genérico.
-const SKILL_SAIDA = new Set(["soft-critico-copy"]);
-// Arquivo do brain que, quando existe, PROVA que o dono já cravou o padrão daquele tema. Enquanto
-// ele existir, a skill de criação correspondente entra resumida — o brain é quem manda.
-const BRAIN_CRAVADO = {
-  // Marca-neutro: aponta pro brain DO DONO DESTE AGENTE, não pro de ninguém específico.
-  // Enquanto o arquivo existir, a skill de criação correspondente entra RESUMIDA e o padrão
-  // já cravado manda. Se não existir, a skill entra inteira (comportamento de antes).
-  "soft-designer": "conteudo/id-visual.md",
-  "soft-voz":      "conteudo/voz.md",
-};
-function brainJaCravou(skill) {
-  const rel = BRAIN_CRAVADO[skill];
-  if (!rel) return null;
-  try { const fp = `${BRAIN}/${rel}`; return fs.existsSync(fp) ? fp : null; } catch { return null; }
-}
-const SKILL_HEAD_CAP = Number(process.env.SKILL_HEAD_CAP || 3000); // cabeca (regra geral) sempre entra
-const _skillRawCache = new Map();
-const _skillMissWarned = new Set();
-function _skNorm(s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
-function _skTokens(s) {
-  return _skNorm(s).split(/[^a-z0-9]+/).filter(w => w.length > 3).map(w => w.replace(/s$/, ""));
-}
-// Um SKILL.md tem 27 mil chars e o teto do turno e 7 mil: cortar os primeiros N chars joga fora
-// justamente o bloco do formato pedido (o "FORMATO-REEL" comeca no char 12.781 do soft-conteudo).
-// Por isso o corte deixou de ser cego: pega a CABECA (regra geral) + as SECOES que casam com o pedido.
-function _skSections(body) {
-  const isTitle = (l) => {
-    const t = l.trim();
-    if (/^#{1,3} \S/.test(t)) return true;
-    if (!t || t.length > 90) return false;
-    const m = t.match(/^[A-Z][A-Z0-9 _.\-\/]{4,}/);   // "FORMATO-REEL (roteiro curto)", "P0. IMPORT..."
-    if (!m) return false;
-    const resto = t.slice(m[0].length).trimStart();
-    return !resto || /^[\(\-]/.test(resto);
-  };
-  const secs = [];
-  let cur = { title: "", lines: [] };
-  for (const l of body.split("\n")) {
-    if (isTitle(l) && cur.lines.length) { secs.push(cur); cur = { title: l.trim(), lines: [l] }; }
-    else { if (!cur.title && isTitle(l)) cur.title = l.trim(); cur.lines.push(l); }
-  }
-  secs.push(cur);
-  return secs.map(x => ({ title: x.title, text: x.lines.join("\n") }));
-}
-function _skPick(raw, msg) {
-  if (raw.length <= SKILL_BODY_CAP) return raw;
-  const secs = _skSections(raw);
-  const alvo = new Set(_skTokens(msg));
-  const chosen = new Set();
-  let usado = 0;
-  const cabe = (t) => usado + t.length + 1 <= SKILL_BODY_CAP;
-  for (let i = 0; i < secs.length; i++) {           // cabeca: a regra que vale pra tudo
-    if (usado + secs[i].text.length > SKILL_HEAD_CAP) break;
-    chosen.add(i); usado += secs[i].text.length + 1;
-  }
-  const scored = secs.map((s, i) => {
-    let sc = 0;
-    for (const t of _skTokens(s.title)) if (alvo.has(t)) sc += 2;
-    return { i, sc, t: s.text };
-  }).filter(x => x.sc > 0 && !chosen.has(x.i)).sort((a, b) => b.sc - a.sc);
-  for (const x of scored) if (cabe(x.t)) { chosen.add(x.i); usado += x.t.length + 1; }
-  for (let i = 0; i < secs.length; i++) {           // sobra do teto: preenche na ordem do arquivo
-    if (chosen.has(i)) continue;
-    if (!cabe(secs[i].text)) continue;
-    chosen.add(i); usado += secs[i].text.length + 1;
-  }
-  const idx = [...chosen].sort((a, b) => a - b);
-  const out = [];
-  let prev = -1;
-  for (const i of idx) { if (prev >= 0 && i !== prev + 1) out.push("[...]"); out.push(secs[i].text); prev = i; }
-  return out.join("\n").trim();
-}
-function loadSkillBody(skill, msg) {
-  const file = `${SKILLS_ROOT}/${skill}/SKILL.md`;
-  let mtime = 0;
-  try { mtime = fs.statSync(file).mtimeMs; } catch {
-    // fusao/renome de skill deixa gatilho apontando pro vazio e o metodo some EM SILENCIO
-    // (foi o que aconteceu na consolidacao de 23/07). Denuncia 1x por nome, pra aparecer no log.
-    if (!_skillMissWarned.has(skill)) { _skillMissWarned.add(skill); console.log(`[skill] declarada mas SEM SKILL.md: ${skill} (nada carregado — conserte o apontamento)`); }
-    return "";
-  }
-  const cached = _skillRawCache.get(skill);
-  let raw;
-  if (cached && cached.mtime === mtime) raw = cached.raw;
-  else {
-    try { raw = fs.readFileSync(file, "utf8"); } catch { return ""; }
-    raw = raw.replace(/^---\n[\s\S]*?\n---\n/, "").trim(); // frontmatter nao e metodo
-    _skillRawCache.set(skill, { mtime, raw });
-  }
-  return _skPick(raw, msg);
-}
-// ---- ESTEIRAS: a CORRENTE, não a pecinha (29/07) ----
-// O problema, na fala do dono: "as skills existem soltas e cada uma faz o seu pedaço. Quem costura
-// sou eu, na conversa, toda vez. Isso não escala." O gate de método acerta UM método por pedido; a
-// esteira acerta a SEQUÊNCIA. Quando o pedido casa com uma esteira, o turno nasce sabendo a corrente
-// inteira, o que passa de um passo pro outro, e onde é legítimo parar e esperar o dono.
-const ESTEIRAS_FILE = `${WORKDIR}/lib/esteiras.json`;
-let _esteiras = null, _esteirasMtime = -1;
-function loadEsteiras() {
-  try {
-    const m = fs.statSync(ESTEIRAS_FILE).mtimeMs;
-    if (m !== _esteirasMtime) {
-      const j = JSON.parse(fs.readFileSync(ESTEIRAS_FILE, "utf8"));
-      _esteiras = Array.isArray(j.esteiras) ? j.esteiras : [];
-      _esteirasMtime = m;
-    }
-  } catch { _esteiras = _esteiras || []; }
-  return _esteiras;
-}
-function detectEsteira(text) {
-  const t = _deaccent(text || "");
-  if (!t) return null;
-  let melhor = null;
-  for (const e of loadEsteiras()) {
-    for (const g of (e.gatilhos || [])) {
-      const gg = _deaccent(g);
-      if (!gg || !t.includes(gg)) continue;
-      if (!melhor || gg.length > melhor.peso) melhor = { esteira: e, peso: gg.length, gatilho: g };
-    }
-  }
-  return melhor;
-}
-function esteiraBlock(text) {
-  const hit = detectEsteira(text);
-  if (!hit) return "";
-  const e = hit.esteira;
-  const passos = (e.passos || []).map((p, i) =>
-    `  ${i + 1}. ${p.metodo}\n     recebe: ${p.entra}\n     entrega: ${p.sai}`).join("\n");
-  return [
-    `[ESTEIRA RECONHECIDA: ${e.nome}`,
-    ``,
-    `Este pedido NÃO é um passo solto, é uma CORRENTE de ${(e.passos || []).length} passos. Execute do primeiro`,
-    `ao último SEM pedir licença entre eles: o que o dono pediu foi a coisa PRONTA no fim, não o começo.`,
-    ``,
-    `A corrente:`,
-    passos,
-    ``,
-    `Regra da corrente: cada passo recebe o que o anterior entregou, no formato escrito acima. Se um`,
-    `passo não entregar naquele formato, ele não terminou: refaça esse passo antes de seguir.`,
-    e.trava ? `\nONDE É LEGÍTIMO PARAR E ESPERAR O DONO: ${e.trava}\nSó pare aí. Parar antes disso é te fazer de carregador de arquivo, que é o que a esteira existe pra matar.` : "",
-    `]`
-  ].filter(Boolean).join("\n");
-}
-// CORREÇÃO DO DONO VIRA ARQUIVO (03/08) — o segundo pedido dele: "quero ir ajustando o agente
-// falando direto com ele". A doutrina do AGENT-BASE já mandava gravar em brain/MEMORIA-VIVA.md,
-// mas era só doutrina: dependia do modelo lembrar no meio de um turno cheio. No LEON existe
-// gatilho mecânico pra isso e a diferença apareceu na prática — lá as correções viram arquivo,
-// aqui evaporavam com a conversa.
-// Isto NÃO grava nada sozinho: injeta a ORDEM de gravar quando o dono corrige/ensina, no mesmo
-// lugar onde o gate de skills já entra. Se a regex não casar, devolve "" e o turno segue igual.
-const CORRIGE_RE = /\b(?:nao (?:manda|mande|escreve|escreva|fala|fale|faz|faca|usa|use|pode|era|e assim)|nunca (?:manda|mande|escreve|escreva|fala|fale|usa|use)|tira isso|tire isso|tira essa|para de|pare de|refaz|refaca|refaça|ta errado|esta errado|nao e (?:isso|assim)|corrige|corrija|muda (?:o tom|o jeito|a forma|esse tom|esse jeito)|troca (?:o tom|o jeito|essa palavra|esse termo))\b/;
-const ENSINA_RE  = /\b(?:faz(?:er)? assim|faca assim|escreve(?:r)? assim|fala(?:r)? assim|manda(?:r)? assim|era pra (?:ser|escrever|falar|fazer)|o certo (?:e|seria)|assim (?:ta|fica) (?:bom|certo|melhor)|(?:esse|este|isso) (?:molde|jeito|tom|formato) (?:ta|esta) (?:bom|certo|otimo)|pode (?:usar|mandar|fazer) assim|de agora em diante|daqui pra frente|sempre que|toda vez que|aprovado|ficou bom|isso sim|agora sim|perfeito assim)\b/;
-
-function correcaoDoDonoBlock(text) {
-  try {
-    if (!text) return "";
-    const t = _deaccent(String(text)).toLowerCase();
-    // 03/08, achado do avaliador: sem estes 2 filtros o bloco disparava em PERGUNTA ("ficou bom
-    // o video?") e em RELATO DE TERCEIRO ("o cliente disse que ta errado"). Nos dois casos o
-    // dono não ensinou nada, e o agente ia gravar uma "lição" que ele nunca deu. Não derruba o
-    // turno — mas suja a memória, que é justamente o que este bloco existe pra manter limpa.
-    const corrige = CORRIGE_RE.test(t);
-    const ensina  = ENSINA_RE.test(t);
-    if (!corrige && !ensina) return "";
-    // Os 2 filtros abaixo rodam DEPOIS de saber que houve verbo de correção — a 1ª versão rodava
-    // antes e engolia o jeito mais natural do dono falar: "não faz assim, entendeu?" e "para de
-    // mandar áudio, tá?" viravam "pergunta" e não gravavam nada. Em WhatsApp, "tá?"/"ok?" fecham
-    // ORDEM o tempo todo. Mesma coisa com relato+ordem na mesma frase ("o cliente reclamou, então
-    // para de mandar às 7h"): o filtro de terceiro descartava a ordem junto com o relato.
-    // Agora só descarta quando NÃO há verbo de correção do dono — pergunta pura e relato puro.
-    const soPergunta = /\?\s*$/.test(String(text).trim())
-      && !/\b(?:nao|nunca|para de|pare de|tira|tire|refaz|refaca|refaça|corrige|corrija|faz assim|faca assim|de agora em diante|daqui pra frente)\b/.test(t);
-    if (soPergunta) return "";
-    // "o cliente disse que ta errado" é relato: o verbo de correção vem DEPOIS do "disse que",
-    // descrevendo a fala do terceiro. Já "o cliente reclamou, entao para de mandar" tem ordem
-    // própria do dono — o "então/portanto" (ou um imperativo solto) marca a virada.
-    const soRelato = /\b(?:o |a )?(?:cliente|lead|ele|ela|pessoal|time|editor|fulano)\s+(?:disse|falou|reclamou|achou|acha|comentou)\b/.test(t)
-      && !/\b(?:entao|portanto|por isso|logo)\b/.test(t)
-      // Qualquer pontuação separa o relato da ordem — vírgula, ponto, ponto-e-vírgula, dois-pontos
-      // ou traço. A 1ª versão só reconhecia vírgula, então "o cliente reclamou. para de mandar às
-      // 7h" era engolido inteiro: o dono deu uma ordem clara e nada era gravado.
-      && !/[,.;:—-]\s*(?:nao|nunca|para de|pare de|tira|tire|refaz|refaca|refaça|corrige|corrija|faz|faca|manda|escreve|muda|troca)\b/.test(t);
-    if (soRelato) return "";
-    return [
-      "[O DONO ACABOU DE TE CORRIGIR/ENSINAR — GRAVE ANTES DE ENCERRAR O TURNO.",
-      "Correção que fica só na conversa evapora quando o histórico comprime, e ele repete a mesma",
-      "coisa semana que vem. Antes de responder, escreva no arquivo (ferramenta Write/Edit):",
-      "",
-      `  ${BRAIN}/MEMORIA-VIVA.md`,
-      "",
-      "Uma entrada curta com: a data, a FALA LITERAL dele (não parafraseie — o tom é dele), o que",
-      "muda na prática, e o molde aprovado se ele tiver dado um exemplo.",
-      corrige && !ensina
-        ? "Ele disse o que NÃO quer. Se você não souber qual é o jeito certo, pergunte numa linha e grave depois."
-        : "Ele disse como QUER. Essa é a parte que mais se perde: grave o exemplo, não só a regra.",
-      "Depois responda normalmente. Não anuncie que gravou — só grave.]"
-    ].join("\n");
-  } catch { return ""; }
-}
-
-function skillGateBlock(text, cfg) {
-  const hits = detectSkillsForMessage(text, cfg);
-  if (!hits.length) return "";
-  // ORDEM (25/07): o MÉTODO da tarefa vem sempre primeiro. O crivo de copy é conferência de saída,
-  // não método — se ele entra na frente, come o teto e a skill que importa fica de fora em silêncio
-  // (era o defeito: sala de conteúdo carregava só o crivo e ignorava o método).
-  const CRIVO = "soft-critico-copy";
-  const base = hits.filter(h => h.base && !SKILL_SAIDA.has(h.skill));
-  const rest = hits.filter(h => !h.base && !SKILL_SAIDA.has(h.skill)).sort((a, b) => b.matched.length - a.matched.length);
-  const crivo = hits.filter(h => SKILL_SAIDA.has(h.skill));
-  const fila = base.concat(rest);   // o gate de saída NÃO disputa o teto: entra depois, em vaga própria
-  const partes = [];
-  const nomes = [];
-  let usado = 0;
-
-  // O BRAIN VEM PRIMEIRO. Se o dono já cravou o padrão do tema (id-visual, voz), esse arquivo entra
-  // INTEIRO e antes de qualquer método — senão a skill recria do zero e erra o padrão que já existe.
-  const cravados = [];
-  for (const h of fila) {
-    const fp = brainJaCravou(h.skill);
-    if (!fp || cravados.includes(fp)) continue;
-    try {
-      const b = fs.readFileSync(fp, "utf8").slice(0, 6000);
-      if (b.trim()) {
-        cravados.push(fp);
-        usado += b.length;
-        partes.push(`### PADRÃO JÁ CRAVADO (${BRAIN_CRAVADO[h.skill]}) — isto é o que VALE. A skill abaixo é referência; onde as duas divergirem, MANDA ESTE ARQUIVO.\n${b}`);
-      }
-    } catch {}
-  }
-
-  for (const h of fila) {
-    if (nomes.length >= SKILL_MAX_LOAD) break;
-    // skill de CRIAÇÃO cujo padrão o brain já cravou entra resumida (teto menor), não em corpo cheio
-    const body = brainJaCravou(h.skill)
-      ? String(loadSkillBody(h.skill, text) || "").slice(0, 2000)
-      : loadSkillBody(h.skill, text);
-    // 29/07: este continue era MUDO e escondeu por semanas que 11 skills (todas as de conteúdo e
-    // webinar) eram stubs vazios no diretório lido — o gate acertava, carregava nada e o agente
-    // respondia de cabeça sem ninguém perceber. Agora grita: peça que degrada em silêncio some do radar.
-    if (!body) { console.error(`[skill] "${h.skill}" bateu o gate mas carregou VAZIO em ${SKILLS_ROOT} — SKILL.md ausente?`); continue; }
-    if (usado + body.length > SKILL_TOTAL_CAP) continue;
-    usado += body.length;
-    nomes.push(h.skill);
-    partes.push(`### MÉTODO: ${h.skill}\n${body}`);
-  }
-
-  // VAGA RESERVADA DO GATE DE SAÍDA: entra SEMPRE que foi detectado, mesmo com o teto de método
-  // estourado. É a conferência antes de entregar — sem ela sai peça pública sem passar pelo crivo.
-  // Era o defeito medido em 02/ago: a sala fixava 4 skills, o teto era 2, e o crivo caía fora calado.
-  for (const h of crivo) {
-    if (nomes.includes(h.skill)) continue;
-    const body = loadSkillBody(h.skill, text);
-    if (!body) { console.error(`[skill] gate de saída "${h.skill}" carregou VAZIO em ${SKILLS_ROOT}`); continue; }
-    nomes.push(h.skill);
-    partes.push(`### GATE DE SAÍDA (obrigatório antes de entregar): ${h.skill}\n${body}`);
-  }
-
-  if (!partes.length) return "";
-  return `[MÉTODO CARREGADO (${nomes.join(", ")}) — o que está abaixo é o método que vale pra esta tarefa. Siga como está escrito, não improvise de cabeça.\n\n${partes.join("\n\n")}\n]`;
-}
-
-// ---- COPY RODA EM SONNET 5 ----
-// Escrita de linha pública (headline, carrossel, carta, landing, script, legenda, e-mail) sai
-// melhor no sonnet. Vale em QUALQUER sala: o turno que escreve copy troca de modelo sozinho.
-// Meta-salas ficam de fora (falar SOBRE copy no Motor não é escrever copy).
-// 29/07: nomes atualizados pro catálogo vivo (27 skills). Os antigos "soft-conteudo",
-// "soft-webinario", "soft-vendas-sdr" e "soft-vendas-closer" não existem mais desde a
-// consolidação, então a troca automática pro modelo de copy nunca disparava neles.
-// Os nomes da geração anterior seguem listados no fim: custam nada e cobrem sala que ainda os cite.
-const COPY_SKILLS = new Set([
-  "soft-conteudo-headlines", "soft-conteudo-carrossel", "soft-conteudo-reels",
-  "soft-conteudo-stories", "soft-conteudo-multiplataforma", "soft-conteudo-impulsionar",
-  "soft-funil-carta", "soft-funil-landing", "soft-funil-isca", "soft-funil-miniwebinar",
-  "soft-webinar-chat", "soft-webinar-mensagens", "soft-webinar-paginas",
-  "soft-webinar-script", "soft-webinar-slides",
-  "soft-vendas", "soft-apostila", "soft-proposta-comercial",
-  // geração anterior, ainda presente no diretório do bot:
-  "soft-conteudo", "soft-webinario", "soft-vendas-sdr", "soft-vendas-closer",
-  "soft-voz", "soft-critico-copy",
-]);
-// 29/07: o VERBO tem voto, não só o substantivo. Antes bastava a palavra "carrossel" aparecer pro
-// turno cair no sonnet — então "analisa por que meu carrossel nao converteu e reescreve a tese"
-// (diagnóstico + reestruturação) ia pro modelo simples, e "qual meu saldo" ficava no opus. Era o
-// avesso da doutrina do dono: caro no fácil, barato no difícil.
-// A regra "copy escreve melhor no sonnet" continua valendo — ela só perde quando o pedido é de
-// PENSAR sobre a copy em vez de ESCREVER a copy.
-const PENSAR_KEYWORDS = [
-  "analisa", "analise", "diagnostica", "diagnostico", "por que", "porque nao", "avalia", "avaliacao",
-  "decide", "decida", "estrategia", "reestrutura", "reformula", "repensa", "revisa tudo",
-  "compara", "comparacao", "planeja", "plano de", "arquitetura", "estrutura do", "audita",
-  "auditoria", "critica", "o que ta errado", "nao converteu", "nao funcionou", "melhora o",
-];
-function pedeRaciocinio(text) {
-  const norm = _deaccent(text || "");
-  return PENSAR_KEYWORDS.some(kw => {
-    const nkw = _deaccent(kw).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    return new RegExp(`(^|[^\\p{L}\\p{N}])${nkw}([^\\p{L}\\p{N}]|$)`, "u").test(norm);
-  });
-}
-
-
 const STATIC_FLOOR = Number(process.env.STATIC_FLOOR || 30000); // piso estático estimado (system+tools+persona); seed do floor por sessão
 // TETO ABSOLUTO da conversa. A fração sozinha é um gatilho que se desarma quando a casa aumenta a
 // janela do modelo: janela maior faz o SOFT subir junto, ninguém compacta mais e a conversa engorda
@@ -775,7 +373,7 @@ const STATIC_FLOOR = Number(process.env.STATIC_FLOOR || 30000); // piso estátic
 // ABSOLUTO (context_token_threshold, padrão 100000), não fração.
 const SOFT_CAP     = Number(process.env.SOFT_CAP || 112000);    // teto de CONVERSA onde compacta, independente da janela
 const HARD_CAP     = Number(process.env.HARD_CAP || 123000);    // teto do backstop bruto
-const FLOOR_CAP    = Number(process.env.FLOOR_CAP || 18000);    // TETO do piso: enxoval real nunca passa disto. Floor acima = turno pesado/fan-out envenenando → trava aqui, senão o SOFT despenca e compacta a cada 1-2 msgs ("esquece o que falávamos")
+const FLOOR_CAP    = Number(process.env.FLOOR_CAP || 60000);    // TETO do piso: enxoval real nunca passa disto. Floor acima = turno pesado/fan-out envenenando → trava aqui, senão o SOFT despenca e compacta a cada 1-2 msgs ("esquece o que falávamos")
 const SNAPSHOT_EVERY = Number(process.env.SNAPSHOT_EVERY || 8); // a cada N turnos guarda um tail-handoff (sobrevive a poda willow)
 const COMPACT_TIMEOUT_MS = Number(process.env.COMPACT_TIMEOUT_SEG || 120) * 1000;
 const MEMVIVA_FILE = process.env.MEMVIVA_FILE || `${BRAIN}/MEMORIA-VIVA.md`;   // memória de trabalho (decisões/projetos/pendências ATIVAS): SEMPRE no contexto (estilo NAIA)
@@ -912,21 +510,6 @@ const saveSessions = () => {
 // TEMP em DISCO REAL, NÃO no tmpfs /tmp (pequeno — enche com whisper/download de vídeo e trava TUDO com ENOSPC = "echo dá exit 1"; blindagem 08/jul).
 const WORK_TMP = process.env.LEAN_TMPDIR || `${process.env.HOME || "/tmp"}/.lean-tmp`;
 try { fs.mkdirSync(WORK_TMP, { recursive: true }); } catch {}
-
-// ==================== REFORÇO QUANDO A COTA BATE (02/ago) ====================
-// Sem isto o agente fica MUDO até a cota renovar — o dono manda mensagem e não vem nada.
-// Tudo aqui é OPCIONAL e gated por chave: sem as variáveis no .env, o comportamento é
-// exatamente o de antes. Quem quiser um seguro, preenche uma das duas:
-//   ANTHROPIC_OAUTH_2  → 2ª conta Anthropic (mesmo Claude, mesma qualidade)
-//   ZAI_API_KEY        → motor de reserva compatível
-const isLimitMsg = (s) => { s = String(s || ""); return s.length < 280 && /(hit your limit|usage limit|limit reached|reached your .{0,40}limit|rate.?limit|credit balance|balance is too low|resets?\s+(?:[A-Za-z]{3,9}\s+)?\d{1,2}|too many requests)/i.test(s); };
-const oauth2    = () => (envMap().ANTHROPIC_OAUTH_2 || process.env.ANTHROPIC_OAUTH_2 || "").trim();
-const zaiKey    = () => (envMap().ZAI_API_KEY || process.env.ZAI_API_KEY || "").trim();
-const ZAI_MODEL = process.env.ZAI_FALLBACK_MODEL || "glm-5.2";
-const ZAI_BASE  = process.env.ZAI_BASE_URL || "https://api.z.ai/api/anthropic";
-const conta2Env = () => { const e = childEnv(); e.CLAUDE_CODE_OAUTH_TOKEN = oauth2(); delete e.ANTHROPIC_API_KEY; delete e.ANTHROPIC_AUTH_TOKEN; delete e.ANTHROPIC_BASE_URL; return e; };
-const zaiEnv    = () => { const e = childEnv(); e.ANTHROPIC_BASE_URL = ZAI_BASE; e.ANTHROPIC_AUTH_TOKEN = zaiKey(); delete e.ANTHROPIC_API_KEY; delete e.CLAUDE_CODE_OAUTH_TOKEN; return e; };
-
 const childEnv = () => { const e = { ...process.env, ...envMap(), TZ: process.env.TZ || "America/Sao_Paulo", TMPDIR: WORK_TMP, TMP: WORK_TMP, TEMP: WORK_TMP }; delete e.TELEGRAM_BOT_TOKEN; return e; };
 // GUARD do /tmp: se o tmpfs ficar baixo, limpa só REGENERÁVEL/ANTIGO e avisa o dono CEDO. Nunca toca sessão claude ativa.
 let _lastDiskWarn = 0;
@@ -1539,6 +1122,194 @@ function saveMission(m) { try { fs.writeFileSync(missionFile(m.id), JSON.stringi
 function loadMission(id) { try { return JSON.parse(fs.readFileSync(missionFile(id), "utf8")); } catch { return null; } }
 function newMissionId() { return `m${Date.now().toString(36)}${Math.floor(Math.random() * 1e4).toString(36)}`; }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// MOTOR POR SALA (05/ago) — uma sala pode rodar noutro CLI (Codex/Grok) em vez do Claude.
+// Duas portas: "engine": "codex"|"grok" no topics.json (sala NATIVA, vale sempre) e os comandos
+// /codex | /grok | /claude por tópico (modo manual, durável em arquivo). Modo manual VENCE o
+// engine do topics.json; /claude pausa os dois e o Claude assume até religar.
+// DOUTRINA (dura): sala/modo de motor NUNCA cai no Claude escondido quando o motor falha — o
+// agente avisa honesto e para. Sala respondendo por outro motor por baixo é sala mentindo.
+// O Codex/Grok aqui é a ASSINATURA DO CLIENTE (ChatGPT / X), não é conta de terceiro: o motor só
+// liga se o binário EXISTIR na máquina; senão a resposta é o passo de instalação/login.
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// resposta curta de cota/limite = inútil pro dono (guarda barata; nunca entregar isso como resposta)
+const isLimitMsg = (s) => { s = String(s || ""); return s.length < 280 && /(hit your limit|usage limit|limit reached|reached your .{0,40}limit|rate.?limit|credit balance|balance is too low|resets?\s+(?:[A-Za-z]{3,9}\s+)?\d{1,2}|too many requests)/i.test(s); };
+// binário resolvido AO VIVO no HOME do cliente (env > caminhos comuns > PATH): ele pode instalar
+// o CLI DEPOIS do agente já estar no ar e a sala passa a funcionar sem restart.
+function acheBin(envVar, cmd, extras) {
+  const cands = [];
+  if (process.env[envVar]) cands.push(process.env[envVar]);
+  const H = process.env.HOME || os.homedir();
+  for (const e of extras) cands.push(e.replace(/^~/, H));
+  for (const d of String(process.env.PATH || "").split(":").filter(Boolean)) cands.push(`${d}/${cmd}`);
+  for (const c of cands) { try { if (c && fs.existsSync(c)) return c; } catch {} }
+  return null;
+}
+const codexBin = () => acheBin("CODEX_BIN", "codex", ["~/.npm-global/bin/codex", "~/.local/bin/codex", "/usr/local/bin/codex", "/usr/bin/codex"]);
+const grokBin  = () => acheBin("GROK_BIN",  "grok",  ["~/.grok/bin/grok", "~/.npm-global/bin/grok", "~/.local/bin/grok", "/usr/local/bin/grok"]);
+// o Codex herdaria OPENAI_* do .env e tentaria API key em vez da assinatura ChatGPT logada no `codex login`
+const codexEnv = () => { const e = childEnv(); delete e.OPENAI_API_KEY; delete e.OPENAI_BASE_URL; delete e.OPENAI_ORG_ID; return e; };
+const CODEX_TIMEOUT_SEG = Number(process.env.CODEX_TIMEOUT_SEG || 240);
+// CORTE CABEÇA+CAUDA: nunca cortar o FIM do contexto (a cauda carrega persona e memória fresca).
+function cortaPeloMeio(s, max) {
+  s = String(s || "");
+  if (s.length <= max) return s;
+  const head = Math.floor(max * 0.55), tail = max - head;
+  return s.slice(0, head) + "\n\n[…meio do contexto cortado pra caber no motor…]\n\n" + s.slice(-tail);
+}
+// sessão do motor por sala, na MESMA sessions.json do produto, chave "codex:<sala>"/"grok:<sala>"
+const codexKeyS = (key) => `codex:${key}`;
+const grokKeyS  = (key) => `grok:${key}`;
+function codexSid(key) { const s = sessions[codexKeyS(key)]; return (s && typeof s === "object" && s.sid) ? s.sid : null; }
+// system dos motores = a MESMA identidade que o Claude recebe (doutrina-base + persona + onde-está);
+// reconstruída aqui porque o runOnce monta a dele por dentro, inacessível antes do spawn.
+function motorSys(cfg, chatId, threadId) {
+  let s = "";
+  try { const b = doutrinaBase(); if (b) s += b + "\n\n"; } catch {}
+  try { const pf = `${PERSONA_DIR}/${cfg.persona}`; if (cfg.persona && fs.existsSync(pf)) s += fs.readFileSync(pf, "utf8"); } catch {}
+  s += `\n\n## ONDE VOCÊ ESTÁ AGORA\nVocê está respondendo no chat_id=${chatId}` + (threadId ? `, dentro do tópico topic_id=${threadId}` : ` (sem tópico — DM ou chat principal)`) + (cfg.label ? `, sala "${cfg.label}"` : "") + `.`;
+  return s;
+}
+// GROK CLI — agente completo (--always-approve: bash/arquivos ligados), assinatura do cliente.
+// ⚠️ SEM --resume (medido no grok CLI 0.2.93: o resume TRAVA headless esperando terminal até o
+// timeout). Continuação vai por SEED de texto (readTail no chamador). O sessionId continua sendo
+// gravado pra quando o CLI ganhar resume headless. NÃO religar --resume sem re-medir.
+function grokAsk(sys, userText, seed, key) {
+  const prompt = `${String(sys || "")}\n\n${seed ? `# CONTINUAÇÃO (últimas trocas desta MESMA conversa; siga daqui, não recomece):\n${String(seed).slice(0, 6000)}\n\n` : ""}# MENSAGEM DO DONO:\n${userText}\n\n(Você é o agente COMPLETO do dono nesta VPS — você TEM ferramentas de verdade: bash, ler/escrever arquivo, rodar comando. EXECUTE o que ele pedir, não só descreva. Pra ENTREGAR arquivo: cite o caminho absoluto no FIM da resposta — o sistema envia sozinho no Telegram. Responda na voz da persona acima. Só diga PRONTO quando o resultado EXISTIR de fato (confira). ⛔ Nunca finja que fez — faça de verdade e mostre o caminho.)`;
+  const GB = grokBin();
+  // prompt por ARQUIVO (--prompt-file): sem teto de ARG_MAX, a persona inteira chega no Grok.
+  // CLI antigo sem a flag → retry único com --single (prompt cortado pra caber como argumento).
+  const roda = (usaArquivo) => new Promise((resolve) => {
+    if (!GB) return resolve({ result: null, err: "sem-binario" });
+    let _pf = null;
+    if (usaArquivo) {
+      try { fs.mkdirSync(TMP_DIR, { recursive: true }); _pf = `${TMP_DIR}/grok-prompt-${Date.now()}-${Math.floor(Math.random() * 1e6)}.txt`; fs.writeFileSync(_pf, prompt); }
+      catch (e) { console.error("[ponte] grokAsk prompt-file:", e.message); _pf = null; }
+    }
+    const args = _pf ? ["--prompt-file", _pf] : ["--single", cortaPeloMeio(prompt, 24000)];
+    args.push("--output-format", "json", "--always-approve", "--permission-mode", "bypassPermissions");
+    let out = "", err = "", settled = false;
+    const _cleanup = () => { if (_pf) { try { fs.unlinkSync(_pf); } catch {} } };
+    const fin = (v) => { if (settled) return; settled = true; clearTimeout(t); try { p.kill("SIGKILL"); } catch {} _cleanup(); resolve(v); };
+    const p = trackKid(spawn(GB, args, { cwd: process.env.HOME || os.homedir(), env: childEnv(), stdio: ["ignore", "pipe", "pipe"] }));
+    const t = setTimeout(() => { console.error("[ponte] grokAsk TIMEOUT (180s)"); fin({ result: null, err: "timeout" }); }, 180000);
+    p.stdout.on("data", d => (out += d));
+    p.stderr.on("data", d => (err += d));
+    p.on("close", () => {
+      const raw = String(out).trim();
+      let result = null, _gkSid = null;
+      // --output-format json: shape {text, sessionId, ...}; se o formato mudar, cai pro texto cru
+      try {
+        const j = JSON.parse(raw);
+        result = j.result || j.response || j.text || j.message || null;
+        _gkSid = j.session_id || j.sessionId || j.thread_id || null;
+      } catch {
+        for (const line of raw.split("\n").reverse()) {
+          try { const ev = JSON.parse(line);
+            if (!_gkSid && ev && (ev.session_id || ev.sessionId || ev.thread_id)) _gkSid = ev.session_id || ev.sessionId || ev.thread_id;
+            if (!result && ev && (ev.result || ev.text || (ev.item && ev.item.text))) result = ev.result || ev.text || (ev.item && ev.item.text);
+          } catch {}
+        }
+      }
+      if (!result && raw && raw[0] !== "{") result = raw;   // saída plain (fallback do fallback)
+      if (result && key && _gkSid) { try { persistSession(grokKeyS(key), _gkSid, 0, "grok"); } catch {} }
+      if (!result) console.error("[ponte] grokAsk vazio/erro:", String(err || raw).slice(-300));
+      fin({ result: result ? String(result).trim() : null, err: String(err) });
+    });
+    p.on("error", (e) => { console.error("[ponte] grokAsk erro:", e.message); fin({ result: null, err: e.message }); });
+  });
+  return (async () => {
+    let r = await roda(true);
+    if (!r.result && /unknown (option|flag)|unrecognized|prompt-file/i.test(String(r.err || ""))) {
+      console.error("[ponte] grokAsk: --prompt-file rejeitado pelo CLI — tentando --single");
+      r = await roda(false);
+    }
+    return r.result;
+  })();
+}
+// CODEX CLI — COM sessão por sala (`codex exec resume <id>`): o motor retoma a conversa de
+// verdade, não recomeça do zero. stdio de entrada FECHADO de propósito (`codex exec` fica
+// esperando stdin quando ele não é fechado). Se o resume morrer (sessão podada), retry único
+// SEM resume — a sala não fica muda por causa de um id morto.
+function codexAsk(sys, userText, seed, cfg, key) {
+  const _label = (cfg && cfg.label) || "Agente";
+  const _pers = (cfg && cfg.persona) || "persona";
+  const _sysMax = Number(process.env.CODEX_SYS_MAX || 60000);
+  // identidade HONESTA: o dono escolheu esta sala/modo pra rodar no Codex — ele SABE o motor.
+  const _ident = `# IDENTIDADE DESTE TURNO (OBRIGATÓRIA)\nVocê É o agente "${_label}" do dono no Telegram, rodando no Codex CLI. A persona abaixo (${_pers}) é a sua.\nFale na voz, tom, regras e jargão dessa persona.\nEsta sala foi configurada pelo dono PRA rodar no Codex: se ele perguntar em que motor você roda, responda a verdade.\nPROIBIDO: virar assistente genérico; mudar de personagem; pedir pro dono "abrir o Claude"; fingir que rodou algo que não rodou.\n\n# VOCÊ TEM TERMINAL\nVocê roda na VPS do dono com ferramentas de verdade (bash, ler e escrever arquivo). Use quando o pedido exigir execução real, e diga o que faltou quando faltar.\n\n# O QUE NÃO EXISTE NESTE MOTOR (proibido prometer)\nAqui NÃO há painel de progresso, subagente, missão nem trabalho em segundo plano. Você responde DENTRO deste turno, e o turno morre quando você terminar de escrever.\nPROIBIDO dizer que abriu missão ou que algo "segue rodando": nada disso sobrevive. Ou você entrega agora, ou diz em uma linha o que falta e por quê.\nSe a doutrina acima descrever essa maquinaria, é porque ela existe nas salas do Claude — NESTA ela NÃO está ligada. Onde ela mandar delegar, faça você mesmo, aqui, agora.\n\n`;
+  const _safe = (s) => String(s || "")
+    .replace(/^(?:Eu|Você):\s*You've hit your limit[^\n]*$/gmi, "")
+    .replace(/^You've hit your limit[^\n]*$/gmi, "")
+    .replace(/^Eu:\s*No response requested\.\s*$/gmi, "");
+  const _utMax = Number(process.env.CODEX_USER_MAX || 40000);
+  let _ut = _safe(userText);
+  if (_ut.length > _utMax) {
+    const _head = Math.floor(_utMax * 0.35), _tail = _utMax - _head;
+    _ut = _ut.slice(0, _head) + "\n\n[…contexto de máquina cortado pra caber…]\n\n" + _ut.slice(-_tail);
+  }
+  const _seed = _safe(seed);
+  const prompt = `${_ident}${cortaPeloMeio(sys, _sysMax)}\n\n${_seed ? `# CONTINUAÇÃO (últimas trocas desta conversa; siga daqui):\n${_seed.slice(0, 3000)}\n\n` : ""}# MENSAGEM DO DONO:\n${_ut}`;
+  const roda = (prevSid) => new Promise((resolve) => {
+    const CB = codexBin();
+    if (!CB) return resolve(null);
+    const args = prevSid
+      ? ["exec", "resume", prevSid, "--json", "--skip-git-repo-check", prompt]   // resume NÃO aceita -C (o cwd já é WORKDIR no spawn)
+      : ["exec", "--json", "--skip-git-repo-check", "-C", WORKDIR, prompt];
+    let out = "", err = "", settled = false;
+    const fin = (v) => { if (settled) return; settled = true; clearTimeout(t2); try { killTree(p, "SIGKILL"); } catch {} resolve(v); };
+    const p = trackKid(spawn(CB, args, { cwd: WORKDIR, env: codexEnv(), detached: true, stdio: ["ignore", "pipe", "pipe"] }));
+    const t2 = setTimeout(() => { console.error(`[ponte] codexAsk TIMEOUT (${CODEX_TIMEOUT_SEG}s)`); fin(null); }, CODEX_TIMEOUT_SEG * 1000);
+    p.stdout.on("data", d => (out += d));
+    p.stderr.on("data", d => (err += d));
+    p.on("close", () => {
+      let result = null, _cxSid = null;
+      // DUAS PASSADAS: o id da conversa vem no PRIMEIRO evento ({"type":"thread.started","thread_id":...})
+      // e a resposta no ÚLTIMO (agent_message). Uma varredura só de trás pra frente perdia o id — a
+      // sessão nunca era persistida e a sala recomeçava do ZERO a cada mensagem (amnésia).
+      const _linhas = String(out).trim().split("\n");
+      for (const line of _linhas) {
+        try { const ev = JSON.parse(line);
+          if (ev && (ev.thread_id || ev.session_id || (ev.item && ev.item.session_id))) { _cxSid = ev.thread_id || ev.session_id || (ev.item && ev.item.session_id); break; }
+        } catch {}
+      }
+      for (const line of _linhas.reverse()) {
+        try { const ev = JSON.parse(line);
+          if (ev && ev.type === "item.completed" && ev.item && ev.item.type === "agent_message" && ev.item.text) { result = String(ev.item.text).trim(); break; }
+        } catch {}
+      }
+      if (result && key && _cxSid) { try { persistSession(codexKeyS(key), _cxSid, 0, "codex"); } catch {} }
+      if (!result) console.error("[ponte] codexAsk vazio/erro:", String(err || out).slice(-300));
+      fin(result);
+    });
+    p.on("error", (e) => { console.error("[ponte] codexAsk erro:", e.message); fin(null); });
+  });
+  return (async () => {
+    const _prev = key ? codexSid(key) : null;
+    let r = await roda(_prev);
+    if (!r && _prev) {   // sessão do Codex podada/expirada → recomeça limpo (o seed já leva a continuação)
+      console.error("[ponte] codexAsk: resume falhou — tentando sessão nova");
+      r = await roda(null);
+    }
+    return r;
+  })();
+}
+// Modos manuais por tópico, duráveis (sobrevivem a restart). Convenção de pausa: modo()[sala]===false
+// = /claude pausou o motor NATIVO desta sala até o /<cli> religar. ===true = modo manual ligado.
+const GROKMODE_FILE = `${WORKDIR}/grok-mode.json`;
+let grokMode = (() => { try { return JSON.parse(fs.readFileSync(GROKMODE_FILE, "utf8")); } catch { return {}; } })();
+const saveGrokMode = () => { try { fs.writeFileSync(GROKMODE_FILE, JSON.stringify(grokMode)); } catch {} };
+const CODEXMODE_FILE = `${WORKDIR}/codex-mode.json`;
+let codexMode = (() => { try { return JSON.parse(fs.readFileSync(CODEXMODE_FILE, "utf8")); } catch { return {}; } })();
+const saveCodexMode = () => { try { fs.writeFileSync(CODEXMODE_FILE, JSON.stringify(codexMode)); } catch {} };
+// REGISTRO DE MOTORES: plugar um CLI novo = UMA entrada aqui (+ "engine" no topics.json da sala).
+// Contrato do ask: (sys, userText, seed, cfg, key) → Promise<string|null>; null = falhou/mudo.
+const MOTORES = {
+  grok:  { nome: "Grok",  ask: (sys, u, seed, _cfg, key) => grokAsk(sys, u, seed, key),        temSessao: false, bin: () => grokBin(),  modo: () => grokMode,  salvar: () => saveGrokMode(),
+           setup: () => `⚙️ Pra esta sala rodar no Grok, instala o CLI e loga na TUA assinatura (é a tua conta, não a de ninguém):\n1. \`curl -fsSL https://x.ai/cli/install.sh | bash\`\n2. \`grok login\` (no terminal da VPS)\nDepois manda a mensagem de novo que eu já pego. Enquanto isso, /claude que eu assumo por aqui.` },
+  codex: { nome: "Codex", ask: (sys, u, seed, cfg, key) => codexAsk(sys, u, seed, cfg, key),   temSessao: true,  bin: () => codexBin(), modo: () => codexMode, salvar: () => saveCodexMode(),
+           setup: () => `⚙️ Pra esta sala rodar no Codex, instala o CLI e loga na TUA assinatura ChatGPT (é a tua conta, não a de ninguém):\n1. \`npm i -g @openai/codex\`\n2. \`codex login\` (no terminal da VPS)\nDepois manda a mensagem de novo que eu já pego. Enquanto isso, /claude que eu assumo por aqui.` },
+};
+
 function ask(key, text, cfg, chatId, threadId, mission) {
   const base = threadId ? { message_thread_id: Number(threadId) } : {};
   const _s    = sessions[key];
@@ -1550,7 +1321,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
   const { win, floor, ctxConv, SOFT, HARD } = gate(_s, cfg.model);   // CAMADA 1: crescimento da conversa, não janela bruta
 
   // roda o claude uma vez. resumeSid=null força sessão nova; 'cont' é o resumo de continuação a injetar.
-  function runOnce(resumeSid, cont, soConclui, override) {   // override: {env, model} — usado pelo reforço de cota
+  function runOnce(resumeSid, cont, soConclui) {
     return new Promise((resolve) => {
       const isMissao = !!mission;   // MODO MISSÃO: tarefa longa deliberada (budget/tempo soltos + reports de marco + retomada durável)
       // HORÁRIO de Brasília vai no INPUT (não no system-prompt: evita cache-bust). Prepende ao texto do usuário.
@@ -1566,16 +1337,9 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       ].filter(Boolean).join("\n\n");
       // resumo da conversa também é volátil (muda a cada compactação): vai no INPUT, não no system-prompt.
       const contBlock = cont ? `# A CONVERSA CONTINUA — NÃO recomece do zero\nVocê JÁ vinha conversando com o dono; este trecho é CONTINUAÇÃO da mesma conversa (ela foi compactada pra caber, só isso). Resumo do que já falaram antes deste ponto:\n${cont}\n\nRegra: trate como continuação natural. NUNCA diga "a conversa começou agora", "não tenho histórico desta sessão" nem peça pra ele repetir o que já foi dito. Se perguntarem o que falaram antes, responda a partir DESTE resumo.` : "";
-      // GATE DE SKILLS (02/ago): injeta o MÉTODO da skill que casa com o pedido. Sem isto o agente
-      // responde de cabeça e o dono não recebe o que comprou. Falha em silêncio se não houver skill.
-      let skillGate = "";
-      try { skillGate = skillGateBlock(text, cfg) || ""; } catch (e) { console.error("[skill] gate:", e && e.message); }
-      // 03/08: correção do dono vira arquivo em vez de evaporar com a conversa (ver a função).
-      let correcao = "";
-      try { correcao = correcaoDoDonoBlock(text) || ""; } catch (e) { console.error("[correcao] bloco:", e && e.message); }
-      const userText = [timeBlock(), contBlock, mbDyn, skillGate, correcao, soConclui || text].filter(Boolean).join("\n\n");
+      const userText = [timeBlock(), contBlock, mbDyn, soConclui || text].filter(Boolean).join("\n\n");
       // COPY sempre em sonnet 5, mesmo que a sala rode outro modelo.
-      const _model = (override && override.model) || (isCopyTask(text) ? COPY_MODEL : cfg.model);
+      const _model = isCopyTask(text) ? COPY_MODEL : cfg.model;
       const args = ["-p", "--model", _model, "--output-format", "stream-json", "--verbose",
                     "--permission-mode", "bypassPermissions",   // agência total: escreve/edita arquivo + roda Bash (acesso já é só OWNER/allowlist)
                     "--add-dir", WORKDIR, "--add-dir", BRAIN, "--add-dir", TMP_DIR, "--add-dir", projDir()];
@@ -1593,10 +1357,6 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       const pf = `${PERSONA_DIR}/${cfg.persona}`;
       let sysPrompt = "";
       { const base = doutrinaBase(); if (base) sysPrompt += base + "\n\n"; }
-      // GERENTE DA SALA (02/ago): toda sala DELEGA em vez de executar tudo, e escala o modelo de
-      // baixo pra cima. Sem isto cada sala fazia tudo sozinha, no modelo caro.
-      { const gp = `${PERSONA_DIR}/_GERENTE-DA-SALA.md`;
-        try { if (fs.existsSync(gp)) sysPrompt += fs.readFileSync(gp, "utf8") + "\n\n"; } catch {} }
       if (cfg.persona && fs.existsSync(pf)) { try { sysPrompt += fs.readFileSync(pf, "utf8"); } catch {} }
       // ONDE VOCÊ ESTÁ: o agente sempre sabe o chat/tópico atual → reporta o id, se auto-configura, e não precisa de getUpdates/@userinfobot
       const loc = `## ONDE VOCÊ ESTÁ AGORA\nVocê está respondendo no chat_id=${chatId}` + (threadId ? `, dentro do tópico topic_id=${threadId}` : ` (sem tópico — DM ou chat principal)`) + (cfg.label ? `, sala "${cfg.label}"` : "") + `. Se pedirem o id deste grupo/tópico, é ESTE — você JÁ sabe, não use getUpdates nem @userinfobot. Pra te configurar nesta sala, grave este chat_id/topic_id no seu .env (GROUP_CHAT_ID) ou no topics.json e reinicie.`;
@@ -1628,7 +1388,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       }
       // detached: process group próprio → killTree(-pgid) não deixa subagente órfão queimando cota
       // missão injeta MISSAO_PROGRESS no filho → o agente escreve marcos nesse arquivo e a ponte posta como report
-      let _env = (override && override.env) || childEnv();
+      let _env = childEnv();
       if (isMissao) _env = { ..._env, MISSAO_ID: mission.id, MISSAO_PROGRESS: mission.progressFile };
       const proc = trackKid(spawn(CLAUDE_BIN, args, { cwd: WORKDIR, env: _env, detached: true }));
 
@@ -1662,17 +1422,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
             if (c === "cp" || c === "mv" || c === "mkdir" || c === "rm" || c === "chmod") return "Organizando arquivo";
             return "Rodando comando";
           }
-          // A tool de subagente virou "Agent" no CLI 2.1.220 — o case "Task" ficou órfão e o painel
-          // mostrava "Pensando" toda vez que um ajudante abria. Pior: como o texto do painel nunca
-          // passa por console.log, o log dava ZERO chamadas de ajudante e a leitura virava "a
-          // delegação não funciona". Os dois nomes ficam, porque CLI antigo ainda manda "Task".
-          // O console.log existe pra o log passar a medir de verdade.
-          case "Agent":
-          case "Task": {
-            const _aj = (inp && (inp.subagent_type || inp.subagentType)) || "";
-            if (_aj) { try { console.log(`[ponte] ajudante aberto: ${_aj}`); } catch {} }
-            return _aj ? `Chamando o ajudante ${_aj}` : "Chamando um ajudante";
-          }
+          case "Task":       return "Chamando um ajudante";
           case "WebFetch":   return "Consultando um site";
           case "WebSearch":  return "Pesquisando na internet";
           case "TodoWrite":  return "Anotando o plano";
@@ -1871,6 +1621,32 @@ function ask(key, text, cfg, chatId, threadId, mission) {
     // continuidade injetada TODO turno: handoff (sessão nova recém-semeada) OU _prior (resumo persistido)
     const cont = handoff || _prior;
 
+    // ── MOTOR POR SALA (registro MOTORES, bloco antes do ask) ────────────────────────────
+    // Modo manual (/codex|/grok) VENCE o engine do topics.json; /claude pausa (modo()[sala]=false).
+    // Doutrina dura: motor de sala falhou = aviso honesto, NUNCA responder pelo Claude escondido.
+    const _mKey = `${chatId}:${threadId || "main"}`;
+    const _mManual = codexMode[_mKey] === true ? "codex" : (grokMode[_mKey] === true ? "grok" : null);
+    const _mNativo = (cfg && cfg.engine && MOTORES[cfg.engine] && MOTORES[cfg.engine].modo()[_mKey] !== false) ? cfg.engine : null;
+    const _motor = _mManual || _mNativo;
+    if (_motor) {
+      const M = MOTORES[_motor];
+      // binário ausente = o cliente ainda não instalou/logou a assinatura DELE: resposta honesta com o passo
+      if (!M.bin()) return { result: M.setup(), sid: _sid, ctx: 0, ok: false };
+      const mSeed = (useSid && sidExists(useSid)) ? readTail(useSid) : (handoff || _prior || "");
+      const _mvvM = capBytes(readLines(MEMVIVA_FILE, 120), MEMVIVA_READ_MAX);
+      const mUser = [timeBlock(),
+        _mvvM ? `# MEMÓRIA VIVA — decisões/projetos/pendências ATIVAS (leia antes de responder):\n${_mvvM}` : "",
+        cont ? `# A CONVERSA CONTINUA — resumo do que já falaram (não recomece do zero):\n${cont}` : "",
+        text].filter(Boolean).join("\n\n");
+      const mOut = await M.ask(motorSys(cfg, chatId, threadId), mUser, mSeed, cfg, key);
+      if (mOut && !isLimitMsg(mOut)) return { result: mOut, sid: _sid, ctx: 0, ok: true };
+      console.error(`[ponte] motor ${_motor} falhou/mudo na sala ${_mKey} — sem rede escondida (doutrina)`);
+      return { result: _mManual
+        ? `⚠️ O ${M.nome} não respondeu agora — e você ligou o /${_motor} neste tópico, então não vou responder por baixo com outro motor. Manda de novo, ou /claude pra voltar.`
+        : `⚠️ O ${M.nome} não respondeu agora — e esta sala roda só nele, por decisão sua, então não vou responder por baixo com outro motor. Manda de novo, /claude pra eu assumir aqui, ou fala comigo em outra sala se for urgente.`,
+        sid: _sid, ctx: 0, ok: false };
+    }
+
     let out = await runOnce(canResume ? useSid : null, cont);
     // sessão expirada/deletada no servidor → re-roda 1x SEM resume, semeando o handoff salvo (não some o turno).
     // casa a frase REAL do claude ("No conversation found with session ID ...") além das variantes antigas.
@@ -1898,28 +1674,6 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       // ESCALADA: na 3ª falha seguida do MESMO tópico, para de dizer "é passageiro" — mostra a causa
       // e pede o dono (erro permanente tipo login vencido/chave morta não pode virar loop infinito).
       // REINÍCIO PLANEJADO vem ANTES de tudo: não é falha do tópico, não conta streak, não vira jargão.
-      // REFORÇO POR COTA (02/ago): se a cota bateu e existe um seguro configurado, responde por ele
-      // em vez de deixar o dono sem resposta. Sem chave no .env, nada disto roda.
-      {
-        const _sig = String(out.err || "") + "\n" + String(out.result || "");
-        const _cota = isLimitMsg(out.result) || /(hit your limit|usage limit|limit reached|credit balance|over.?quota)/i.test(_sig);
-        if (_cota) {
-          const _seed = cont || _store || (useSid && sidExists(useSid) ? readTail(useSid) : "");
-          if (oauth2()) {
-            console.log("[ponte] cota bateu — respondendo pela CONTA 2 (mesmo Claude)");
-            const r2 = await runOnce(null, _seed, null, { env: conta2Env() });
-            if (r2.result != null && !isLimitMsg(r2.result)) { _failStreak[key] = 0; return { result: r2.result, sid: out.sid, ctx: 0, ok: true }; }
-          }
-          if (zaiKey()) {
-            console.log("[ponte] cota bateu — respondendo pelo motor de reserva");
-            const rz = await runOnce(null, _seed, null, { model: ZAI_MODEL, env: zaiEnv() });
-            if (rz.result != null && !isLimitMsg(rz.result)) {
-              _failStreak[key] = 0;
-              return { result: rz.result + "\n\n_⚙️ respondi pelo reforço: a cota do motor principal bateu. Quando renovar, eu volto._", sid: out.sid, ctx: 0, ok: true };
-            }
-          }
-        }
-      }
       if (String(out.err) === "__REINICIO__" || fs.existsSync("/tmp/lean-cliente.selfupd-active")) {
         return { result: "⚙️ Reiniciei no meio do teu recado (estava aplicando um ajuste). Guardei ele aqui e volto com a resposta em ~1 min — não precisa repetir.", sid: out.sid, ctx: out.ctx || 0, ok: false, retomar: true };
       }
@@ -2139,6 +1893,7 @@ function processOne(msg, chatId, threadId, key, cfg, mission) {
         `· _dá uma olhada nessa copy e melhora_`,
         ``,
         `*Comandos:* /status (como eu tô) · /atualiza (pego a última versão do método)`,
+        `*Motor:* /codex ou /grok (esta sala passa a rodar nesse CLI, na TUA assinatura) · /claude (volta). Dá também pra cravar por sala com "engine" no topics.json.`,
         ``,
         `Pode mandar áudio, print, PDF. E não precisa acertar a palavra certa: fala do teu jeito que eu entendo.`
       ].join("\n"), threadId);
@@ -2160,6 +1915,30 @@ function processOne(msg, chatId, threadId, key, cfg, mission) {
       catch (e) { console.error("[ponte] /audio:", e && e.message);
         return send(chatId, `⚠️ Não consegui iniciar a instalação do áudio. Tenta de novo daqui a pouco.`, threadId); }
       return send(chatId, `🎤 Ligando o áudio (transcrição local, sem chave)... baixo o modelo e me reinicio — leva uns minutos. Te aviso com o "✅ No ar!".`, threadId);
+    }
+    // /codex /grok /claude — escolhe o MOTOR deste tópico na hora (instantâneo, sem gastar cota).
+    // Modo durável em arquivo (sobrevive a restart). /claude numa sala NATIVA (topics.json com
+    // engine) é pausa temporária: modo()[sala]=false até o /<cli> religar.
+    if (/^\/(codex|grok|claude)\b/i.test(text.trim())) {
+      const _cmd = text.trim().toLowerCase().split(/[@\s]/)[0];
+      const gk = `${chatId}:${threadId || "main"}`;
+      if (_cmd === "/claude") {
+        delete grokMode[gk]; delete codexMode[gk];
+        const _nat = (cfg && cfg.engine && MOTORES[cfg.engine]) ? cfg.engine : null;
+        if (_nat) MOTORES[_nat].modo()[gk] = false;
+        saveGrokMode(); saveCodexMode();
+        return send(chatId, _nat
+          ? `🧠 Claude assumiu neste tópico (a sala é nativa do ${MOTORES[_nat].nome} — manda /${_nat} pra devolver o motor dela).`
+          : `🧠 Voltei pro Claude neste tópico.`, threadId);
+      }
+      const _eng = _cmd === "/codex" ? "codex" : "grok";
+      // binário ausente: NÃO liga um modo que vai ficar mudo — responde o passo de instalação/login
+      if (!MOTORES[_eng].bin()) return send(chatId, MOTORES[_eng].setup(), threadId);
+      if (_eng === "codex") { delete grokMode[gk]; codexMode[gk] = true; } else { delete codexMode[gk]; grokMode[gk] = true; }
+      saveGrokMode(); saveCodexMode();
+      return send(chatId, _eng === "codex"
+        ? `🟡 Codex LIGADO neste tópico — toda mensagem vai pro Codex CLI (tua assinatura, com terminal e sessão própria desta sala) até você mandar /claude.`
+        : `⚡ Grok LIGADO neste tópico — toda mensagem vai pro Grok CLI (tua assinatura, com terminal e ferramentas ligadas) até você mandar /claude. Obs: a memória dele entre mensagens vai por resumo de texto, não por sessão nativa.`, threadId);
     }
     return ask(key, text, cfg, chatId, threadId, mission).then(async ({ result, sid, ctx, ok, timedOut }) => {
       // ok:true → persiste a sessão pelo motor (floor/turns/compactCount/handoff/priorSummary).
@@ -2339,22 +2118,7 @@ async function flushPending(key) {
     const parts = [];
     for (const m of msgs) { try { const r = await resolveInput(m); if (r.text) parts.push(r.text); } catch (e) { console.error("[ponte] resolve(batch):", e && e.message); } }
     console.log(`[ponte] 🧩 ${msgs.length} mensagens juntadas em 1 prompt (${key})`);
-    // A RAJADA CHEGA MARCADA, E QUEM DECIDE É O AGENTE. Antes as mensagens vinham só coladas uma
-    // na outra: o turno lia um texto comprido e fazia tudo em série, tratando três pedidos
-    // independentes como se fossem um. A tentativa de resolver isso com um triador que decidia
-    // junta-ou-separa ANTES do agente ver foi medida e reprovada — ele julgava duas linhas de
-    // texto solto, sem histórico da conversa, sem persona, sem memória, e errava a maioria dos
-    // casos. Quem tem o contexto é o agente. Aqui a rajada só chega numerada, com a instrução do
-    // que fazer com ela; a decisão fica com quem sabe do que a conversa trata.
-    const _limpas = parts.filter(Boolean);
-    const _num = _limpas.map((p, i) => `[mensagem ${i + 1}]\n${p}`).join("\n\n");
-    const _txt = _limpas.length > 1
-      ? `O dono mandou ${_limpas.length} mensagens seguidas, em rajada:\n\n${_num}\n\n` +
-        `— Decida você o que elas são. Se forem partes do MESMO pedido (uma corrige, completa ou dá contexto à outra), trate como um pedido só. ` +
-        `Se forem trabalhos INDEPENDENTES, que dá pra tocar ao mesmo tempo sem um esperar o outro, toque em paralelo (respeitando o teto de ajudantes) e responda cada um no seu próprio bloco, dizendo o que ficou pronto. ` +
-        `Nenhuma das mensagens pode ficar sem resposta: se você não for atender alguma agora, diga qual e por quê.`
-      : _num.replace(/^\[mensagem 1\]\n/, "");
-    return { text: _txt.trim(), ...(threadId ? { message_thread_id: Number(threadId) } : {}) };
+    return { text: parts.join("\n\n").trim(), ...(threadId ? { message_thread_id: Number(threadId) } : {}) };
   }));
   dispatchResolved(dispatchMsg, chatId, threadId, key, cfg);
 }
@@ -2564,19 +2328,7 @@ function checkPromises() {
     const wRaw = (typeof job.when === "number" ? job.when : Date.parse(job.when)) || 0;
     const agendadaPraFrente = wRaw > Date.now() + 60000;
     let when = (job.mission && !agendadaPraFrente) ? Date.now() : wRaw;
-    // PROMESSA MALFORMADA NÃO MORRE CALADA. O filtro abaixo é o certo (sem prompt ou sem chatId não
-    // dá pra executar nem pra responder), mas até aqui ele descartava EM SILÊNCIO: o arquivo ficava
-    // pra sempre no disco, o dono esperava uma entrega que nunca ia sair, e não havia uma linha de
-    // log dizendo por quê. Isso já custou caro — motor de tarefa que nunca dispara e ninguém
-    // descobre, porque o gatilho morre sem ruído. Agora reclama uma vez por arquivo.
-    if (job.done) continue;
-    if (!job.prompt || !job.chatId) {
-      if (!job._avisado) {
-        job._avisado = true; try { fs.writeFileSync(fp, JSON.stringify(job)); } catch {}
-        console.error(`[ponte] promessa ${f} IGNORADA: falta ${!job.prompt ? "prompt" : "chatId"} — nada a executar. Arquivo: ${fp}`);
-      }
-      continue;
-    }
+    if (job.done || !job.prompt || !job.chatId) continue;
     if (!when) { when = Date.now(); console.log(`[ponte] promessa ${f} sem hora válida → disparando AGORA (nunca deixar promessa morrer calada)`); }
     if (when > Date.now()) continue;                                  // ainda não venceu (vale pra promessa E pra missão agendada)
     job.done = true; job.firedAt = Date.now();                        // NÃO sobrescreve job.when: apagar a data original apagava a prova nas autópsias
@@ -2589,46 +2341,21 @@ function checkPromises() {
 // MENU NATIVO DO TELEGRAM (29/07). Sem isto, o cliente digita "/" e nao aparece nada: ele precisa
 // ADIVINHAR que existe /ajuda. O setMyCommands faz o Telegram mostrar a lista sozinho, com
 // descricao, no proprio campo de digitacao. Roda uma vez no boot; falha aqui nunca derruba o bot.
-// TODA SKILL NO MENU "/" (02/ago): o dono digita "/" e vê o método que comprou, em vez de ter de
-// decorar nome de skill. Lê o mesmo diretório que o gate usa. O Telegram rejeita o lote inteiro
-// quando a soma das descrições cresce (medido), por isso a legenda é cortada em 60 chars.
-function skillsDoMenu() {
-  const out = [];
-  let dirs = [];
-  try { dirs = fs.readdirSync(SKILLS_ROOT, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name); } catch { return out; }
-  for (const nome of dirs.sort()) {
-    if (nome.startsWith("_") || nome === "scripts") continue;
-    const fp = `${SKILLS_ROOT}/${nome}/SKILL.md`;
-    if (!fs.existsSync(fp)) continue;
-    const cmd = nome.toLowerCase().replace(/[^a-z0-9_]/g, "_").replace(/_+$/, "").slice(0, 32);
-    if (!cmd) continue;
-    let desc = "";
-    try {
-      const m = fs.readFileSync(fp, "utf8").slice(0, 4000).match(/^description:\s*(.+)$/mi);
-      if (m) desc = m[1].replace(/^["']|["']$/g, "").trim();
-    } catch {}
-    desc = (desc.split(/(?<=[.;])\s/)[0] || nome).replace(/\s+/g, " ")
-             .replace(/^(Use (this skill )?(whenever|when|any time)[^,]*,\s*)/i, "").slice(0, 60);
-    out.push({ command: cmd, description: desc || nome });
-  }
-  return out;
-}
 async function registrarMenu() {
   try {
-    const fixos = [
+    await tg("setMyCommands", { commands: [
       { command: "ajuda",     description: "o que eu faco e como pedir" },
       { command: "status",    description: "como eu estou (conta, versao, saude)" },
       { command: "atualiza",  description: "pego a ultima versao do metodo" },
       { command: "id",        description: "o id deste grupo/topico" },
-    ];
-    const usados = new Set(fixos.map(c => c.command));
-    const extras = skillsDoMenu().filter(s => !usados.has(s.command)).slice(0, 100 - fixos.length);
-    await tg("setMyCommands", { commands: [...fixos, ...extras] });
-    console.log(`[ponte] menu de comandos registrado no Telegram (${fixos.length} fixos + ${extras.length} skills)`);
+      { command: "codex",     description: "esta sala passa a rodar no Codex CLI (tua assinatura)" },
+      { command: "grok",      description: "esta sala passa a rodar no Grok CLI (tua assinatura)" },
+      { command: "claude",    description: "volta esta sala pro Claude" },
+    ]});
+    console.log("[ponte] menu de comandos registrado no Telegram");
   } catch (e) { console.error("[ponte] setMyCommands falhou (segue a vida):", e && e.message); }
 }
-// só quando EXECUTADO, nunca quando importado como lib (senão qualquer require dispara rede)
-if (require.main === module) registrarMenu();
+registrarMenu();
 
 async function poll() {
   while (!_shuttingDown) {   // no shutdown: para de pegar mensagem nova; o dreno espera as em voo terminarem
@@ -2987,40 +2714,9 @@ async function poll() {
 // no modo SERVIÇO: garante instância única e sobe o poll. No modo TESTE (require): só exporta o miolo puro.
 // SELF-CHECK de dependências (boot + /status): pega claude não-executável.
 // No boot AVISA o dono SÓ se algo estiver quebrado (silêncio = saudável; sem spam a cada restart).
-// O X_OK sozinho não pega o motor que morre DEPOIS do boot (foi o incidente de 02/ago: symlink
-// apontando pro binário apagado numa faxina). Agora o binário tem que RESPONDER --version.
-function claudeVivo() {
-  try { fs.accessSync(CLAUDE_BIN, fs.constants.X_OK); } catch { return "claude não-executável (" + CLAUDE_BIN + ")"; }
-  try {
-    const r = spawnSync(CLAUDE_BIN, ["--version"], { timeout: 15000, encoding: "utf8" });
-    if (r.error) return "claude não responde --version (" + (r.error.code || r.error.message) + ")";
-    if (r.status !== 0) return "claude --version saiu " + r.status;
-    if (!/\d+\.\d+/.test(String(r.stdout || ""))) return "claude --version sem versão na saída";
-  } catch (e) { return "claude --version falhou (" + e.message + ")"; }
-  return null;
-}
-
-// VIGIA DO MOTOR: motor morto = agente MUDO, e o aviso de boot é uma bala só. Insiste a cada 10min
-// enquanto estiver quebrado e confirma quando volta, pro silêncio nunca ser lido como saúde.
-let _motorQuebrado = false;
-function vigiaDoMotor() {
-  try {
-    const prob = claudeVivo();
-    if (prob && !_motorQuebrado) {
-      _motorQuebrado = true;
-      send(OWNER, "🚨 MOTOR FORA DO AR\n· " + prob + "\n\nO agente não responde nada enquanto isso.\nConfere: ls -l " + CLAUDE_BIN).catch(function () {});
-    } else if (prob && _motorQuebrado) {
-      send(OWNER, "🚨 motor ainda fora: " + prob).catch(function () {});
-    } else if (!prob && _motorQuebrado) {
-      _motorQuebrado = false;
-      send(OWNER, "✅ motor de volta (" + CLAUDE_BIN + " responde).").catch(function () {});
-    }
-  } catch (e) {}
-}
-
 function depsCheck() {
   const probs = [];
-  const claudeProb = claudeVivo(); if (claudeProb) probs.push(claudeProb);
+  try { fs.accessSync(CLAUDE_BIN, fs.constants.X_OK); } catch { probs.push(`claude não-executável (${CLAUDE_BIN})`); }
   // Doutrina ausente NÃO pode ser silenciosa: sem ela eu respondo como assistente genérico,
   // e por fora ninguém nota. Este é o aviso que faltava quando a doutrina morava na pasta de outro pacote.
   if (!doutrinaOrigem()) probs.push(`doutrina-base ausente (AGENT-BASE.md não encontrado em ${WORKDIR}) — estou respondendo sem a minha identidade`);
@@ -3041,13 +2737,7 @@ if (require.main === module) {
   console.log(`[ponte-fina] no ar · ${Object.keys(topics).length} tópicos roteados · owner=${OWNER} grupo=${GROUP} · ctx redondo: SOFT=${SOFT_FRAC} HARD=${HARD_FRAC} floor=${STATIC_FLOOR}`);
   // Ativa a licenca no boot (idempotente) e liga o heartbeat. So roda no pacote que traz o modulo.
   // Fora da janela dos 15 dias, licenca vira permanente: heartbeat vira no-op.
-  // 03/08 — O FIO ESTAVA CORTADO. Este gate exigia KEY_PRESENT, mas a instalação oficial
-  // (install-leon.sh) grava só a variável de E-MAIL da licença no .env do cliente — nunca a KEY. Resultado:
-  // o heartbeat NUNCA ligava em cliente nenhum. Medido no banco da central: 4 dos 6 instalados
-  // têm last_heartbeat_at == o minuto exato da ativação, e o espelho leonmodelo está rodando
-  // agora com último sinal de 25/jul. Máquina viva, central achando que morreu há 9 dias.
-  // O sensor existia, o painel existia, o vigia existia — faltava esta condição aceitar o email.
-  if (license && (license.KEY_PRESENT || license.EMAIL_PRESENT)) {
+  if (license && license.KEY_PRESENT) {
     license.activate().then(r => {
       if (!r.ok && !r.already) console.error(`[license] ativacao falhou: ${r.reason}`, r.detail || "");
       else console.log(`[license] ativa${r.already ? " (ja registrada localmente)" : ""}`);
@@ -3062,7 +2752,6 @@ if (require.main === module) {
   setTimeout(sweepMissions, 15000); setInterval(sweepMissions, 21600000);   // FAXINA: apaga missão fechada (done/failed) há +MISSAO_RETAIN_DAYS dias — no boot (após o dreno assentar) + a cada 6h. running fica intacta
   // SELF-CHECK do boot: fala SÓ se algo estiver quebrado (o "no ar" cego anunciava saúde sem checar nada)
   setTimeout(() => { const probs = depsCheck(); if (probs.length) send(OWNER, `⚠️ Subi com pendência(s):\n· ${probs.join("\n· ")}\nManda /status pra acompanhar.`).catch(() => {}); }, 3000);
-  setTimeout(vigiaDoMotor, 60000); setInterval(vigiaDoMotor, 600000);   // VIGIA: motor morto = agente mudo. Avisa a cada 10min ATÉ voltar
   // SAUDAÇÃO PÓS-UPDATE da instalação PAGA. Lá não existe ExecStartPost pra saudar:
   // quem fecha o ciclo é este motor ao subir. O marcador guarda quem pediu (chat e
   // tópico), então a resposta volta no mesmo lugar da pergunta. Consome ANTES de

@@ -51,6 +51,8 @@ function descobreAgentes() {
     .sort((a, b) => (a.base === BRIDGE ? -1 : b.base === BRIDGE ? 1 : a.nome.localeCompare(b.nome)));
 }
 const AGENTES = descobreAgentes();
+const CODEX_DIR = `${HOME}/.codex/sessions`;
+const GROK_LOG = `${HOME}/.grok/logs/unified.jsonl`;
 
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 const tem = (k) => process.argv.includes(k);
@@ -79,6 +81,14 @@ function mapaSalas() {
     try {
       const t = JSON.parse(fs.readFileSync(`${ag.base}/topics.json`, "utf8"));
       for (const [k, v] of Object.entries(t)) labels[`${ag.nome}:${k}`] = v.label || k;
+    } catch {}
+    // LIVRO-CAIXA sid -> sala (append-only, gravado pelo motor toda vez que abre ou troca uma sessão).
+    // Vem ANTES do sessions.json de propósito: ele é o único que conhece sid JÁ ROTACIONADO, que é o
+    // que fazia o balde "sala perdida" ser o maior item do relatório. O sessions.json fica logo depois
+    // como reforço do sid VIVO (se a sala foi renomeada, o nome atual ganha).
+    try {
+      const lv = JSON.parse(fs.readFileSync(`${ag.base}/sid-salas.json`, "utf8"));
+      for (const [sid, v] of Object.entries(lv)) if (v && v.label) map[sid] = v.label;
     } catch {}
     try {
       const s = JSON.parse(fs.readFileSync(`${ag.base}/sessions.json`, "utf8"));
@@ -140,7 +150,67 @@ async function scan() {
       }
     }
   }
-  return { porDia, detalhe };
+  const grok = await scanGrok(corte);
+  const { porDia: codex, quota: codexQuota } = scanCodex(corte);
+  return { porDia, detalhe, grok, codex, codexQuota };
+}
+
+// ---------- outros motores (Grok e Codex, fora do ~/.claude/projects) ----------
+// Grok e Codex nao mandam token pro Anthropic, entao nao entram na conta em dinheiro do
+// plano Claude: aqui e so CONTAGEM de token por dia, pra mostrar fatia de uso entre os 3 CLIs.
+async function scanGrok(corte) {
+  const porDia = {};
+  if (!fs.existsSync(GROK_LOG)) return porDia;
+  const rl = readline.createInterface({ input: fs.createReadStream(GROK_LOG), crlfDelay: Infinity });
+  for await (const linha of rl) {
+    if (!linha || linha.indexOf('"prompt_tokens"') < 0) continue;
+    let d; try { d = JSON.parse(linha); } catch { continue; }
+    const ctx = d.ctx; if (!ctx || typeof ctx.prompt_tokens !== "number") continue;
+    const t = new Date(d.ts).getTime(); if (!t || t < corte) continue;
+    const dt = dia(t); if (dt > hojeStr) continue;
+    porDia[dt] = (porDia[dt] || 0) + ctx.prompt_tokens + (ctx.completion_tokens || 0);
+  }
+  return porDia;
+}
+function scanCodex(corte) {
+  const porDia = {};
+  let quota = null, quotaTs = 0;   // a leitura MAIS RECENTE do medidor real da OpenAI (rate_limits), nao inventado
+  const walk = (dir) => {
+    let ents = []; try { ents = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const e of ents) {
+      const p = `${dir}/${e.name}`;
+      if (e.isDirectory()) { walk(p); continue; }
+      if (!e.name.endsWith(".jsonl")) continue;
+      let st; try { st = fs.statSync(p); } catch { continue; }
+      if (st.mtimeMs < corte) continue;
+      let last = null, ts = st.mtimeMs;
+      try {
+        for (const l of fs.readFileSync(p, "utf8").split("\n")) {
+          if (!l || l.indexOf('"token_count"') < 0) continue;
+          let d; try { d = JSON.parse(l); } catch { continue; }
+          const info = d.payload && d.payload.info;
+          if (info && info.total_token_usage) { last = info.total_token_usage; ts = new Date(d.timestamp).getTime() || ts; }
+          // O Codex CLI devolve a COTA REAL (rate_limits), medida pela OpenAI, nao estimada por
+          // nos: primary.window_minutes=10080 (7 dias) e primary.used_percent e o numero de
+          // verdade. Guardamos so a leitura mais RECENTE entre todos os arquivos.
+          const rl = d.payload && d.payload.rate_limits;
+          if (rl && rl.primary && typeof rl.primary.used_percent === "number" && ts > quotaTs) {
+            quota = { usedPercent: rl.primary.used_percent, windowMinutes: rl.primary.window_minutes, resetsAt: rl.primary.resets_at };
+            quotaTs = ts;
+          }
+        }
+      } catch {}
+      if (last) { const dt = dia(ts); if (dt <= hojeStr) porDia[dt] = (porDia[dt] || 0) + (last.total_tokens || 0); }
+    }
+  };
+  walk(CODEX_DIR);
+  return { porDia, quota };
+}
+function somaDias(porDiaSimples, dias, ate) {
+  const fim = new Date(ate + "T12:00:00Z").getTime();
+  let acc = 0;
+  for (let i = 0; i < dias; i++) acc += porDiaSimples[dia(fim - i * 864e5)] || 0;
+  return acc;
 }
 
 // ---------- feitos ----------
@@ -171,9 +241,12 @@ function feitos(dataAlvo) {
 // ---------- formatacao ----------
 const nf = (n) => Math.round(n).toLocaleString("pt-BR");
 const mtok = (n) => (n >= 1e9 ? (n / 1e9).toFixed(2) + " bilhoes" : n >= 1e6 ? (n / 1e6).toFixed(1) + " milhoes" : n >= 1e3 ? (n / 1e3).toFixed(0) + " mil" : String(Math.round(n))).replace(".", ",");
-const dinheiro = (n, s) => s + " " + n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const dinheiro = (n, s, c = 2) => s + " " + n.toLocaleString("pt-BR", { minimumFractionDigits: c, maximumFractionDigits: c });
 const usd = (n) => dinheiro(n, "US$");
-const brl = (n) => dinheiro(n * (PRECOS.usd_por_dolar || 5.45), "R$");
+const brl = (n, c) => dinheiro(n * (PRECOS.usd_por_dolar || 5.45), "R$", c);
+// O plano e o UNICO dinheiro de verdade: fixo, pago no cartao, nao varia com o uso.
+const PLANO = PRECOS.plano || { nome: "assinatura", usd_por_mes: 0, dias_no_mes: 30 };
+const custoDia = () => PLANO.usd_por_mes / (PLANO.dias_no_mes || 30);
 const total = (a) => a.in + a.out + a.cw + a.cr;
 const REGUA = "━━━━━━━━━━━━━━━━━━━━━";
 const barra = (v, max, n = 10) => (max > 0 ? "█".repeat(Math.max(1, Math.round((v / max) * n))) : "▏");
@@ -193,7 +266,7 @@ function janela(porDia, dias, ate) {
 }
 const somaTudo = (obj) => Object.values(obj).reduce((a, b) => soma(a, b), zero());
 
-function monta({ porDia, detalhe }) {
+function monta({ porDia, detalhe, grok, codex, codexQuota }) {
   const L = [];
   const d1 = porDia[ALVO] || {};
   const t1 = somaTudo(d1);
@@ -209,23 +282,34 @@ function monta({ porDia, detalhe }) {
 
   const aproveita = total(t1) ? (t1.cr / total(t1)) * 100 : 0;
   L.push("");
-  L.push(`1️⃣  O DIA`);
+  L.push(`1️⃣  O DIA DENTRO DO TEU PLANO`);
   L.push("");
-  L.push(`💰  ${brl(t1.usd)}   (${usd(t1.usd)})`);
-  L.push(`🔢  ${mtok(total(t1))} tokens · ${nf(t1.msgs)} respostas`);
-  L.push(`♻️  ${aproveita.toFixed(0)}% veio do cache (10x mais barato)`);
+  L.push(`📦 ${PLANO.nome}: ${brl(PLANO.usd_por_mes)}/mes`);
+  L.push(`   Isso da ${brl(custoDia())} por dia, fixo.`);
+  L.push(`   Nao muda se voce usar muito ou nada.`);
   L.push("");
-  L.push(`Voce paga assinatura: isso e o que voce`);
-  L.push(`DEIXOU de gastar, nao o que gastou.`);
+  L.push(`🔧 Trabalho de ontem: ${nf(t1.msgs)} respostas`);
+  L.push(`💵 Custo REAL por resposta: ${brl(custoDia() / t1.msgs, 3)}`);
+  L.push("");
+  const mult = custoDia() > 0 ? t1.usd / custoDia() : 0;
+  L.push(`📈 Voce tirou ${mult.toFixed(0)}x do plano.`);
+  L.push(`   Pagou ${brl(custoDia())} e levou trabalho que,`);
+  L.push(`   cobrado por token, sairia ${brl(t1.usd)}.`);
+  L.push("");
+  L.push(`♻️ ${aproveita.toFixed(0)}% do que entrou veio do cache, e e`);
+  L.push(`   o que segura o plano de estourar.`);
   L.push("");
   const ordAg = Object.entries(d1).sort((a, b) => b[1].usd - a[1].usd);
   const maxAg = Math.max(...ordAg.map(([, v]) => v.usd));
-  ordAg.forEach(([ag, v], i) => {
-    L.push(`${MEDALHA[i] || "▫️"} ${pad(ag, 7)} ${pad(barra(v.usd, maxAg), 11)} ${brl(v.usd)}`);
-  });
-  L.push("");
-  L.push(`entrada ${mtok(t1.in)} · saida ${mtok(t1.out)}`);
-  L.push(`cache gravado ${mtok(t1.cw)} · lido ${mtok(t1.cr)}`);
+  if (ordAg.length > 1) {
+    L.push(`Quem usou o plano:`);
+    ordAg.forEach(([ag, v], i) => {
+      const f = t1.usd ? (v.usd / t1.usd) * 100 : 0;
+      L.push(`${MEDALHA[i] || "▫️"} ${pad(ag, 7)} ${pad(barra(v.usd, maxAg), 11)} ${f.toFixed(0)}%`);
+    });
+    L.push("");
+  }
+  L.push(`${mtok(total(t1))} tokens · entrada ${mtok(t1.in)} · saida ${mtok(t1.out)}`);
   L.push("");
   L.push(REGUA);
 
@@ -235,39 +319,41 @@ function monta({ porDia, detalhe }) {
   L.push("");
   L.push(`2️⃣  A SEMANA E O MES`);
   L.push("");
-  L.push(`📅 7 dias    ${brl(j7.usd)}`);
-  L.push(`   media/dia ${brl(media7)}`);
-  L.push(`🗓️ 30 dias   ${brl(j30.usd)}`);
-  L.push(`   media/dia ${brl(j30.usd / 30)}`);
+  L.push(`📅 7 dias    ${nf(somaTudo(p7).msgs)} respostas`);
+  L.push(`   custo real ${brl(custoDia() * 7)} · tirou ${(j7.usd / (custoDia() * 7)).toFixed(0)}x`);
+  L.push(`🗓️ 30 dias   ${nf(j30.msgs)} respostas`);
+  L.push(`   custo real ${brl(PLANO.usd_por_mes)} · tirou ${(j30.usd / PLANO.usd_por_mes).toFixed(0)}x`);
+  L.push("");
+  L.push(`No mes inteiro, cada resposta saiu por ${brl(PLANO.usd_por_mes / (j30.msgs || 1), 3)}.`);
   if (media7 > 0) {
     const dif = ((t1.usd - media7) / media7) * 100;
     const seta = dif >= 15 ? "🔺" : dif <= -15 ? "🔻" : "➖";
     L.push("");
-    L.push(`${seta} O dia ficou ${dif >= 0 ? "+" : ""}${dif.toFixed(0)}% ante a media da semana.`);
+    L.push(`${seta} O dia puxou ${dif >= 0 ? "+" : ""}${dif.toFixed(0)}% do plano ante a media da semana.`);
   }
   L.push("");
   const ord30 = AGENTES.map((a) => [a.nome, p30[a.nome]]).filter(([, v]) => v && v.msgs).sort((a, b) => b[1].usd - a[1].usd);
   const max30 = ord30.length ? Math.max(...ord30.map(([, v]) => v.usd)) : 0;
   L.push(`Em 30 dias, por agente:`);
-  for (const [ag, v] of ord30) L.push(`   ${pad(ag, 7)} ${pad(barra(v.usd, max30), 11)} ${brl(v.usd)}`);
+  for (const [ag, v] of ord30) L.push(`   ${pad(ag, 7)} ${pad(barra(v.usd, max30), 11)} ${(j30.usd ? (v.usd / j30.usd) * 100 : 0).toFixed(0)}%`);
   for (const a of AGENTES) if (!p30[a.nome] || !p30[a.nome].msgs) L.push(`   ${pad(a.nome, 7)} sem uso no periodo`);
   L.push("");
   L.push(REGUA);
 
   L.push("");
-  L.push(`3️⃣  ONDE O CUSTO FOI`);
+  L.push(`3️⃣  ONDE O PLANO FOI USADO`);
   L.push("");
   const mods = Object.entries(det.modelo).filter(([, v]) => total(v) > 0).sort((a, b) => b[1].usd - a[1].usd);
   const maxMod = mods.length ? mods[0][1].usd : 0;
   for (const [k, v] of mods) {
     const fatia = t1.usd ? (v.usd / t1.usd) * 100 : 0;
-    L.push(`   ${pad(k, 7)} ${pad(barra(v.usd, maxMod), 11)} ${brl(v.usd)}  ${fatia.toFixed(0)}%`);
+    L.push(`   ${pad(k, 7)} ${pad(barra(v.usd, maxMod), 11)} ${fatia.toFixed(0)}% do esforco`);
   }
   const caro = (det.modelo.opus || zero()).usd;
   if (t1.usd > 0) {
     const fc = (caro / t1.usd) * 100;
     L.push("");
-    L.push(`${fc > 45 ? "🚨" : "✅"} Modelo caro: ${fc.toFixed(0)}% do custo (meta 30%).`);
+    L.push(`${fc > 45 ? "🚨" : "✅"} Modelo caro: ${fc.toFixed(0)}% do esforco (meta 30%).`);
     if (fc > 45) L.push(`   A cabeca executou o que era pra ter delegado.`);
   }
   if (det.semPreco) L.push(`⚠️ ${mtok(det.semPreco)} em modelo fora da tabela (fora da conta).`);
@@ -284,14 +370,45 @@ function monta({ porDia, detalhe }) {
     L.push("");
     L.push(`4️⃣  SALAS QUE MAIS PESARAM`);
     L.push("");
-    for (const [lab, v] of top) L.push(`   ${pad(lab, 16)} ${pad(barra(v.usd, maxSala, 8), 9)} ${brl(v.usd)}`);
+    for (const [lab, v] of top) L.push(`   ${pad(lab, 16)} ${pad(barra(v.usd, maxSala, 8), 9)} ${(t1.usd ? (v.usd / t1.usd) * 100 : 0).toFixed(0)}%`);
+    L.push("");
+    L.push(REGUA);
+  }
+
+  const grokHoje = (grok && grok[ALVO]) || 0, codexHoje = (codex && codex[ALVO]) || 0;
+  const grok7 = somaDias(grok || {}, 7, ALVO), codex7 = somaDias(codex || {}, 7, ALVO);
+  const claudeHoje = total(t1), claude7 = total(j7);
+  const motoresHoje = [["Claude", claudeHoje], ["Grok", grokHoje], ["Codex", codexHoje]].filter(([, v]) => v > 0);
+  const motores7 = [["Claude", claude7], ["Grok", grok7], ["Codex", codex7]].filter(([, v]) => v > 0);
+  if (motoresHoje.length > 1 || motores7.length > 1) {
+    L.push("");
+    L.push(`5️⃣  POR MOTOR (Claude · Grok · Codex)`);
+    L.push("");
+    const totHoje = motoresHoje.reduce((a, [, v]) => a + v, 0);
+    const maxHoje = Math.max(...motoresHoje.map(([, v]) => v), 1);
+    L.push(`Ontem:`);
+    for (const [nome, v] of motoresHoje) L.push(`   ${pad(nome, 7)} ${pad(barra(v, maxHoje), 11)} ${(totHoje ? (v / totHoje) * 100 : 0).toFixed(0)}%  ${mtok(v)}`);
+    L.push("");
+    const tot7 = motores7.reduce((a, [, v]) => a + v, 0);
+    const max7 = Math.max(...motores7.map(([, v]) => v), 1);
+    L.push(`7 dias:`);
+    for (const [nome, v] of motores7) L.push(`   ${pad(nome, 7)} ${pad(barra(v, max7), 11)} ${(tot7 ? (v / tot7) * 100 : 0).toFixed(0)}%  ${mtok(v)}`);
+    L.push("");
+    L.push(`Grok e Codex nao entram no plano Claude, e so contagem de token.`);
+    if (codexQuota) {
+      const dias = Math.round((codexQuota.windowMinutes || 0) / 1440);
+      const resetEm = codexQuota.resetsAt ? Math.max(0, Math.round((codexQuota.resetsAt * 1000 - Date.now()) / 864e5)) : null;
+      L.push("");
+      L.push(`📟 Cota REAL do Codex (medida pela OpenAI, janela de ${dias} dias):`);
+      L.push(`   ${codexQuota.usedPercent.toFixed(0)}% usada${resetEm !== null ? ` · reseta em ${resetEm}d` : ""}`);
+    }
     L.push("");
     L.push(REGUA);
   }
 
   const f = feitos(ALVO);
   L.push("");
-  L.push(`5️⃣  O QUE SAIU DISSO`);
+  L.push(`6️⃣  O QUE SAIU DISSO`);
   L.push("");
   if (f.marcas.length) for (const m of f.marcas) L.push(`✅ ${m}`);
   if (f.missoes.length) for (const m of f.missoes) L.push(`🔧 ${m}`);

@@ -1,5 +1,5 @@
 {
-  "_nota": "Preco de referencia da API Anthropic em USD por 1 milhao de tokens.",
+  "_nota": "Preco de referencia da API Anthropic em USD por 1 milhao de tokens. O dono paga assinatura Claude Max, entao este valor NAO e gasto: e quanto a mesma operacao custaria se fosse cobrada por token. Editar aqui quando a tabela mudar.",
   "_atualizado": "2026-07-31",
   "usd_por_dolar": 5.45,
   "familias": {
@@ -21,5 +21,11 @@
       "cache_grava": 1.25,
       "cache_le": 0.1
     }
+  },
+  "plano": {
+    "_nota": "O que o dono REALMENTE paga. E o unico dinheiro de verdade do report: e fixo, nao varia com o uso. Se o valor cobrado no cartao for outro (cambio, IOF, plano anual), corrija aqui e o historico inteiro recalcula.",
+    "nome": "Claude Max 20x",
+    "usd_por_mes": 200.0,
+    "dias_no_mes": 30
   }
 }
