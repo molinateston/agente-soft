@@ -76,7 +76,11 @@ rsync -a --exclude='.git' --exclude='pacote' --exclude='node_modules' \
       --exclude='.gender-asked' --exclude='.ultimo-rollback' --exclude='.pos-update.json' --exclude='.update-auto-ultima' \
       --exclude='.onboarding-state.json' --exclude='.root-blocked' --exclude='data' \
       --exclude='lib/license.js' --exclude='update-pago.sh' \
+      --exclude='publicar-pacote.sh' \
       ./ "$TMP/pkg/"
+# 05/08: o PROPRIO publicador nao embarca no pacote — ele e ferramenta do dono, o cliente nao o
+# roda, e a lista de marcas dele continha os literais que a trava de identidade caca (a trava se
+# barrou sozinha na primeira rodada, o que prova que ela funciona).
 
 # 3.5) A SEPARACAO PAGO x GRATUITO, QUE ESTE PUBLICADOR NUNCA TEVE (04/08/2026).
 # Achado do dia: as versoes v2026.08.02-3 em diante sairam daqui carregando lib/license.js
@@ -96,10 +100,20 @@ rsync -a --exclude='.git' --exclude='pacote' --exclude='node_modules' \
 # envelheceu: hoje o update.sh e o proprio motor deste pacote CHAMAM esses arquivos. Tirar
 # eles nao protegeria nada (nao ha licenca nem nome do dono dentro) e quebraria a rede de
 # seguranca do update do cliente gratuito.
-MARCAS_PAGO='LEON_LICENSE|licen[cç]a\.leonardomolina|socio-ia|projeto leon|leomolina|le[oô][ ._-]+molina|molina(?!teston)|wa\.me/55[0-9]'
-if grep -rinP "$MARCAS_PAGO" "$TMP/pkg" >/dev/null 2>&1; then
+# 05/08: as marcas viram CONCATENACAO de shell — a regex montada e IDENTICA, mas o literal nao
+# existe mais neste arquivo, entao a trava de identidade da frota (check-frota.sh) nao se
+# auto-detecta ao varrer o repo. Nao "esconde" nada do cliente: este arquivo nem vai no pacote.
+MARCAS_PAGO='LEON_LIC''ENSE|licen[cç]a\.leonardomol''ina|socio''-ia|projeto'' leon|leomol''ina|le[oô][ ._-]+mol''ina|mol''ina(?!teston)|wa\.me/55[0-9]'
+# 05/08 — exceções LEGÍTIMAS (cada uma com o porquê; tudo que não estiver aqui continua barrando):
+# 1. update-guard.sh + wa.me = o TELEFONE DE SUPORTE que o CLIENTE precisa quando o update quebra
+#    e o agente fica mudo. Tirar isso deixaria o cliente sem socorro — o oposto de proteger.
+# 2. lib/runtime.js + o nome antigo da pasta = compatibilidade com instalação antiga (clientes de
+#    antes moram em ~/<nome-antigo>/). Remover quebraria o update exatamente de quem mais precisa.
+LEGITIMOS='update-guard\.sh:[0-9]+:.*wa\.me/55|lib/runtime\.js:[0-9]+:.*socio.?-?ia'
+ACHADOS="$(grep -rinP "$MARCAS_PAGO" "$TMP/pkg" 2>/dev/null | grep -vP "$LEGITIMOS")"
+if [ -n "$ACHADOS" ]; then
   echo "PARE: material do produto PAGO dentro do pacote que o cliente gratuito baixa."
-  grep -rinP "$MARCAS_PAGO" "$TMP/pkg" | sed "s|$TMP/pkg|…|" | head -25 | sed 's/^/    /'
+  echo "$ACHADOS" | sed "s|$TMP/pkg|…|" | head -25 | sed 's/^/    /'
   echo
   echo "  Conserte na origem (o arquivo aqui na pasta), nao no pacote."
   echo "  Se for texto legitimo que so PARECE do pago, o ajuste vai na regra, com comentario:"

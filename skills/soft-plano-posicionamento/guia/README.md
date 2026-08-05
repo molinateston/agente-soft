@@ -33,7 +33,7 @@ Tese (o mecanismo): **C + Im = In** (Complexidade + Improviso = Invisibilidade).
 - `10-vendas-consultivas.md` - Vendas Consultivas, Fechamento Limpo
 
 **O Motor**
-- `11-socio-ia.md` - Agente do dono
+- `11-agente-do-dono.md` - Agente do dono
 
 **Operação**
 - `12-rotina.md` - Rotina Estratégica

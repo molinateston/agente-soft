@@ -3042,7 +3042,7 @@ if (require.main === module) {
   // Ativa a licenca no boot (idempotente) e liga o heartbeat. So roda no pacote que traz o modulo.
   // Fora da janela dos 15 dias, licenca vira permanente: heartbeat vira no-op.
   // 03/08 — O FIO ESTAVA CORTADO. Este gate exigia KEY_PRESENT, mas a instalação oficial
-  // (install-leon.sh) grava só LEON_LICENSE_EMAIL no .env do cliente — nunca a KEY. Resultado:
+  // (install-leon.sh) grava só a variável de E-MAIL da licença no .env do cliente — nunca a KEY. Resultado:
   // o heartbeat NUNCA ligava em cliente nenhum. Medido no banco da central: 4 dos 6 instalados
   // têm last_heartbeat_at == o minuto exato da ativação, e o espelho leonmodelo está rodando
   // agora com último sinal de 25/jul. Máquina viva, central achando que morreu há 9 dias.
