@@ -2761,8 +2761,31 @@ function depsCheck() {
   return probs;
 }
 
+// EXTENSÕES DO AGENTE — automação custom que SOBREVIVE a toda atualização (lei do dono, 05/ago:
+// "NENHUMA atualização pode derrubar brain e crons"). Caso real da frota: um gancho de acervo foi
+// escrito DENTRO deste arquivo e morreu calado quando o /atualiza trocou o motor. A regra agora:
+// automação de agente NUNCA mora aqui — mora em ${WORKDIR}/extensoes/*.cjs, pasta que o pacote
+// NÃO carrega e o atualizador NÃO toca (cópia aditiva). Cada extensão exporta init(ctx) e roda
+// protegida: extensão quebrada avisa no log e no Telegram do dono, mas NUNCA derruba o motor.
+function carregaExtensoes() {
+  const dir = `${WORKDIR}/extensoes`;
+  let files = [];
+  try { files = fs.readdirSync(dir).filter(f => f.endsWith(".cjs")).sort(); } catch { return; }
+  for (const f of files) {
+    try {
+      const ext = require(`${dir}/${f}`);
+      if (typeof ext.init === "function") ext.init({ WORKDIR, envMap, send, tg, log: (m) => console.log(`[extensao:${f}] ${m}`) });
+      console.log(`[extensao] ${f} carregada`);
+    } catch (e) {
+      console.error(`[extensao] ${f} FALHOU (motor segue vivo): ${e && e.message}`);
+      if (OWNER) send(OWNER, `⚠️ A automação "${f}" não conseguiu ligar (${String((e && e.message) || "erro").slice(0, 120)}). O resto está funcionando normal.`).catch(() => {});
+    }
+  }
+}
+
 if (require.main === module) {
   acquireLock();   // FIX H — garante instância única antes de abrir o long-poll (evita 409 + sessions.json corrompido)
+  carregaExtensoes();   // automações do dono (fora do motor, imunes a atualização) ligam ANTES do poll
   // Diz em voz alta o modo e DE ONDE veio a doutrina. Vir de fora de casa nao e erro
   // (instalacao antiga usa isso como socorro), mas tem que aparecer: doutrina lida da
   // pasta de outro pacote foi a dependencia escondida que ninguem via.
