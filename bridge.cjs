@@ -1108,11 +1108,11 @@ const STALL_MS    = Number(process.env.STALL_MIN || 10) * 60000;     // sem NENH
 const HARD_CAP_MS = Number(process.env.HARD_CAP_MIN || 120) * 60000; // teto absoluto (anti-runaway), bem alto
 
 // ---------- MODO MISSÃO (tarefa longa deliberada: lote de fotos/depoimentos, transcrição longa, à prova de sofá) ----------
-// Portado do LEON. Motivação: o cliente que manda MUITO volume estourava os tetos normais (TURN_BUDGET_USD=8,
-// HARD_CAP_MIN=120) SEM checkpoint — a tarefa morria no meio, sem retomar. O modo missão solta os tetos, reporta
+// Motivação: o cliente que manda MUITO volume estourava os tetos normais de custo e de tempo
+// (HARD_CAP_MIN) SEM checkpoint — a tarefa morria no meio, sem retomar. O modo missão solta os tetos, reporta
 // marco a marco enquanto roda, e RETOMA sozinho se o processo cair (trilho DURÁVEL em disco, igual às promessas).
 // São tetos PARALELOS aos do turno normal (STALL_MS/HARD_CAP_MS acima) — só valem quando `mission` está presente.
-const MISSAO_BUDGET_USD   = Number(process.env.MISSAO_BUDGET_USD || 50);      // teto GENEROSO de custo da missão (vs 8 do turno normal)
+const missaoBudgetUSD     = () => Number(envVal("MISSAO_BUDGET_USD") || 0);  // 0 = sem teto; lido ao vivo do .env
 const MISSAO_CAP_MS       = Number(process.env.MISSAO_CAP_MIN || 240) * 60000;   // teto de tempo (4h) — a tarefa longa roda até aqui
 const MISSAO_STALL_MS     = Number(process.env.MISSAO_STALL_MIN || 20) * 60000;  // "travou" = sem NENHUM sinal por 20min (missão espera jobs longos)
 const MISSAO_MAX_RETRIES  = Number(process.env.MISSAO_MAX_RETRIES || 3);      // após N retomadas sem concluir, desiste e AVISA o dono (não vira loop eterno)
@@ -1348,8 +1348,8 @@ function ask(key, text, cfg, chatId, threadId, mission) {
                     "--permission-mode", "bypassPermissions",   // agência total: escreve/edita arquivo + roda Bash (acesso já é só OWNER/allowlist)
                     "--add-dir", WORKDIR, "--add-dir", BRAIN, "--add-dir", TMP_DIR, "--add-dir", projDir()];
       if (cfg.effort) args.push("--effort", cfg.effort);                 // quanto ele PENSA: high=estratégico, medium=operacional, low=casual
-      if (isMissao) args.push("--max-budget-usd", String(MISSAO_BUDGET_USD));   // MODO MISSÃO: teto GENEROSO — a tarefa longa não morre por custo no meio
-      else if (TURN_BUDGET_USD > 0) args.push("--max-budget-usd", String(TURN_BUDGET_USD));   // teto de USD por turno (antes só o TEMPO parava um loop caro)
+      if (isMissao) { const b = missaoBudgetUSD(); if (b > 0) args.push("--max-budget-usd", String(b)); }   // MODO MISSÃO: 0 = sem teto — a tarefa longa não morre por custo no meio
+      else { const b = turnBudgetUSD(); if (b > 0) args.push("--max-budget-usd", String(b)); }   // turno comum: 0 = sem teto; tetos lidos ao vivo do .env
       if (resumeSid) args.push("--resume", resumeSid);
       // identidade: doutrina-base FORTE + a persona específica do dono (nome/tom). A base vem
       // PRIMEIRO pra cravar "você é o agente que JÁ roda aqui, não o Claude genérico".
@@ -1814,7 +1814,7 @@ const MAX_CONCURRENT = Number(process.env.MAX_CONCURRENT || 3);   // teto GLOBAL
 const running = () => Object.values(busy).filter(Boolean).length;
 // ESCALADA DE ERRO: falhas consecutivas por tópico — na 3ª a mensagem deixa de dizer "é passageiro".
 const _failStreak = {};
-const TURN_BUDGET_USD = Number(process.env.TURN_BUDGET_USD || 8);   // teto de custo por turno (anti-runaway; 0 desliga)
+const turnBudgetUSD  = () => Number(envVal("TURN_BUDGET_USD") || 0);   // teto de custo por turno (0 = sem teto; lido ao vivo do .env)
 
 // não derrubar o processo por exceção solta: loga e segue (o serviço tem Restart=always de qualquer jeito)
 process.on("uncaughtException",  (e) => console.error("[ponte] uncaughtException:", e && e.stack || e));
