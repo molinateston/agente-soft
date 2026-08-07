@@ -7,6 +7,8 @@ sessions.json
 sessions.json.bak
 sessions.json.tmp
 topics.json
+.root-blocked
+.gender-asked
 persona/
 brain/
 backups/
