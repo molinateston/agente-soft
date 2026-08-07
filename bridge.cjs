@@ -377,6 +377,20 @@ const SOFT_CAP     = Number(process.env.SOFT_CAP || 112000);    // teto de CONVE
 const HARD_CAP     = Number(process.env.HARD_CAP || 123000);    // teto do backstop bruto
 const FLOOR_CAP    = Number(process.env.FLOOR_CAP || 60000);    // TETO do piso: enxoval real nunca passa disto. Floor acima = turno pesado/fan-out envenenando → trava aqui, senão o SOFT despenca e compacta a cada 1-2 msgs ("esquece o que falávamos")
 const SNAPSHOT_EVERY = Number(process.env.SNAPSHOT_EVERY || 8); // a cada N turnos guarda um tail-handoff (sobrevive a poda willow)
+// ---------- CONTEXTO DO ZERO: knobs ----------
+// A conversa deixa de ser retomada pelo --resume e passa a ser REMONTADA a cada turno, do zero, a
+// partir do texto que já está no disco (os jsonl das sessões anteriores). Em vez de o modelo reler
+// a sessão inteira até bater o teto e precisar de um resumo caro, cada turno já entra enxuto, e
+// quem decide o que cabe é uma janela deslizante (gap de silêncio + teto de chars), não o tamanho
+// acumulado da sessão. Efeito: a compactação simplesmente não é alcançada.
+// NASCE DESLIGADO: com CONTEXTO_DO_ZERO=0 (ou ausente) nada disto roda — o caminho é BYTE POR BYTE
+// o de hoje. Lido de process.env de propósito: ligar/desligar no meio de um turno deixaria a sala
+// com meio histórico de cada jeito, então exige restart do serviço.
+const CONTEXTO_DO_ZERO  = process.env.CONTEXTO_DO_ZERO === "1";
+const CONTEXTO_GAP_MIN  = Number(process.env.CONTEXTO_GAP_MIN || 45);   // minutos de silêncio que fecham a sessão de trabalho
+const CONTEXTO_TETO_CHARS = Number(process.env.CONTEXTO_TETO_CHARS || 45000);   // teto do histórico montado
+const CONTEXTO_CHAIN_MAX = Number(process.env.CONTEXTO_CHAIN_MAX || 60);   // poda no disco: sessions.json não guarda mais que isto de elos por sala
+const CONTEXTO_PONTE_MAX_H = Number(process.env.CONTEXTO_PONTE_MAX_H || 48);   // idade máxima (horas) do turno que atravessa como ponte entre sessões de trabalho
 const COMPACT_TIMEOUT_MS = Number(process.env.COMPACT_TIMEOUT_SEG || 120) * 1000;
 const MEMVIVA_FILE = process.env.MEMVIVA_FILE || `${BRAIN}/MEMORIA-VIVA.md`;   // memória de trabalho (decisões/projetos/pendências ATIVAS): SEMPRE no contexto (estilo NAIA)
 const ASSUNTOS_FILE = process.env.ASSUNTOS_FILE || `${BRAIN}/ASSUNTOS-VIVOS.md`;   // ASSUNTOS CRUZADOS — nomes/projetos/decisões novas que apareceram em QUALQUER tópico das últimas 48h; injetado em TODAS as personas pra você nunca ficar por fora do que rolou em OUTRO tópico. Linhas velhas (>48h) são filtradas na leitura.
@@ -492,6 +506,9 @@ for (const k in sessions) {
   }
 }
 if (_hyg) console.error(`[ponte] higiene: ${_hyg} sessão(ões) com ctx órfão zeradas no boot`);
+// registro honesto no log: modo ligado muda como a conversa é retomada, então tem que ficar escrito
+// no arranque. Desligado não escreve nada (não polui o log de quem nunca ligou).
+if (CONTEXTO_DO_ZERO) console.error(`[ponte] contexto do zero LIGADO — sem --resume; histórico remontado por sessão de trabalho (gap ${CONTEXTO_GAP_MIN}min, teto ${CONTEXTO_TETO_CHARS} chars, ponte ${CONTEXTO_PONTE_MAX_H}h). Compactação desativada.`);
 // escrita atômica: grava .tmp, guarda o atual como .bak, renomeia por cima (crash no meio não trunca)
 const saveSessions = () => {
   try {
@@ -646,7 +663,10 @@ function tailBytes(path, n) {
   finally { if (fd !== undefined) { try { fs.closeSync(fd); } catch {} } }
 }
 // handoff de FALLBACK: últimas trocas user/assistant do jsonl, só blocos de TEXTO (pula thinking/tool).
-function readTail(sid, maxTurns = 16, capChars = 6000) {
+// capPorTurno (CONTEXTO DO ZERO): 4º parâmetro OPCIONAL. Os call-sites de hoje não passam ele e
+// continuam cortando cada mensagem em 400 chars, byte a byte igual antes. Só o caminho novo (que
+// monta o histórico de verdade, não um resumo) pede turno mais largo.
+function readTail(sid, maxTurns = 16, capChars = 6000, capPorTurno = 400) {
   const path = `${projDir()}/${sid}.jsonl`;
   let truncated = false;
   try { truncated = fs.statSync(path).size > 262144; } catch { return ""; }
@@ -664,9 +684,85 @@ function readTail(sid, maxTurns = 16, capChars = 6000) {
     else if (Array.isArray(c)) txt = c.filter(b => b && b.type === "text").map(b => b.text).join(" ");
     txt = (txt || "").trim();
     if (!txt) continue;
-    turns.push(`${m.role === "user" ? "Você" : "Eu"}: ${txt.slice(0, 400)}`);
+    turns.push(`${m.role === "user" ? "Você" : "Eu"}: ${txt.slice(0, capPorTurno)}`);
   }
   return turns.slice(-maxTurns).join("\n").slice(-capChars);
+}
+
+// ============ CONTEXTO DO ZERO — funções da "sessão de trabalho" ============
+// Tudo aqui é dado-entra/dado-sai, sem I/O de rede, testável na bancada sem gastar um token. A
+// única exceção é `montaHistoricoDaConversa`, que lê os jsonl (via readTail) pra saber o TEXTO de
+// cada elo. O resto é puro de propósito, pra dar pra provar as regras de corte à mão.
+
+// REGRA 1 — GAP DE TEMPO: varre a corrente (mais nova por último) de trás pra frente e corta no
+// primeiro silêncio maior que `gapMin`. Também zera a sessão de trabalho inteira se o silêncio
+// ENTRE a última resposta e AGORA já abriu o gap (o turno de agora começa depois de horas paradas).
+function correnteViva(chain, agora = Date.now(), gapMin = CONTEXTO_GAP_MIN) {
+  // filtro de elo podre: cinto E suspensório. `chain` com um `null` dentro estouraria em
+  // `c[c.length-1].at` e deixaria o turno MUDO. Só o motor escreve a chain e ele só escreve
+  // {sid,at}, mas sessions.json restaurado pela metade de um .bak não é hipótese.
+  const c = (Array.isArray(chain) ? chain : []).filter(e => e && typeof e === "object" && e.sid);
+  if (!c.length) return [];
+  const gapMs = gapMin * 60000;
+  if (agora - (c[c.length - 1].at || 0) > gapMs) return [];   // silêncio desde a última resposta: sessão nova
+  let corte = 0;
+  for (let i = c.length - 1; i > 0; i--) {
+    if ((c[i].at || 0) - (c[i - 1].at || 0) > gapMs) { corte = i; break; }
+  }
+  return c.slice(corte);
+}
+
+// REGRA 2 — TETO DE CHARS: `blocos` é um array do mais ANTIGO pro mais NOVO. Estourou o teto, joga
+// fora o mais antigo — NUNCA o mais novo, e NUNCA o índice 0 (a 1ª mensagem da sessão de trabalho,
+// o pedido original, é imortal). Por isso a remoção sempre mira o índice 1, nunca o 0 nem o último.
+function capaPorTeto(blocos, teto = CONTEXTO_TETO_CHARS) {
+  const arr = blocos.slice();
+  let total = arr.reduce((s, b) => s + (b ? b.length : 0), 0);
+  while (total > teto && arr.length > 2) {
+    total -= (arr[1] ? arr[1].length : 0);
+    arr.splice(1, 1);
+  }
+  return arr;
+}
+
+const CONTEXTO_HIST_HEADER = "[HISTÓRICO DESTA CONVERSA — as trocas anteriores desta MESMA sessão de trabalho, do mais antigo pro mais novo. Não é resumo: é o texto real. Continue daqui.]";
+// PONTE: a sessão de trabalho anterior fechou por silêncio, mas o dono pode perfeitamente voltar e
+// dizer "e aquele número?". Este é o último turno de antes, e ele vem marcado como PASSADO
+// justamente pra o agente não tratar assunto encerrado como assunto de agora.
+const CONTEXTO_PONTE_HEADER = "[FIM DA CONVERSA ANTERIOR — este assunto foi encerrado (silêncio longo) e a conversa de AGORA começa nova. Está aqui só pra você não ficar cego se o dono retomar algo daqui. Não presuma que ele quer continuar isto.]";
+
+// IMPURA (lê jsonl): monta o histórico de UMA sessão de trabalho a partir da corrente de sids
+// gravada em `sessions[key].chain`. Devolve { texto, block }: `texto` puro alimenta o seed dos
+// motores alternativos; `block` já vem com o cabeçalho, pro slot de continuidade do userText.
+// `{texto:"", block:""}` quando não há sessão de trabalho viva — o turno nasce limpo, sem histórico
+// nenhum, exatamente como uma sala nova.
+function montaHistoricoDaConversa(key, agora = Date.now()) {
+  const s = sessions[key];
+  const chain = (s && typeof s === "object" && Array.isArray(s.chain)) ? s.chain : [];
+  const porGap = correnteViva(chain, agora, CONTEXTO_GAP_MIN);
+  // PONTE ENTRE SESSÕES DE TRABALHO: cortar a sessão de trabalho é o desenho; ficar CEGO não é — é
+  // regressão que o dono sente como "piorou". Quando a sessão nova começa, o último turno da
+  // anterior atravessa como PONTE, marcado como tal. Um elo só: o suficiente pra "e aquele número?"
+  // funcionar, longe de arrastar a conversa inteira. E a ponte SÓ VALE ENQUANTO FOR RECENTE
+  // (CONTEXTO_PONTE_MAX_H, padrão 48h): sem esse teto, uma sala parada há 6 meses ressuscitaria o
+  // último turno dela.
+  if (!porGap.length) {
+    if (!chain.length) return { texto: "", block: "" };
+    const ultimo = chain[chain.length - 1];
+    if (!ultimo || typeof ultimo !== "object" || !ultimo.sid) return { texto: "", block: "" };
+    if (agora - (ultimo.at || 0) > CONTEXTO_PONTE_MAX_H * 3600000) return { texto: "", block: "" };
+    let pTexto = ""; try { pTexto = readTail(ultimo.sid, 6, 4000, 2000); } catch {}
+    if (!pTexto) return { texto: "", block: "" };
+    return { texto: pTexto, block: `${CONTEXTO_PONTE_HEADER}\n${pTexto}` };
+  }
+  // lê o texto de cada elo (neste modo, 1 sid = 1 turno).
+  const blocos = porGap.map(elo => {
+    let texto = ""; try { texto = readTail(elo.sid, 20, 12000, 4000); } catch {}
+    return texto;
+  }).filter(Boolean);
+  if (!blocos.length) return { texto: "", block: "" };
+  const texto = capaPorTeto(blocos, CONTEXTO_TETO_CHARS).join("\n\n");
+  return { texto, block: `${CONTEXTO_HIST_HEADER}\n${texto}` };
 }
 
 // lê o TEXTO da conversa (turnos user/assistant) de um jsonl GRANDE, p/ alimentar o resumo SEM
@@ -765,13 +861,31 @@ function persistSession(key, sid, ctx, model) {
   // floor = MIN(ctx>0 já visto neste sid) ≈ piso estático puro; ignora leitura ctx=0 (cache-miss/erro)
   const floor = Math.min(FLOOR_CAP, same ? (ctx > 0 ? Math.min(prev.floor || ctx, ctx) : (prev.floor || STATIC_FLOOR))
                                          : (ctx > 0 ? ctx : STATIC_FLOOR));   // CAP: nunca grava piso envenenado por turno pesado/fan-out
-  const turns = (same ? (prev.turns || 0) : 0) + 1;
+  // CONTEXTO DO ZERO: sem --resume o sid troca a cada turno, então `same` é sempre falso e o
+  // contador de turnos zeraria pra sempre. Aqui ele passa a acompanhar a CHAVE (a conversa), não o
+  // sid. A guarda `prev &&` é obrigatória: em chave NOVA `prev` é undefined e `prev.turns`
+  // estouraria TypeError ANTES da atribuição de sessions[key] logo abaixo — a chave nunca nasceria
+  // e o turno seguinte estouraria de novo, pra sempre, com o dono no vácuo.
+  const turns = (((same || CONTEXTO_DO_ZERO) && prev && typeof prev === "object") ? (prev.turns || 0) : 0) + 1;
   const compactCount = same ? (prev.compactCount || 0) : 0;
   let handoff = same ? (prev.handoff || "") : "";
   if (turns % SNAPSHOT_EVERY === 0) { const t = readTail(sid); if (t) handoff = t; }   // snapshot proativo (sobrevive à poda)
   const mdl = model || (prev && typeof prev === "object" && prev.model) || undefined;   // guarda o modelo p/ a higiene de órfão acertar o limiar
   const priorSummary = (prev && typeof prev === "object" && prev.priorSummary) || "";   // carrega o resumo-de-continuação adiante: a conversa CONTINUA entre compactações (não recomeça)
-  sessions[key] = { sid, ctx: ctx || 0, floor, turns, compactCount, handoff, ...(priorSummary ? { priorSummary } : {}), ...(mdl ? { model: mdl } : {}), updatedAt: Date.now() };
+  // CONTEXTO DO ZERO — a corrente de sids desta sala (chain). Só cresce quando o sid muda de fato:
+  // turno repetido (mesmo sid) não duplica elo. Com a chave desligada, `chain` nunca nasce e o
+  // objeto gravado sai idêntico ao de antes.
+  const prevChain = (prev && typeof prev === "object" && Array.isArray(prev.chain)) ? prev.chain : [];
+  let chain = prevChain;
+  if (CONTEXTO_DO_ZERO && sid && (!prevChain.length || prevChain[prevChain.length - 1].sid !== sid)) {
+    chain = prevChain.concat([{ sid, at: Date.now() }]);
+    if (chain.length > CONTEXTO_CHAIN_MAX) chain = chain.slice(-CONTEXTO_CHAIN_MAX);   // poda no disco: sessions.json não cresce sem teto
+  }
+  // parte do que JÁ está gravado e só sobrescreve por cima os campos que esta função de fato
+  // calcula. Antes o literal era construído do ZERO e qualquer campo não citado aqui SUMIA no turno
+  // seguinte — foi o que comeria o `chain`. Nenhum valor que ela grava hoje muda; o que muda é que
+  // ela para de apagar o resto.
+  sessions[key] = { ...(sessions[key] || {}), sid, ctx: ctx || 0, floor, turns, compactCount, handoff, ...(priorSummary ? { priorSummary } : {}), ...(mdl ? { model: mdl } : {}), ...(chain.length ? { chain } : {}), updatedAt: Date.now() };
   saveSessions();
 }
 
@@ -1342,7 +1456,13 @@ function ask(key, text, cfg, chatId, threadId, mission) {
         _asv ? `# ASSUNTOS VIVOS — nomes/projetos/decisões NOVAS que apareceram em QUALQUER tópico das últimas 48h (contexto CRUZADO, pra você NUNCA ficar por fora do que rolou em outro tópico; regra: se aparecer aqui um NOME/PROJETO novo, você JÁ conhece; quando você mesmo detectar assunto novo, ESCREVA nesse arquivo em ${ASSUNTOS_FILE} no formato "- YYYY-MM-DD HHhMM [TÓPICO] resumo em 1 linha"):\n${_asv}` : "",
       ].filter(Boolean).join("\n\n");
       // resumo da conversa também é volátil (muda a cada compactação): vai no INPUT, não no system-prompt.
-      const contBlock = cont ? `# A CONVERSA CONTINUA — NÃO recomece do zero\nVocê JÁ vinha conversando com o dono; este trecho é CONTINUAÇÃO da mesma conversa (ela foi compactada pra caber, só isso). Resumo do que já falaram antes deste ponto:\n${cont}\n\nRegra: trate como continuação natural. NUNCA diga "a conversa começou agora", "não tenho histórico desta sessão" nem peça pra ele repetir o que já foi dito. Se perguntarem o que falaram antes, responda a partir DESTE resumo.` : "";
+      // CONTEXTO DO ZERO: quando o histórico vem montado (já traz o próprio cabeçalho), ele entra
+      // COMO ESTÁ. Falar em "resumo" e "foi compactada" ali seria mentira — o que está sendo
+      // injetado é o texto REAL das trocas, não um resumo de nada.
+      const contBlock = !cont ? ""
+        : (cont.startsWith(CONTEXTO_HIST_HEADER) || cont.startsWith(CONTEXTO_PONTE_HEADER))
+        ? `# A CONVERSA CONTINUA — NÃO recomece do zero\n${cont}\n\nRegra: trate como continuação natural. NUNCA diga "a conversa começou agora" nem peça pra ele repetir o que já foi dito.`
+        : `# A CONVERSA CONTINUA — NÃO recomece do zero\nVocê JÁ vinha conversando com o dono; este trecho é CONTINUAÇÃO da mesma conversa (ela foi compactada pra caber, só isso). Resumo do que já falaram antes deste ponto:\n${cont}\n\nRegra: trate como continuação natural. NUNCA diga "a conversa começou agora", "não tenho histórico desta sessão" nem peça pra ele repetir o que já foi dito. Se perguntarem o que falaram antes, responda a partir DESTE resumo.`;
       const userText = [timeBlock(), contBlock, mbDyn, soConclui || text].filter(Boolean).join("\n\n");
       // COPY sempre em sonnet 5, mesmo que a sala rode outro modelo.
       const _model = isCopyTask(text) ? COPY_MODEL : cfg.model;
@@ -1601,12 +1721,19 @@ function ask(key, text, cfg, chatId, threadId, mission) {
   return (async () => {
     let handoff = (!_sid && _store) ? _store : "";   // compactação pendente de turno anterior que falhou — reusa
     let useSid = _sid;
+    // CONTEXTO DO ZERO — DECISÃO ÚNICA: o resto do turno só consulta ESTA const, nunca a env crua.
+    // MISSÃO nunca entra aqui: ela pode viver horas e o --resume é a única forma dela enxergar o
+    // próprio trabalho já feito. Cinto e suspensório, o prefixo da chave também fica de fora, então
+    // missão continua com o caminho de sempre mesmo se `mission` chegar vazio.
+    const _semResume = CONTEXTO_DO_ZERO && !mission && !String(key).startsWith("missao:");
 
     if (_sid && !sidExists(_sid)) {
       // sid podado pela willow (jsonl sumiu) → sessão nova semeada com o handoff salvo (não amnésia muda)
       console.log(`[ponte] sid podado (${key}) — recomeçando com handoff salvo`);
       useSid = null; handoff = _store || "";
-    } else if (_sid && ctxConv >= SOFT && _cc < 1) {
+      // CONTEXTO DO ZERO: inalcançável de propósito — sem --resume a sessão já nasce enxuta, e
+      // compactar aqui seria rodar um resumo caro em cima de uma sessão que já é pequena.
+    } else if (!_semResume && _sid && ctxConv >= SOFT && _cc < 1) {
       // CAMADA 2 — cruzou SOFT: compacta com RESUMO antes de responder (1× por sid = anti-flap/anti-cota)
       console.log(`[ponte] SOFT cruzado (${key}) ctxConv≈${Math.round(ctxConv)}/${Math.round(SOFT)} — compactando`);
       handoff = (await withCompactSlot(() => compactSession(_sid, cfg))) || readTail(_sid) || _store || "";
@@ -1616,7 +1743,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       saveSessions();
     }
 
-    const canResume = !!useSid && ctxConv < HARD;
+    const canResume = !_semResume && !!useSid && ctxConv < HARD;
     // BACKSTOP HARD (ou qualquer sessão-nova sem handoff): NUNCA resetar a frio se há de onde retomar.
     // Semeia do snapshot salvo, ou do tail do sid que está sendo abandonado por tamanho.
     if (!canResume && !handoff) {
@@ -1625,7 +1752,21 @@ function ask(key, text, cfg, chatId, threadId, mission) {
     }
 
     // continuidade injetada TODO turno: handoff (sessão nova recém-semeada) OU _prior (resumo persistido)
-    const cont = handoff || _prior;
+    let cont = handoff || _prior;
+    // CONTEXTO DO ZERO — o histórico da sessão de trabalho é montado AGORA, do texto real no disco,
+    // e ENTRA NO LUGAR do resumo. `contTexto` (sem cabeçalho) alimenta também o seed dos motores
+    // alternativos, logo abaixo. O try/catch é o que impede um turno MUDO: os readTail lá dentro
+    // estão embrulhados um a um, mas se qualquer outra coisa estourar o throw sobe pelo ask() e
+    // morre num .catch de log, deixando o dono no vácuo. Histórico é reforço: se falhar, o turno
+    // segue sem ele em vez de sumir.
+    let contBlockZero = "", contTextoZero = "";
+    if (_semResume) {
+      try {
+        const _h = montaHistoricoDaConversa(key, Date.now());
+        contTextoZero = _h.texto; contBlockZero = _h.block;
+      } catch (e) { console.error("[ponte] contexto do zero: histórico falhou (turno segue sem ele):", e && e.message); }
+      cont = contBlockZero;   // com cabeçalho: é assim que o runOnce reconhece que é histórico real, não resumo
+    }
 
     // ── MOTOR POR SALA (registro MOTORES, bloco antes do ask) ────────────────────────────
     // Modo manual (/codex|/grok) VENCE o engine do topics.json; /claude pausa (modo()[sala]=false).
@@ -1644,11 +1785,15 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       const M = MOTORES[_motor];
       // binário ausente = o cliente ainda não instalou/logou a assinatura DELE: resposta honesta com o passo
       if (!M.bin()) return { result: M.setup(), sid: _sid, ctx: 0, ok: false };
-      const mSeed = (useSid && sidExists(useSid)) ? readTail(useSid) : (handoff || _prior || "");
+      // CONTEXTO DO ZERO: o motor alternativo recebe o MESMO histórico montado (texto puro, sem o
+      // cabeçalho — quem rotula é a linha do mUser logo abaixo), em vez de um tail do sid velho.
+      const mSeed = _semResume ? contTextoZero
+        : (useSid && sidExists(useSid)) ? readTail(useSid) : (handoff || _prior || "");
       const _mvvM = capBytes(readLines(MEMVIVA_FILE, 120), MEMVIVA_READ_MAX);
       const mUser = [timeBlock(),
         _mvvM ? `# MEMÓRIA VIVA — decisões/projetos/pendências ATIVAS (leia antes de responder):\n${_mvvM}` : "",
-        cont ? `# A CONVERSA CONTINUA — resumo do que já falaram (não recomece do zero):\n${cont}` : "",
+        _semResume ? (contTextoZero ? `# A CONVERSA CONTINUA — as trocas anteriores desta mesma conversa, texto real (não recomece do zero):\n${contTextoZero}` : "")
+                   : (cont ? `# A CONVERSA CONTINUA — resumo do que já falaram (não recomece do zero):\n${cont}` : ""),
         text].filter(Boolean).join("\n\n");
       const mOut = await M.ask(motorSys(cfg, chatId, threadId), mUser, mSeed, cfg, key);
       if (mOut && !isLimitMsg(mOut)) return { result: mOut, sid: _sid, ctx: 0, ok: true };
@@ -2616,6 +2761,10 @@ async function poll() {
             missoesTxt,
             `promessas pendentes: ${promCount}${promNext ? ` (próxima: ${new Date(promNext).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })})` : ""}`,
             `transcrição de áudio: ${VOICE_ENABLED ? "✅" : "desligada"}`,
+            // AVISO HONESTO: quando o modo está ligado, a conversa NÃO é retomada inteira — ela é
+            // remontada por uma janela de trabalho. O dono precisa saber disso pelo nome, senão
+            // sente como "esqueceu" e ninguém liga o efeito à chave que ele mesmo ligou.
+            ...(CONTEXTO_DO_ZERO ? [`contexto: modo do zero LIGADO — eu remonto a conversa a cada turno a partir das trocas das últimas ${CONTEXTO_GAP_MIN}min de atividade, em vez de arrastar a sessão inteira. Não compacto mais (nada de resumo no meio da conversa), mas assunto de horas atrás eu não trago sozinho: se for retomar algo antigo, me lembra em uma linha.`] : []),
             (d => d.length ? `dependências: ⚠️ ${d.join(" · ")}` : `dependências: ✅`)(depsCheck()),
             healthTxt,
             backupTxt,
@@ -2887,4 +3036,6 @@ if (require.main === module) {
   }, 5000);
 } else module.exports = { capBytes, rotateMemViva, readLines, readTail, tailBytes, timeBlock, convoBlock, winFor, projDir, sidExists, persistSession, gate,
   ask, compactSession, withCompactSlot, chunk,
+  correnteViva, capaPorTeto, montaHistoricoDaConversa,
+  CONTEXTO_DO_ZERO, CONTEXTO_GAP_MIN, CONTEXTO_TETO_CHARS, CONTEXTO_CHAIN_MAX, CONTEXTO_PONTE_MAX_H,
   _state: () => sessions, _setSessions: (s) => { sessions = s; }, SOFT_FRAC, HARD_FRAC, STATIC_FLOOR };
