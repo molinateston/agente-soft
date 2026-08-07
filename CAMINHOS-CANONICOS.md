@@ -1,10 +1,10 @@
 ====================================
-CAMINHOS CANONICOS DO LEON
+CAMINHOS CANONICOS DO AGENTE
 ====================================
 
 Fonte unica da verdade para DUAS coisas: como o dono CONECTA uma
 ferramenta, e como o dono PEDE uma coisa e recebe o resultado.
-Vale para TODO LEON: o seu e o de toda a frota, incluindo o de cada
+Vale para TODO agente: o seu e o de toda a frota, incluindo o de cada
 cliente. Mesmo texto, mesma resposta, em qualquer agente.
 
 ------------------------------
@@ -289,7 +289,7 @@ follow-up", assim o GHL faz errado. Escreve como briefing
 fechado, o dono nao pode precisar completar nada.
 
 Entregar so o passo a passo, ou so o prompt, esta errado. Sao
-os dois, sempre, em qualquer LEON da frota.
+os dois, sempre, em qualquer agente da frota.
 
 ------------------------------
 A8. DINHEIRO (contas, saldo, conciliacao)

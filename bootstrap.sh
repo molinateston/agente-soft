@@ -162,10 +162,10 @@ echo "   agente $VERSAO_PUB baixado em $DESTINO_PKG"
 # ffmpeg — pré-req do TTS local (Piper gera wav; conversão pra mp3).
 apt-get install -y -qq ffmpeg >/dev/null 2>&1 || true
 
-# --- Piper TTS local (voz grátis pt_BR — default do LEON) ---
+# --- Piper TTS local (voz grátis pt_BR — default do agente) ---
 # Instala como user 'agente' num venv próprio (usuário sem sudo).
 echo "→ Voz local grátis (Piper TTS · pt_BR)..."
-sudo -u agente bash -s <<'PIPER_SETUP' || echo "   (aviso) Piper opcional falhou — LEON cai em nuvem se você ativar voz." >&2
+sudo -u agente bash -s <<'PIPER_SETUP' || echo "   (aviso) Piper opcional falhou — o agente cai em nuvem se você ativar voz." >&2
 set -e
 # COMPATIBILIDADE (02/ago/2026): o diretorio do agente passou a se chamar ~/.leon.
 # Instalacao ANTIGA (que ja tem ~/.openclaw com os venvs de voz) continua funcionando:
@@ -188,7 +188,7 @@ fi
 PIPER_SETUP
 echo "   Piper pronto (roda offline, custa 0)."
 
-# --- Edge TTS (voz nuvem grátis Microsoft, Antonio/Francisca pt-BR — default do LEON desde 22/07) ---
+# --- Edge TTS (voz nuvem grátis Microsoft, Antonio/Francisca pt-BR — default do agente desde 22/07) ---
 # Piper vira fallback. Roda no user 'agente', venv próprio, só requer conexão pra Microsoft (grátis, sem cadastro).
 echo "→ Voz nuvem grátis (Edge TTS · Antonio/Francisca pt-BR)..."
 sudo -u agente bash -s <<'EDGE_SETUP' || echo "   (aviso) Edge TTS opcional falhou — cai em Piper." >&2

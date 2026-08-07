@@ -99,8 +99,8 @@ echo "   voz pronta (transcrição + resposta em áudio, custo zero)."
 echo ""
 echo "→ 5/5 Configuração (4 perguntas e acabou):"
 echo ""
-read -rp "   1) Nome do agente (Enter = LEON): " AGENT_NAME
-AGENT_NAME="${AGENT_NAME:-LEON}"
+read -rp "   1) Nome do agente (Enter = Agente): " AGENT_NAME
+AGENT_NAME="${AGENT_NAME:-Agente}"
 read -rp "   2) Seu nome (como o agente te chama): " OWNER_NAME
 OWNER_NAME="${OWNER_NAME:-Chefe}"
 # só letras/espaço/hífen — apóstrofo e afins quebram o serviço

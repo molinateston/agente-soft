@@ -49,7 +49,7 @@ claude -p --model sonnet "responda só OK" | head -c 40 | grep -qiE '^[^a-z]*ok'
 > **Este check é só sanity interno — NÃO mostre a string `CHECK_FALHOU` (nem `LOGIN_OK`) pro dono.** Você já está rodando DENTRO do `claude` logado dele, então normalmente passa. Se `CHECK_FALHOU` aparecer, NÃO peça pra ele "rodar claude e logar" (ele já está dentro). Quase sempre é um soluço de rede/limite momentâneo: espere alguns segundos e rode o `claude -p` de novo. Se insistir em falhar, traduza pra algo acionável em português simples — ex.: *"O login parece não ter completado. Volte na aba do navegador onde você autorizou o Claude e confirme que terminou; se tiver fechado antes, rode `claude` numa OUTRA aba do terminal e refaça o login."* — e só então continue.
 
 ## ETAPA 1 — Coletar os dados (uma pergunta por vez)
-1. "Qual o **nome do agente**? Pode ser qualquer nome, mas o padrão da casa é **LEON** (é o nome original do agente, e todo mundo que manteve LEON prosperou, dizem que dá sorte kkk). Se preferir outro (ex: Bia, Sofia), fica à vontade." → `AGENT_NAME`
+1. "Qual o **nome do agente**? Pode ser qualquer nome (ex: Bia, Sofia, Max). É o nome que você vai usar pra falar com ele todo dia, escolhe um que soe como um sócio de verdade." → `AGENT_NAME`
 1b. "Essa persona é **masculina** ou **feminina**? (isso define a voz que ele/ela vai usar quando responder em áudio — Alex se masculina, Dora se feminina)." → `AGENT_GENDER` (aceita: `male`/`m`/`masculino`/`masc` ou `female`/`f`/`feminino`/`fem`; normalize pra `male` ou `female` antes de gravar. Se ficar em dúvida — nome unissex ou o dono não decidiu — assuma `male` e avise: "vou deixar masculina (Alex); se quiser trocar depois, é só falar").
 2. "Qual o **seu nome**? (como o agente vai te chamar)" → `OWNER_NAME`
 3. **Crie o bot do Telegram** — guie o dono assim (mande estas instruções pra ele e espere o token):
@@ -332,8 +332,8 @@ else
 fi
 ```
 
-## ETAPA 4.8 — (Opcional) LEON RESPONDER EM VOZ
-Se o cliente quer que o LEON responda em ÁUDIO (quando ele mandar áudio, ou sempre), é opt-in. Padrão da instalação é DESLIGADO. Ligar depois:
+## ETAPA 4.8 — (Opcional) O AGENTE RESPONDER EM VOZ
+Se o cliente quer que o agente responda em ÁUDIO (quando ele mandar áudio, ou sempre), é opt-in. Padrão da instalação é DESLIGADO. Ligar depois:
 
 **Rota GRÁTIS (default recomendado) — Piper local, roda na própria VPS:**
 1. O bootstrap já instalou o Piper e a voz pt_BR (Faber). Se por algum motivo não instalou, roda uma vez como o usuário do agente:
@@ -351,7 +351,7 @@ Se o cliente quer que o LEON responda em ÁUDIO (quando ele mandar áudio, ou se
    - `mirror` = responde em áudio só quando o cliente mandar áudio (imita o canal).
    - `always` = responde em áudio SEMPRE (todo turno).
    - `off` = desligado (padrão).
-3. Manda `/atualiza` pro LEON no Telegram — o `.env` recarrega sozinho, sem reiniciar.
+3. Manda `/atualiza` pro agente no Telegram — o `.env` recarrega sozinho, sem reiniciar.
 
 Custo: **zero**. Roda offline. Voz pt_BR masculina (Faber).
 
@@ -365,7 +365,7 @@ ELEVENLABS_VOICE_ID=bJrNspxJVFovUxNBQ0wh
 ```
 Chave em elevenlabs.io → "API Keys". Voz padrão = Marcelo Costa (macho BR grave); pra trocar, ID em elevenlabs.io/voice-library.
 
-**Rota nuvem barata (fallback automático) — OpenAI TTS:** se `OPENAI_API_KEY` estiver no `.env` e Piper falhar (não instalou), o LEON usa OpenAI TTS como plano B sem você mexer.
+**Rota nuvem barata (fallback automático) — OpenAI TTS:** se `OPENAI_API_KEY` estiver no `.env` e Piper falhar (não instalou), o agente usa OpenAI TTS como plano B sem você mexer.
 
 ## ETAPA 5 — Validar ponta a ponta
 ```bash

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# backup-diario.sh — snapshot local do state do LEON.
+# backup-diario.sh — snapshot local do state do agente.
 # Roda 3h AM via cron. Tudo em ~/backups/. Rotação: 14 dias.
 # LOCAL ONLY (sem Drive, sem S3). Se a VPS morrer, o backup morre junto —
 # é uma rede pra corrupção de sessions.json / promises / .env, não pra desastre.

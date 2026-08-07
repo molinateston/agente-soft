@@ -11,7 +11,7 @@ const { execSync } = require('child_process');
 const https = require('https');
 
 function loadEnv() {
-  // Cliente: .env fica na raiz do bridge (../ do workers). LEON: /home/cloud/.openclaw/.env.
+  // Cliente: .env fica na raiz do bridge (../ do workers). Ambiente-mãe: /home/cloud/.openclaw/.env.
   const candidates = [
     path.join(__dirname, '..', '.env'),
     '/home/cloud/.openclaw/.env'
@@ -92,10 +92,12 @@ async function collect() {
   const [dTotalMB, dUsedMB] = localDisk.split(' ').map(Number);
   const uptime = sh('uptime -p');
 
-  // Detecta serviços do usuário automaticamente (LEON: lean-*; cliente: agente).
+  // Detecta serviços do usuário automaticamente (ambiente-mãe: lean-*; cliente: agente).
   // Só entra no radar o que EXISTE no systemd — evita false-alarm "bot caído" quando o serviço nem foi criado.
   const bots = {};
-  const known = ['lean-leon', 'lean-levin', 'lean-mamoca', 'agente'];
+  const known = sh(`systemctl --user list-unit-files 'lean-*.service' --no-legend`)
+    .split('\n').map(l => l.trim().split(/\s+/)[0].replace(/\.service$/, '')).filter(Boolean);
+  known.push('agente');
   for (const svc of known) {
     const loaded = sh(`systemctl --user show -p LoadState --value ${svc}`);
     if (loaded !== 'loaded') continue;
@@ -206,7 +208,7 @@ async function main() {
   }
 
   if (args.includes('--alert')) {
-    // Estado do alert: no LEON vai em ~/.openclaw/state; no cliente vai em ./state ao lado do bridge.
+    // Estado do alert: no ambiente-mãe vai em ~/.openclaw/state; no cliente vai em ./state ao lado do bridge.
     const stateDir = fs.existsSync('/home/cloud/.openclaw')
       ? '/home/cloud/.openclaw/state'
       : path.join(__dirname, '..', 'state');

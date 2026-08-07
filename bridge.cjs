@@ -6,7 +6,7 @@
 // Auth = login nativo em ~/.claude/ (sem token no ambiente).
 // Roteamento: cada tópico tem seu modelo (sonnet padrão / opus[1m] sob pedido) e persona.
 //
-// CONTEXTO REDONDO (motor portado do LEON, contra "reset do nada" + "esqueceu do que falávamos"):
+// CONTEXTO REDONDO (contra "reset do nada" + "esqueceu do que falávamos"):
 //  1. Métrica honesta: gate por CRESCIMENTO da conversa (ctx - piso estático), não janela bruta;
 //     higiene de ctx órfão no boot.
 //  2. Compactação semeada por RESUMO ao cruzar SOFT: gera handoff semântico (como o /compact) e
@@ -60,7 +60,7 @@ if (process.platform === "linux" && typeof process.getuid === "function" && proc
   // O comando de reinstalação e o nome do usuário do serviço mudam por pacote, e por isso
   // vêm do arquivo de modo em vez de estarem escritos aqui: string de um produto dentro do
   // motor é justamente o que fazia material do pago vazar pro pacote público.
-  let _pac = { instalador: "", usuario: "agente" };
+  let _pac = { instalador: "", usuario: "agente", servico: "" };
   try { Object.assign(_pac, JSON.parse(fs.readFileSync(`${__dirname}/.pacote.json`, "utf8"))); } catch {}
   const _rootMsg = "⛔ Bridge iniciado como ROOT. O CLI claude recusa rodar assim (bypassPermissions). "
     + `Solução automática — rode NA VPS (como root) em UMA linha, o instalador para o serviço quebrado, cria o usuário '${_pac.usuario}' e reinstala certo: `
@@ -86,8 +86,10 @@ if (process.platform === "linux" && typeof process.getuid === "function" && proc
     }
     try {
       const { spawnSync: _sp } = require("child_process");
-      _sp("systemctl", ["--user", "disable", "--now", "leon-agente.service"], { stdio: "ignore", timeout: 5000 });
-      _sp("systemctl", ["disable", "--now", "leon-agente.service"], { stdio: "ignore", timeout: 5000 });
+      if (_pac.servico) {
+        _sp("systemctl", ["--user", "disable", "--now", _pac.servico], { stdio: "ignore", timeout: 5000 });
+        _sp("systemctl", ["disable", "--now", _pac.servico], { stdio: "ignore", timeout: 5000 });
+      }
     } catch {}
   }
   setTimeout(() => process.exit(0), 60000);
@@ -213,7 +215,7 @@ const PACOTE = (() => {
     const p = JSON.parse(fs.readFileSync(`${WORKDIR}/.pacote.json`, "utf8"));
     if (p && (p.modo === "pago" || p.modo === "gratuito")) return Object.assign(padrao, p);
   } catch {}
-  try { if (fs.existsSync(`${WORKDIR}/lib/license.js`)) return Object.assign(padrao, { modo: "pago", usuario: "leon" }); } catch {}
+  try { if (fs.existsSync(`${WORKDIR}/lib/license.js`)) return Object.assign(padrao, { modo: "pago" }); } catch {}
   return padrao;
 })();
 const MODO_PAGO = PACOTE.modo === "pago";
@@ -316,7 +318,7 @@ const VOICE_PY      = process.env.VOICE_PY || "/usr/bin/python3";
 const VOICE_HANDLER = process.env.VOICE_HANDLER || `${WORKDIR}/workers/voice-handler.py`;
 const VOICE_ENABLED = (() => { try { return fs.existsSync(VOICE_HANDLER); } catch { return false; } })();
 // VOZ DE SAÍDA (TTS): "mirror" = responde em áudio quando o dono manda áudio; "always" = toda resposta; "off" = nunca.
-// Default "mirror" desde 23/07 (paridade com LEON): áudio in vira áudio out via Edge TTS grátis (Antonio/Francisca pt-BR).
+// Default "mirror" desde 23/07: áudio in vira áudio out via Edge TTS grátis (Antonio/Francisca pt-BR).
 // Cliente pode desligar colocando VOICE_REPLY=off no .env. Pra premium, adiciona ELEVENLABS_API_KEY + TTS_PROVIDER=elevenlabs.
 const VOICE_REPLY = (process.env.VOICE_REPLY || "mirror").toLowerCase();
 const TTS_VOICE   = process.env.TTS_VOICE || "echo";              // OpenAI fallback: echo/onyx/nova/shimmer/alloy/fable/ash/sage/verse
@@ -362,7 +364,7 @@ try { setInterval(sweepTmp, 1800000).unref(); } catch {}   // varre a cada 30min
 const HEARTBEAT_MS    = Number(process.env.HEARTBEAT_SEG || 12) * 1000;   // reescreve o painel a cada Xs
 const AVISO_PESADA_MS = Number(process.env.AVISO_PESADA_SEG || 25) * 1000; // painel só nasce depois disso
 
-// ---------- CONTEXTO REDONDO: knobs (motor portado do LEON — compactação semeada + continuidade) ----------
+// ---------- CONTEXTO REDONDO: knobs (compactação semeada + continuidade) ----------
 const SOFT_FRAC    = Number(process.env.SOFT_FRAC || 0.80);   // fração da janela de CONVERSA onde COMPACTA (resumo)
 const HARD_FRAC    = Number(process.env.HARD_FRAC || 0.88);   // backstop bruto se a compactação falhar
 const STATIC_FLOOR = Number(process.env.STATIC_FLOOR || 30000); // piso estático estimado (system+tools+persona); seed do floor por sessão
@@ -500,7 +502,7 @@ const saveSessions = () => {
   } catch (e) { console.error("[ponte] falha ao salvar sessions.json:", e.message); }
 };
 
-// ---------- CONTEXTO REDONDO: helpers do motor (portados do LEON) ----------
+// ---------- CONTEXTO REDONDO: helpers do motor ----------
 // env reduzido pro filho: NÃO passa o token do Telegram (a ponte fala com o TG, o claude não precisa).
 // As DEMAIS chaves do .env (Cloudflare/Notion/Apify/OAuth) vão de PROPÓSITO: é a agência do agente
 // operar as APIs do DONO. Cada cliente tem o próprio .env (chaves dele), não há vazamento cruzado.
@@ -869,7 +871,7 @@ async function send(chatId, text, threadId) {
   for (const piece of chunk(text, 4000)) await sendChunk(chatId, piece, base);
 }
 
-// ---------- ENTREGA DE ARQUIVO (imagem/doc que o AGENTE gera) — porta do LEON ----------
+// ---------- ENTREGA DE ARQUIVO (imagem/doc que o AGENTE gera) ----------
 const SENDABLE_IMG = /\.(png|jpe?g|gif|webp)$/i;
 const SENDABLE_DOC = /\.(pdf|mp4|mov|mp3|wav|ogg|m4a|zip|docx?|xlsx?|pptx?|csv|md|markdown|txt|json|log|ya?ml|xml|html?|srt|vtt)$/i;
 function tgSendFile(method, field, chatId, filePath, base) {
@@ -1400,7 +1402,7 @@ function ask(key, text, cfg, chatId, threadId, mission) {
       let buf = "", err = "", finalResult = null, finalSid = null, finalUsage = null, mainUsage = null, settled = false, timedOut = false, lastActivity = Date.now();
       let finalIsError = false, finalErrors = "";
       let lastAction = "começando…", panelId = null, _lastMarco = "", _marcos = [], _lastPanelEditAt = 0;
-      // tradutor: nome cru da ferramenta interna vira acao humana pro painel do dono (portado do LEON 27/07)
+      // tradutor: nome cru da ferramenta interna vira acao humana pro painel do dono (27/07)
       const friendlyAction = (name, input) => {
         const inp = input || {}; const bn = (p) => p ? String(p).split("/").pop() : "";
         switch (name) {
@@ -1821,7 +1823,7 @@ process.on("uncaughtException",  (e) => console.error("[ponte] uncaughtException
 process.on("unhandledRejection", (e) => console.error("[ponte] unhandledRejection:", e && (e.stack || e.message) || e));
 
 // FIX H — lock de instância única: dois bridges brigam pelo getUpdates (409) e corrompem sessions.json
-// (last-writer). Portado do lean-bridge (LEON), já provado lá.
+// (last-writer). Portado do lean-bridge original, já provado lá.
 const LOCK_FILE = `${WORKDIR}/.bridge.lock`;
 function acquireLock() {
   try { const fd = fs.openSync(LOCK_FILE, "wx"); fs.writeFileSync(fd, String(process.pid)); fs.closeSync(fd); return; }   // O_EXCL

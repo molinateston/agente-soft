@@ -20,7 +20,7 @@ const PRECOS = JSON.parse(fs.readFileSync(`${BRIDGE}/lib/precos-tokens.json`, "u
 // ---------- descoberta dos agentes ----------
 // Nada e fixo: o worker se acha ao lado do proprio bridge.cjs e varre o HOME atras de
 // irmaos (outro motor com topics.json). Numa instalacao de cliente ele encontra um so,
-// que e o dono da casa. Numa VPS com varios (LEON/LEVIN/MAMOCA) encontra todos.
+// que e o dono da casa. Numa VPS com varios agentes encontra todos.
 const projSlug = (p) => p.replace(/[/.]/g, "-");
 function lerEnv(dir) {
   const env = {};

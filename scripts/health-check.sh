@@ -39,12 +39,12 @@ AGE_MIN=$(( AGE / 60 ))
 if (( AGE > 600 )); then
   # bridge silencioso há > 10min
   if [[ ! -f "$FLAG" ]]; then
-    notify "⚠️ LEON parou de responder há ${AGE_MIN}min (bridge.log sem escrita). Ver: journalctl --user -n 100 --since '30 min ago'"
+    notify "⚠️ O agente parou de responder há ${AGE_MIN}min (bridge.log sem escrita). Ver: journalctl --user -n 100 --since '30 min ago'"
     touch "$FLAG"
   fi
 elif [[ -f "$FLAG" ]]; then
   # voltou
-  notify "✅ LEON voltou (log ativo). Última pausa: ${AGE_MIN}min atrás."
+  notify "✅ O agente voltou (log ativo). Última pausa: ${AGE_MIN}min atrás."
   rm -f "$FLAG"
 fi
 
